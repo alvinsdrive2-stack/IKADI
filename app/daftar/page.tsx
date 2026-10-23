@@ -41,6 +41,7 @@ export default function DaftarPage() {
           </p>
         </div>
       </main>
+      <SiteFooter />
     </>
   );
 }

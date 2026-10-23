@@ -210,7 +210,7 @@ export function RadioGroup({
               checked={value === o.value}
               onChange={() => onChange(o.value)}
               required={required}
-              className="size-4 shrink-0 accent-[#166534]"
+              className="size-4 shrink-0 accent-primary"
             />
             {o.label}
           </label>
@@ -259,7 +259,7 @@ export function Checkbox({
           onBlur={onBlur}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${id}-error` : undefined}
-          className="mt-0.5 size-4 shrink-0 accent-[#166534]"
+          className="mt-0.5 size-4 shrink-0 accent-primary"
         />
         <span>{label}</span>
       </label>

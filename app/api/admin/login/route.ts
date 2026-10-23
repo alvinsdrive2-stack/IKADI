@@ -34,7 +34,16 @@ export async function POST(request: Request) {
   }
 
   const { username, password } = parsed.data;
-  const admin = await prisma.admin.findUnique({ where: { username } });
+
+  let admin: { id: bigint | number; username: string; passwordHash: string } | null;
+  try {
+    admin = await prisma.admin.findUnique({ where: { username } });
+  } catch (err) {
+    // DB down or misconfigured: never surface driver details, never 500 without JSON.
+    console.error("POST /api/admin/login failed:", err instanceof Error ? err.name : "unknown");
+    return jsonError(503, "SERVER_ERROR", "Layanan sedang tidak tersedia. Coba lagi nanti.");
+  }
+
   const hash = admin?.passwordHash ?? (await getDummyHash());
   const valid = await verifyPassword(hash, password);
 
@@ -45,10 +54,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const session = await getAdminSession();
-  session.adminId = String(admin.id);
-  session.username = admin.username;
-  await session.save();
+  try {
+    const session = await getAdminSession();
+    session.adminId = String(admin.id);
+    session.username = admin.username;
+    await session.save();
+  } catch (err) {
+    console.error("POST /api/admin/login session failed:", err instanceof Error ? err.name : "unknown");
+    return jsonError(503, "SERVER_ERROR", "Layanan sedang tidak tersedia. Coba lagi nanti.");
+  }
 
   return Response.json({ ok: true });
 }

@@ -37,7 +37,24 @@ export default function Home() {
           </div>
         </section>
 
+        <section
+          aria-label="Yang perlu diketahui"
+          className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8"
+        >
+          <ul role="list" className="grid gap-4 sm:grid-cols-3">
+            {BENEFITS.map((b) => (
+              <li
+                key={b.title}
+                className="rounded-lg border border-border bg-surface p-5 shadow-card"
+              >
+                <h2 className="text-base font-semibold text-ink">{b.title}</h2>
+                <p className="mt-1 text-sm text-ink-muted">{b.body}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
       </main>
+      <SiteFooter />
     </>
   );
 }

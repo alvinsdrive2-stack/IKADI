@@ -45,6 +45,7 @@ export default function SuksesPage() {
           </Link>
         </div>
       </main>
+      <SiteFooter />
     </>
   );
 }

@@ -1,10 +1,14 @@
 import argon2 from "argon2";
 import { cookies } from "next/headers";
-import { getIronSession, type SessionOptions } from "iron-session";
+import { getIronSession, unsealData, type SessionOptions } from "iron-session";
 
 export type AdminSession = { adminId?: string; username?: string };
 
 export const SESSION_COOKIE = "ikadi_admin";
+
+const SESSION_TTL_SECONDS = 60 * 60 * 8;
+
+export type SessionData = AdminSession;
 
 const sessionOptions: SessionOptions = {
   cookieName: SESSION_COOKIE,
@@ -14,7 +18,7 @@ const sessionOptions: SessionOptions = {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 8,
+    maxAge: SESSION_TTL_SECONDS,
   },
 };
 
@@ -48,6 +52,29 @@ export async function readAdminSession(): Promise<AdminSession | null> {
     return session.adminId ? session : null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Decrypts and validates the session cookie in the edge runtime (proxy.ts).
+ * iron-session's seal/unseal is pure Web Crypto, so it runs where Prisma cannot.
+ * Rejects any cookie that was not signed with SESSION_SECRET.
+ */
+export async function hasValidAdminSession(
+  store: { get(name: string): { value: string } | undefined },
+): Promise<boolean> {
+  const cookie = store.get(SESSION_COOKIE)?.value;
+  if (!cookie) return false;
+  const secret = process.env.SESSION_SECRET;
+  if (!secret || secret.length < 32) return false;
+  try {
+    const data = await unsealData<SessionData>(cookie, {
+      password: secret,
+      ttl: SESSION_TTL_SECONDS,
+    });
+    return Boolean(data?.adminId);
+  } catch {
+    return false;
   }
 }
 

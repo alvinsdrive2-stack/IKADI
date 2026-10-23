@@ -10,7 +10,7 @@
     "db:seed": "tsx scripts/seed-admin.ts",
     "verify:schema": "tsx scripts/verify/schema-check.mts",
     "postinstall": "prisma generate",
-    "verify:qa": "node --experimental-transform-types --import ./tests/support/register-alias.mjs --test tests/schema.test.mts tests/design-sync.test.mts tests/participants-route.test.mts tests/http-smoke.test.mts"
+    "verify:qa": "node scripts/verify/qa.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.2",

@@ -3,9 +3,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-// The alias loader (NODE_OPTIONS in npm run verify:qa, or QA_MOCK=1 locally) maps
-// "@/lib/prisma" and "@prisma/client" to tests/support/mocks.mjs, so no real driver loads.
-process.env.QA_MOCK = "1";
+// QA_MOCK=1 must already be in the environment: the loader (--import ./tests/support/register-alias.mjs)
+// swaps "@/lib/prisma" and "@prisma/client" for ./support/mocks.mjs only from that point on.
 const { state, reset } = (await import("./support/mocks.mjs")) as {
   state: { rows: Array<Record<string, unknown>>; failNextCreateWith: Error | null };
   reset: () => void;

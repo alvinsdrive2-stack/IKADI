@@ -6,12 +6,25 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:seed": "tsx scripts/seed-admin.ts",
+    "verify:schema": "tsx scripts/verify/schema-check.mts",
+    "postinstall": "prisma generate",
+    "verify:qa": "node --experimental-transform-types --import ./tests/support/register-alias.mjs --test tests/schema.test.mts tests/design-sync.test.mts tests/participants-route.test.mts tests/http-smoke.test.mts"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.9.2",
+    "@prisma/adapter-mariadb": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "argon2": "^0.45.1",
+    "dotenv": "^18.0.9",
+    "iron-session": "^9.0.1",
     "next": "16.4.3",
+    "prisma": "^7.10.1",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "react-hook-form": "^7.90.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
@@ -21,6 +34,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

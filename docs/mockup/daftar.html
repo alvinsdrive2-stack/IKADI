@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>daftar</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+ --primary:#166534;--primary-hover:#14532D;--primary-soft:#DCFCE7;--primary-ink:#14532D;
+ --bg:#F0FDF4;--surface:#fff;--accent:#D4AF37;--accent-soft:#FBF5DE;--accent-ink:#7A5C0A;
+ --ink:#1F2937;--ink-muted:#4B5563;--border:#D1D5DB;--control-border:#6B7280;
+ --danger:#B91C1C;--danger-soft:#FEF2F2;--danger-border:#FCA5A5;--focus:#1D4ED8;
+ --shadow-card:0 1px 2px rgb(0 0 0/.04),0 1px 3px rgb(0 0 0/.06);
+ --shadow-raised:0 4px 16px rgb(0 0 0/.08);
+ --radius-sm:.375rem;--radius-md:.5rem;--radius-lg:.75rem;--radius-xl:1rem;
+}
+@layer base{
+ html{font-family:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;color:var(--ink);background:var(--bg);-webkit-text-size-adjust:100%}
+ body{font-size:1rem;line-height:1.6;margin:0}
+ :focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:2px}
+ .on-dark :focus-visible{outline-color:#fff}
+}
+.ornament{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cg fill='none' stroke='%23166534' stroke-width='1'%3E%3Cpath d='M32 2 62 32 32 62 2 32z'/%3E%3Cpath d='M32 14 50 32 32 50 14 32z'/%3E%3C/g%3E%3C/svg%3E");background-size:64px 64px;opacity:.06;pointer-events:none}
+.ornament-light{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cg fill='none' stroke='%23FFFFFF' stroke-width='1'%3E%3Cpath d='M32 2 62 32 32 62 2 32z'/%3E%3Cpath d='M32 14 50 32 32 50 14 32z'/%3E%3C/g%3E%3C/svg%3E");background-size:64px 64px;opacity:.08;pointer-events:none}
+.input{height:2.75rem;width:100%;border-radius:var(--radius-md);border:1px solid var(--control-border);background:#fff;padding:0 .75rem;font-size:1rem;color:var(--ink);transition:border-color .15s}
+.input:hover{border-color:var(--ink-muted)}
+.input:focus{border-color:var(--primary)}
+.input[aria-invalid="true"]{border-color:var(--danger);background:rgba(254,242,242,.6)}
+textarea.input{height:auto;min-height:7rem;padding:.625rem .75rem;resize:vertical}
+select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' stroke='%234B5563' stroke-width='2'%3E%3Cpath d='m5 8 5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .75rem center;padding-right:2.5rem}
+.field-label{display:block;font-size:.875rem;font-weight:500;color:var(--ink)}
+.hint{font-size:.875rem;color:var(--ink-muted);margin:0}
+.err{display:flex;gap:.375rem;align-items:flex-start;font-size:.875rem;font-weight:500;color:var(--danger);margin:0}
+.req{color:var(--primary)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;height:2.75rem;padding:0 1.25rem;border-radius:var(--radius-md);font-weight:600;font-size:1rem;line-height:1;border:1px solid transparent;cursor:pointer;text-decoration:none;transition:background-color .15s,color .15s;white-space:nowrap}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-secondary{background:#fff;color:var(--primary);border-color:var(--primary)}
+.btn-secondary:hover{background:var(--bg)}
+.btn-ghost{color:var(--ink-muted);background:transparent}
+.btn-ghost:hover{color:var(--primary);background:var(--bg)}
+.btn-sm{height:2.25rem;padding:0 .75rem;font-size:.875rem}
+.btn[disabled]{opacity:.6;cursor:not-allowed}
+.badge{display:inline-flex;align-items:center;gap:.25rem;border-radius:999px;padding:.125rem .625rem;font-size:.75rem;font-weight:600;line-height:1.4}
+.badge-neutral{background:#F3F4F6;color:#374151}
+.badge-pw{background:var(--primary-soft);color:var(--primary-ink)}
+.badge-pd{background:var(--accent-soft);color:var(--accent-ink)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card)}
+.card-main{border-top:4px solid var(--accent);border-radius:var(--radius-xl)}
+.label-opt{font-size:.75rem;font-weight:500;color:var(--ink-muted)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg);background:#fff}
+table{border-collapse:collapse;width:100%;min-width:1000px;text-align:left;font-size:.875rem}
+thead{background:#F9FAFB}
+th{white-space:nowrap;padding:.75rem 1rem;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-muted);text-align:left}
+td{padding:.75rem 1rem;border-top:1px solid var(--border);vertical-align:top}
+tbody tr:hover{background:rgba(240,253,244,.6)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.875rem;font-variant-numeric:tabular-nums;letter-spacing:.02em;white-space:nowrap}
+.skip{position:absolute;left:-9999px;top:0;background:#fff;color:var(--primary);padding:.75rem 1rem;z-index:50;font-weight:600}
+.skip:focus{left:8px;top:8px}
+
+.logo-w .t1{color:#fff}
+.logo-w .t2{color:rgba(255,255,255,.8)}
+details>summary{cursor:pointer;list-style:none}
+details>summary::-webkit-details-marker{display:none}
+details>summary::after{content:"▾";margin-left:.5rem}
+details[open]>summary::after{content:"▴"}
+
+</style>
+</head>
+<body class="min-h-screen bg-[var(--bg)]">
+<a href="#main" class="skip">Lompat ke konten utama</a>
+
+<header class="border-b border-[var(--border)] bg-[var(--surface)]">
+  <div class="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+    <a href="/" class="flex items-center gap-3 no-underline">
+  <svg width="40" height="40" viewBox="0 0 48 48" role="img" aria-label="Logo IKADI" class="shrink-0">
+    <rect x="1" y="1" width="46" height="46" rx="12" fill="#166534"/>
+    <path d="M24 7l3.6 6.4L35 15l-4.8 5.3.9 7.2L24 24.6l-7.1 2.9.9-7.2L13 15l7.4-1.6z" fill="#D4AF37"/>
+    <text x="24" y="41" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="700" fill="#fff" letter-spacing=".6">IKADI</text>
+  </svg>
+  <span class="block">
+    <span class="block text-base font-bold leading-tight text-[var(--ink)]">Pendataan KTA IKADI</span>
+    <span class="block text-xs text-[var(--ink-muted)]">Ikatan Dai Indonesia</span>
+  </span>
+</a>
+    <a href="landing.html" class="btn btn-ghost btn-sm">Beranda</a>
+  </div>
+</header>
+
+<main id="main" class="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+
+  <div class="mb-6 flex items-start gap-2 text-sm text-[var(--ink-muted)]" role="note">
+    <svg aria-hidden="true" class="mt-0.5 size-4 shrink-0 text-[var(--primary)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75M6.75 21h10.5a2.25 2.25 0 0 0 2.25-2.25V12a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 12v6.75A2.25 2.25 0 0 0 6.75 21Z"/></svg>
+    <p>Data yang Anda isi digunakan IKADI untuk pendataan dan pengurusan Kartu Tanda Anggota. NIK Anda hanya dapat dilihat oleh admin dan tidak ditampilkan kepada publik.</p>
+  </div>
+
+  <form novalidate aria-describedby="form-note">
+    <div class="card card-main overflow-hidden">
+      <div class="relative overflow-hidden border-b border-[var(--border)] bg-[var(--bg)] px-5 py-6 sm:px-6 lg:px-8">
+        <div aria-hidden="true" class="ornament absolute inset-0"></div>
+        <div class="relative">
+          <h1 class="text-2xl font-bold text-[var(--ink)]" tabindex="-1">Formulir Pendataan KTA IKADI</h1>
+          <p id="form-note" class="mt-1 text-sm text-[var(--ink-muted)]">Kolom bertanda <span class="text-[var(--primary)]" aria-hidden="true">*</span> wajib diisi.</p>
+        </div>
+      </div>
+
+      <div class="space-y-10 px-5 py-6 sm:px-6 sm:py-8 lg:px-8">
+
+        <!-- Identitas -->
+        <fieldset class="space-y-6">
+          <legend class="mb-4 w-full border-b border-[var(--border)] pb-2 text-lg font-semibold text-[var(--ink)]">1. Identitas</legend>
+
+          <div class="space-y-2">
+            <p id="origin-label" class="field-label">Asal IKADI <span class="req" aria-hidden="true">*</span></p>
+            <div role="radiogroup" aria-labelledby="origin-label" aria-required="true" class="grid gap-2 sm:grid-cols-2">
+              <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-[var(--control-border)] bg-white px-3 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-soft)]">
+                <input type="radio" name="originType" value="PW" class="size-4 accent-[#166534]" checked>
+                <span class="text-base text-[var(--ink)]">PW (Provinsi)</span>
+              </label>
+              <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-[var(--control-border)] bg-white px-3 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-soft)]">
+                <input type="radio" name="originType" value="PD" class="size-4 accent-[#166534]">
+                <span class="text-base text-[var(--ink)]">PD (Kabupaten/Kota)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div class="space-y-1.5">
+              <label for="originName" class="field-label">Nama PW/PD IKADI <span class="req" aria-hidden="true">*</span></label>
+              <input id="originName" name="originName" type="text" class="input" required aria-required="true" value="PW Jawa Timur">
+            </div>
+            <div class="space-y-1.5">
+              <label for="fullName" class="field-label">Nama Lengkap &amp; Gelar/Akademik <span class="req" aria-hidden="true">*</span></label>
+              <input id="fullName" name="fullName" type="text" class="input" required aria-required="true" value="Ust. Ahmad Fauzi, S.Pd.I.">
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="nik" class="field-label">Nomor NIK KTP <span class="req" aria-hidden="true">*</span></label>
+            <p id="nik-hint" class="hint">16 digit angka sesuai KTP, tanpa spasi.</p>
+            <input id="nik" name="nik" type="text" inputmode="numeric" autocomplete="off" maxlength="17" class="input mono" required aria-required="true" aria-describedby="nik-hint nik-error" aria-invalid="true" value="3576014241026002">
+            <p id="nik-error" class="err">
+              <svg aria-hidden="true" class="mt-0.5 size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/></svg>
+              NIK harus 16 digit angka.
+            </p>
+          </div>
+        </fieldset>
+
+        <!-- Data pribadi -->
+        <fieldset class="space-y-6 border-t border-[var(--border)] pt-8">
+          <legend class="mb-4 w-full border-b border-[var(--border)] pb-2 text-lg font-semibold text-[var(--ink)]">2. Data Pribadi</legend>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div class="space-y-1.5">
+              <label for="birthPlace" class="field-label">Tempat Lahir <span class="req" aria-hidden="true">*</span></label>
+              <input id="birthPlace" name="birthPlace" type="text" class="input" required aria-required="true" value="Surabaya">
+            </div>
+            <div class="space-y-1.5">
+              <label for="birthDate" class="field-label">Tanggal Lahir <span class="req" aria-hidden="true">*</span></label>
+              <input id="birthDate" name="birthDate" type="date" class="input" required aria-required="true" value="1985-04-12">
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="address" class="field-label">Alamat <span class="req" aria-hidden="true">*</span></label>
+            <p id="address-hint" class="hint">Desa/Kelurahan, Kecamatan, Kabupaten/Kota, Provinsi.</p>
+            <textarea id="address" name="address" class="input" rows="3" required aria-required="true" aria-describedby="address-hint">Jl. Ahmad Yani No. 45, Kel. Ketintang, Kec. Gayungan, Kota Surabaya, Jawa Timur</textarea>
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="whatsapp" class="field-label">No. Handphone (WhatsApp) <span class="req" aria-hidden="true">*</span></label>
+            <p id="wa-hint" class="hint">Contoh: 085987654321 atau +6285987654321.</p>
+            <input id="whatsapp" name="whatsapp" type="tel" inputmode="tel" class="input mono" required aria-required="true" aria-describedby="wa-hint" placeholder="08xxxxxxxxxx">
+          </div>
+        </fieldset>
+
+        <!-- Latar belakang -->
+        <fieldset class="space-y-6 border-t border-[var(--border)] pt-8">
+          <legend class="mb-4 w-full border-b border-[var(--border)] pb-2 text-lg font-semibold text-[var(--ink)]">3. Latar Belakang</legend>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div class="space-y-1.5">
+              <label for="lastEducation" class="field-label">Pendidikan Terakhir <span class="label-opt">(opsional)</span></label>
+              <select id="lastEducation" name="lastEducation" class="input">
+                <option value="">Pilih pendidikan</option>
+                <option>SD/Sederajat</option>
+                <option>SMP/Sederajat</option>
+                <option selected>SMA/SMK/Sederajat</option>
+                <option>D1/D2/D3</option>
+                <option>D4/S1</option>
+                <option>S2</option>
+                <option>S3</option>
+                <option>Lainnya</option>
+              </select>
+            </div>
+            <div class="space-y-1.5">
+              <label for="occupation" class="field-label">Pekerjaan <span class="req" aria-hidden="true">*</span></label>
+              <input id="occupation" name="occupation" type="text" class="input" required aria-required="true" value="Guru PAI">
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="expertise" class="field-label">Bidang Keahlian <span class="label-opt">(opsional)</span></label>
+            <input id="expertise" name="expertise" type="text" class="input" placeholder="Contoh: tafsir, hadis, fikih">
+          </div>
+        </fieldset>
+
+        <!-- Pengalaman -->
+        <fieldset class="space-y-6 border-t border-[var(--border)] pt-8">
+          <legend class="mb-4 w-full border-b border-[var(--border)] pb-2 text-lg font-semibold text-[var(--ink)]">4. Pengalaman</legend>
+
+          <div class="space-y-2">
+            <p id="sermon-label" class="field-label">Pengalaman Khutbah <span class="req" aria-hidden="true">*</span></p>
+            <div role="radiogroup" aria-labelledby="sermon-label" aria-required="true" class="grid gap-2">
+              <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-[var(--control-border)] bg-white px-3 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-soft)]">
+                <input type="radio" name="sermon" value="SERING" class="size-4 accent-[#166534]" checked>
+                <span>Sering</span>
+              </label>
+              <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-[var(--control-border)] bg-white px-3 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-soft)]">
+                <input type="radio" name="sermon" value="KADANG_KADANG" class="size-4 accent-[#166534]">
+                <span>Kadang-Kadang</span>
+              </label>
+              <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-[var(--control-border)] bg-white px-3 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-soft)]">
+                <input type="radio" name="sermon" value="BELUM_PERNAH" class="size-4 accent-[#166534]">
+                <span>Belum Pernah</span>
+              </label>
+              <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-[var(--control-border)] bg-white px-3 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-soft)]">
+                <input type="radio" name="sermon" value="LAINNYA" class="size-4 accent-[#166534]" aria-controls="sermon-other-wrap">
+                <span>Lainnya</span>
+              </label>
+              <div id="sermon-other-wrap" class="space-y-1.5 pl-7">
+                <label for="sermonOther" class="text-sm text-[var(--ink-muted)]">Jelaskan pengalaman khutbah Anda</label>
+                <input id="sermonOther" name="sermonOther" type="text" class="input" placeholder="Contoh: khutbah bulanan di masjid desa">
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="organization" class="field-label">Pengalaman Organisasi &mdash; Jabatan <span class="label-opt">(opsional)</span></label>
+            <textarea id="organization" name="organization" class="input" rows="2" placeholder="Contoh: Ketua Takmir Masjid Al-Hikmah (2019-2024)"></textarea>
+          </div>
+
+          <div class="space-y-2">
+            <p id="quran-label" class="field-label">Kemampuan Membaca Al-Qur'an <span class="req" aria-hidden="true">*</span></p>
+            <div role="radiogroup" aria-labelledby="quran-label" aria-required="true" class="grid gap-2">
+              <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-[var(--control-border)] bg-white px-3 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-soft)]">
+                <input type="radio" name="quran" value="TAJWID_BAIK" class="size-4 accent-[#166534]" checked>
+                <span>Baik Sesuai Hukum Tajwid</span>
+              </label>
+              <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-[var(--control-border)] bg-white px-3 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-soft)]">
+                <input type="radio" name="quran" value="BIASA" class="size-4 accent-[#166534]">
+                <span>Biasa Saja</span>
+              </label>
+              <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-[var(--control-border)] bg-white px-3 has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-soft)]">
+                <input type="radio" name="quran" value="TIDAK_LANCAR" class="size-4 accent-[#166534]">
+                <span>Tidak Lancar</span>
+              </label>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Motivasi -->
+        <fieldset class="space-y-6 border-t border-[var(--border)] pt-8">
+          <legend class="mb-4 w-full border-b border-[var(--border)] pb-2 text-lg font-semibold text-[var(--ink)]">5. Motivasi</legend>
+          <div class="space-y-1.5">
+            <label for="trainingReason" class="field-label">Alasan Mengikuti Pelatihan <span class="req" aria-hidden="true">*</span></label>
+            <textarea id="trainingReason" name="trainingReason" class="input" rows="3" required aria-required="true"></textarea>
+          </div>
+          <div class="space-y-1.5">
+            <label for="trainingExpectation" class="field-label">Harapan Setelah Pelatihan <span class="req" aria-hidden="true">*</span></label>
+            <textarea id="trainingExpectation" name="trainingExpectation" class="input" rows="3" required aria-required="true"></textarea>
+          </div>
+        </fieldset>
+
+        <!-- Persetujuan -->
+        <fieldset class="space-y-3 border-t border-[var(--border)] pt-8">
+          <legend class="mb-2 w-full text-lg font-semibold text-[var(--ink)]">6. Persetujuan</legend>
+          <label class="flex cursor-pointer items-start gap-3 rounded-md border border-[var(--control-border)] bg-white p-4 text-sm">
+            <input type="checkbox" name="consent" class="mt-0.5 size-4 shrink-0 accent-[#166534]" required aria-required="true">
+            <span>Saya memahami data yang saya isi digunakan untuk pendataan KTA IKADI dan saya dapat dihubungi melalui nomor WhatsApp yang dicantumkan. <span class="req" aria-hidden="true">*</span></span>
+          </label>
+        </fieldset>
+
+        <div role="alert" class="mb-6 flex items-start gap-3 rounded-md border border-[var(--danger-border)] bg-[var(--danger-soft)] p-4 text-[var(--danger)]">
+  <svg aria-hidden="true" class="mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v3.75m0 3.75h.008M10.34 3.94 2.1 18a2.25 2.25 0 0 0 1.94 3.37h15.92A2.25 2.25 0 0 0 21.9 18L13.66 3.94a2.25 2.25 0 0 0-3.88 0Z"/></svg>
+  <div class="text-sm">
+    <p class="font-semibold">NIK ini sudah terdaftar.</p>
+    <p>Silakan hubungi admin jika membutuhkan bantuan.</p>
+  </div>
+</div>
+
+        <div class="flex flex-col gap-3 border-t border-[var(--border)] pt-6 sm:flex-row-reverse sm:justify-start">
+          <button type="submit" class="btn btn-primary min-w-40 w-full sm:w-auto">Kirim Data</button>
+          <a href="landing.html" class="btn btn-secondary w-full sm:w-auto">Batal</a>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <p class="mt-6 text-center text-sm text-[var(--ink-muted)]">Butuh bantuan mengisi? Hubungi admin.</p>
+</main>
+
+</body>
+</html>

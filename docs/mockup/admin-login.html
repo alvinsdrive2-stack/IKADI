@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>admin-login</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+ --primary:#166534;--primary-hover:#14532D;--primary-soft:#DCFCE7;--primary-ink:#14532D;
+ --bg:#F0FDF4;--surface:#fff;--accent:#D4AF37;--accent-soft:#FBF5DE;--accent-ink:#7A5C0A;
+ --ink:#1F2937;--ink-muted:#4B5563;--border:#D1D5DB;--control-border:#6B7280;
+ --danger:#B91C1C;--danger-soft:#FEF2F2;--danger-border:#FCA5A5;--focus:#1D4ED8;
+ --shadow-card:0 1px 2px rgb(0 0 0/.04),0 1px 3px rgb(0 0 0/.06);
+ --shadow-raised:0 4px 16px rgb(0 0 0/.08);
+ --radius-sm:.375rem;--radius-md:.5rem;--radius-lg:.75rem;--radius-xl:1rem;
+}
+@layer base{
+ html{font-family:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;color:var(--ink);background:var(--bg);-webkit-text-size-adjust:100%}
+ body{font-size:1rem;line-height:1.6;margin:0}
+ :focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:2px}
+ .on-dark :focus-visible{outline-color:#fff}
+}
+.ornament{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cg fill='none' stroke='%23166534' stroke-width='1'%3E%3Cpath d='M32 2 62 32 32 62 2 32z'/%3E%3Cpath d='M32 14 50 32 32 50 14 32z'/%3E%3C/g%3E%3C/svg%3E");background-size:64px 64px;opacity:.06;pointer-events:none}
+.ornament-light{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cg fill='none' stroke='%23FFFFFF' stroke-width='1'%3E%3Cpath d='M32 2 62 32 32 62 2 32z'/%3E%3Cpath d='M32 14 50 32 32 50 14 32z'/%3E%3C/g%3E%3C/svg%3E");background-size:64px 64px;opacity:.08;pointer-events:none}
+.input{height:2.75rem;width:100%;border-radius:var(--radius-md);border:1px solid var(--control-border);background:#fff;padding:0 .75rem;font-size:1rem;color:var(--ink);transition:border-color .15s}
+.input:hover{border-color:var(--ink-muted)}
+.input:focus{border-color:var(--primary)}
+.input[aria-invalid="true"]{border-color:var(--danger);background:rgba(254,242,242,.6)}
+textarea.input{height:auto;min-height:7rem;padding:.625rem .75rem;resize:vertical}
+select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' stroke='%234B5563' stroke-width='2'%3E%3Cpath d='m5 8 5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .75rem center;padding-right:2.5rem}
+.field-label{display:block;font-size:.875rem;font-weight:500;color:var(--ink)}
+.hint{font-size:.875rem;color:var(--ink-muted);margin:0}
+.err{display:flex;gap:.375rem;align-items:flex-start;font-size:.875rem;font-weight:500;color:var(--danger);margin:0}
+.req{color:var(--primary)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;height:2.75rem;padding:0 1.25rem;border-radius:var(--radius-md);font-weight:600;font-size:1rem;line-height:1;border:1px solid transparent;cursor:pointer;text-decoration:none;transition:background-color .15s,color .15s;white-space:nowrap}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-secondary{background:#fff;color:var(--primary);border-color:var(--primary)}
+.btn-secondary:hover{background:var(--bg)}
+.btn-ghost{color:var(--ink-muted);background:transparent}
+.btn-ghost:hover{color:var(--primary);background:var(--bg)}
+.btn-sm{height:2.25rem;padding:0 .75rem;font-size:.875rem}
+.btn[disabled]{opacity:.6;cursor:not-allowed}
+.badge{display:inline-flex;align-items:center;gap:.25rem;border-radius:999px;padding:.125rem .625rem;font-size:.75rem;font-weight:600;line-height:1.4}
+.badge-neutral{background:#F3F4F6;color:#374151}
+.badge-pw{background:var(--primary-soft);color:var(--primary-ink)}
+.badge-pd{background:var(--accent-soft);color:var(--accent-ink)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card)}
+.card-main{border-top:4px solid var(--accent);border-radius:var(--radius-xl)}
+.label-opt{font-size:.75rem;font-weight:500;color:var(--ink-muted)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg);background:#fff}
+table{border-collapse:collapse;width:100%;min-width:1000px;text-align:left;font-size:.875rem}
+thead{background:#F9FAFB}
+th{white-space:nowrap;padding:.75rem 1rem;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-muted);text-align:left}
+td{padding:.75rem 1rem;border-top:1px solid var(--border);vertical-align:top}
+tbody tr:hover{background:rgba(240,253,244,.6)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.875rem;font-variant-numeric:tabular-nums;letter-spacing:.02em;white-space:nowrap}
+.skip{position:absolute;left:-9999px;top:0;background:#fff;color:var(--primary);padding:.75rem 1rem;z-index:50;font-weight:600}
+.skip:focus{left:8px;top:8px}
+
+.logo-w .t1{color:#fff}
+.logo-w .t2{color:rgba(255,255,255,.8)}
+details>summary{cursor:pointer;list-style:none}
+details>summary::-webkit-details-marker{display:none}
+details>summary::after{content:"▾";margin-left:.5rem}
+details[open]>summary::after{content:"▴"}
+
+</style>
+</head>
+<body class="min-h-screen bg-[var(--bg)]">
+<a href="#main" class="skip">Lompat ke konten utama</a>
+
+<div class="flex min-h-screen flex-col bg-[var(--bg)]">
+  <header class="border-b border-[var(--border)] bg-[var(--surface)]">
+    <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+      <a href="/" class="flex items-center gap-3 no-underline">
+  <svg width="40" height="40" viewBox="0 0 48 48" role="img" aria-label="Logo IKADI" class="shrink-0">
+    <rect x="1" y="1" width="46" height="46" rx="12" fill="#166534"/>
+    <path d="M24 7l3.6 6.4L35 15l-4.8 5.3.9 7.2L24 24.6l-7.1 2.9.9-7.2L13 15l7.4-1.6z" fill="#D4AF37"/>
+    <text x="24" y="41" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="700" fill="#fff" letter-spacing=".6">IKADI</text>
+  </svg>
+  <span class="block">
+    <span class="block text-base font-bold leading-tight text-[var(--ink)]">Pendataan KTA IKADI</span>
+    <span class="block text-xs text-[var(--ink-muted)]">Ikatan Dai Indonesia</span>
+  </span>
+</a>
+      <a href="landing.html" class="btn btn-ghost btn-sm">Kembali ke beranda</a>
+    </div>
+  </header>
+
+  <main id="main" class="flex flex-1 items-start justify-center px-4 py-10 sm:py-16">
+    <div class="w-full max-w-md">
+      <div class="card card-main overflow-hidden">
+        <div class="relative overflow-hidden border-b border-[var(--border)] bg-[var(--bg)] px-6 py-6">
+          <div aria-hidden="true" class="ornament absolute inset-0"></div>
+          <h1 class="relative text-2xl font-bold text-[var(--ink)]">Masuk Admin</h1>
+          <p class="relative mt-1 text-sm text-[var(--ink-muted)]">Halaman ini khusus pengurus IKADI.</p>
+        </div>
+
+        <form novalidate class="space-y-6 p-6">
+          <div role="alert" class="flex items-start gap-3 rounded-md border border-[var(--danger-border)] bg-[var(--danger-soft)] p-3 text-sm text-[var(--danger)]">
+  <svg aria-hidden="true" class="mt-0.5 size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/></svg>
+  <p>Email/Username atau sandi salah.</p>
+</div>
+
+          <div class="space-y-1.5">
+            <label for="username" class="field-label">Username</label>
+            <input id="username" name="username" type="text" autocomplete="username" class="input" autofocus aria-invalid="true" aria-describedby="login-error" value="admin_ikadi">
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="password" class="field-label">Sandi</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" class="input" required aria-required="true" aria-invalid="true" aria-describedby="login-error">
+            <p id="login-error" class="err">
+              <svg aria-hidden="true" class="mt-0.5 size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/></svg>
+              Email/Username atau sandi salah.
+            </p>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-full">Masuk</button>
+        </form>
+      </div>
+
+      <p class="mt-6 text-center text-sm text-[var(--ink-muted)]">
+        Lupa akses? Hubungi pengurus IKADI pusat.
+      </p>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

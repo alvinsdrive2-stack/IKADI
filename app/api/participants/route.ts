@@ -55,11 +55,13 @@ export async function POST(request: Request) {
     if (existing) return Response.json(NIK_DUPLICATE, { status: 409 });
 
     const created = await prisma.participant.create({ data });
-    try {
-      const photoPath = await saveParticipantPhoto(photo, String(created.id));
-      await prisma.participant.update({ where: { id: created.id }, data: { photoPath } });
-    } catch {
-      // Foto gagal ditulis: data peserta tetap tersimpan, foto bisa diunggah ulang nanti.
+    if (photo) {
+      try {
+        const photoPath = await saveParticipantPhoto(photo, String(created.id));
+        await prisma.participant.update({ where: { id: created.id }, data: { photoPath } });
+      } catch {
+        // Foto gagal ditulis: data peserta tetap tersimpan, foto bisa diunggah ulang nanti.
+      }
     }
     return Response.json({ ok: true }, { status: 201 });
   } catch (err) {

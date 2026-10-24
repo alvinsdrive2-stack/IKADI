@@ -20,11 +20,13 @@ export function detectImageExt(buf: Buffer): string | null {
 
 /**
  * Simpan pas foto sebagai `public/uploads/participants/<id>.<ext>`.
+ * `photo` boleh data URL penuh ("data:image/png;base64,...") atau base64 mentah.
  * Id dipakai sebagai nama file — mencegah traversal & tabrakan antar peserta.
  * Mengembalikan path relatif yang disimpan ke kolom `photo_path`.
  */
-export async function saveParticipantPhoto(photoBase64: string, participantId: string): Promise<string> {
-  const buf = Buffer.from(photoBase64, "base64");
+export async function saveParticipantPhoto(photo: string, participantId: string): Promise<string> {
+  const base64 = photo.includes(",") ? photo.slice(photo.indexOf(",") + 1) : photo;
+  const buf = Buffer.from(base64, "base64");
   const ext = detectImageExt(buf);
   if (!ext) throw new Error("PHOTO_INVALID");
   await mkdir(PHOTO_DIR, { recursive: true });

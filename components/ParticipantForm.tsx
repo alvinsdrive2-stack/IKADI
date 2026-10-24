@@ -293,12 +293,11 @@ export function ParticipantForm() {
             {...register("birthDate")}
           />
         </div>
-        <Field id="photo" label="Pas Foto" required hint="Format JPEG, PNG, atau WebP. Maksimal 1 MB." error={opt("photo")}>
+        <Field id="photo" label="Pas Foto" hint="Opsional. Format JPEG, PNG, atau WebP. Maksimal 1 MB." error={opt("photo")}>
           <input
             id="photo"
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            aria-required
             aria-invalid={errors.photo ? true : undefined}
             aria-describedby="photo-hint photo-error"
             onChange={(e) => onPhotoChange(e.target.files?.[0])}

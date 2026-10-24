@@ -42,14 +42,17 @@ const optionalText = (max: number, label: string) =>
     z.string().max(max, `${label} maksimal ${max} karakter`).optional(),
   );
 
-/** Pas foto: base64 dari <input type=file>, maks 1 MB. Ekstensi divalidasi dari magic bytes server. */
+/** Pas foto: base64 dari <input type=file>, opsional, maks 1 MB. Ekstensi divalidasi dari magic bytes server. */
 export const PHOTO_MAX_BYTES = 1024 * 1024;
 
-const photoSchema = z
-  .string({ error: "Pas foto wajib diunggah" })
-  .refine((s) => /^data:image\/(jpeg|png|webp);base64,/.test(s), "Pas foto harus JPEG, PNG, atau WebP")
-  .refine((s) => s.length * 0.75 <= PHOTO_MAX_BYTES, "Ukuran pas foto maksimal 1 MB")
-  .transform((s) => s.slice(s.indexOf(",") + 1));
+const photoSchema = z.preprocess(
+  (v) => (typeof v === "string" && v.trim() !== "" ? v : undefined),
+  z
+    .string({ error: "Pas foto harus JPEG, PNG, atau WebP" })
+    .refine((s) => /^data:image\/(jpeg|png|webp);base64,/.test(s), "Pas foto harus JPEG, PNG, atau WebP")
+    .refine((s) => s.length * 0.75 <= PHOTO_MAX_BYTES, "Ukuran pas foto maksimal 1 MB")
+    .optional(),
+);
 
 const todayIso = () => {
   const d = new Date();

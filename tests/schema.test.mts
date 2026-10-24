@@ -129,6 +129,21 @@ test("enum asing ditolak", () => {
   assert.equal(parse({ originType: "pw" }).success, false);
   assert.equal(parse({ quranReading: "TAJWID" }).success, false);
   assert.equal(parse({ sermonExperience: "" }).success, false);
+  assert.equal(parse({ gender: "LAKI" }).success, false);
+  assert.equal(parse({ gender: "" }).success, false);
+});
+
+test("pas foto opsional: kosong / hilang -> undefined, format & ukuran divalidasi", () => {
+  for (const empty of [undefined, "", "   "]) {
+    const r = parse(empty === undefined ? { photo: undefined } : { photo: empty });
+    assert.ok(r.success, `photo ${JSON.stringify(empty)} harus tetap valid`);
+    assert.equal(r.data.photo, undefined);
+  }
+  assert.equal(parse({ photo: "data:image/gif;base64,R0lGOD" }).success, false, "GIF ditolak");
+  // Isi payload divalidasi server-side dari magic bytes (lib/photo.ts), bukan di sini.
+  // s.length * 0.75 ~ ukuran biner; 1 MB biner ~= 1.37M karakter base64.
+  const besar = parse({ photo: "data:image/png;base64," + "A".repeat(2 * 1024 * 1024) });
+  assert.equal(besar.success, false, "di atas 1 MB ditolak");
 });
 
 test("field opsional: kosong -> undefined, spasi di-trim", () => {

@@ -3,6 +3,7 @@ import { loginSchema } from "@/lib/schema";
 import { getAdminSession, hashPassword, verifyPassword } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { clientIp, jsonError } from "@/lib/http";
+import { logRouteError } from "@/lib/route-log";
 
 
 // Cheap constant-ish work for unknown usernames so timing does not reveal account existence.
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
     admin = await prisma.admin.findUnique({ where: { username } });
   } catch (err) {
     // DB down or misconfigured: never surface driver details, never 500 without JSON.
-    console.error("POST /api/admin/login failed:", err instanceof Error ? err.name : "unknown");
+    logRouteError("POST /api/admin/login", err);
     return jsonError(503, "SERVER_ERROR", "Layanan sedang tidak tersedia. Coba lagi nanti.");
   }
 
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
     session.username = admin.username;
     await session.save();
   } catch (err) {
-    console.error("POST /api/admin/login session failed:", err instanceof Error ? err.name : "unknown");
+    logRouteError("POST /api/admin/login session", err);
     return jsonError(503, "SERVER_ERROR", "Layanan sedang tidak tersedia. Coba lagi nanti.");
   }
 

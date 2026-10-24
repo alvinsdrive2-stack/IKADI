@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isUniqueViolation, logRouteError } from "@/lib/route-log";
 import { participantSchema } from "@/lib/schema";
 import { saveParticipantPhoto } from "@/lib/photo";
 import { rateLimit } from "@/lib/rate-limit";
@@ -42,7 +43,8 @@ export async function POST(request: Request) {
   }
 
   const d = parsed.data;
-  const { photo, gender, ...rest } = d;
+  // consent cuma validasi UI — bukan kolom di tabel participants.
+  const { photo, gender, consent: _consent, ...rest } = d;
   const data: Prisma.ParticipantCreateInput = {
     ...rest,
     gender,
@@ -65,10 +67,10 @@ export async function POST(request: Request) {
     }
     return Response.json({ ok: true }, { status: 201 });
   } catch (err) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+    if (isUniqueViolation(err)) {
       return Response.json(NIK_DUPLICATE, { status: 409 });
     }
-    console.error("POST /api/participants failed:", err instanceof Error ? err.name : "unknown");
+    logRouteError("POST /api/participants", err);
     return jsonError(500, "SERVER_ERROR", "Terjadi kesalahan. Silakan coba lagi.");
   }
 }

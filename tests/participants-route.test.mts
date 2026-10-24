@@ -51,6 +51,8 @@ test("AC-02: payload valid -> 201, tepat satu baris", async () => {
   assert.equal(res.status, 201);
   assert.deepEqual(await res.json(), { ok: true });
   assert.equal(state.rows.length, 1);
+  // consent hanya validasi UI; bocor ke Prisma = "Unknown argument `consent`".
+  assert.equal("consent" in (state.rows[0] as Record<string, unknown>), false);
 });
 
 test("AC-03: semua field wajib kosong -> 400 + error per field, tidak menyimpan", async () => {

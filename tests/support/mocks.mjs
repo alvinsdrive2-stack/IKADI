@@ -25,6 +25,12 @@ export const fakePrisma = {
       state.rows.push(row);
       return row;
     },
+    update: async ({ where, data }) => {
+      const r = state.rows.find((x) => x.id === where.id);
+      if (!r) return Promise.reject(Object.assign(new Error("Record not found"), { code: "P2025" }));
+      Object.assign(r, data);
+      return r;
+    },
   },
 };
 

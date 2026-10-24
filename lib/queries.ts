@@ -88,6 +88,12 @@ export async function getParticipant(id: bigint) {
   return { ...r, id: String(r.id), birthDate: r.birthDate.toISOString().slice(0, 10) };
 }
 
+/** Path relatif pas foto (mis. "uploads/participants/12.jpg") atau null. */
+export async function getParticipantPhotoPath(id: bigint) {
+  const r = await prisma.participant.findUnique({ where: { id }, select: { photoPath: true } });
+  return r?.photoPath ?? null;
+}
+
 export async function getStats() {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);

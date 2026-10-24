@@ -12,6 +12,11 @@ enum OriginType {
   PD
 }
 
+enum Gender {
+  LAKI_LAKI
+  PEREMPUAN
+}
+
 enum SermonExperience {
   SERING
   KADANG_KADANG
@@ -33,6 +38,7 @@ model Participant {
   nik                     String           @unique(map: "uq_participants_nik") @db.VarChar(16)
   birthPlace              String           @map("birth_place") @db.VarChar(120)
   birthDate               DateTime         @map("birth_date") @db.Date
+  gender                  Gender?          @map("gender")
   address                 String           @db.Text
   whatsapp                String           @db.VarChar(20)
   lastEducation           String?          @map("last_education") @db.VarChar(100)
@@ -44,6 +50,7 @@ model Participant {
   quranReading            QuranReading     @map("quran_reading")
   trainingReason          String           @map("training_reason") @db.Text
   trainingExpectation     String           @map("training_expectation") @db.Text
+  photoPath               String?          @map("photo_path") @db.VarChar(255)
   createdAt               DateTime         @default(now()) @map("created_at")
   updatedAt               DateTime         @default(now()) @updatedAt @map("updated_at")
 

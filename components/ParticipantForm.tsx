@@ -4,15 +4,20 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { participantSchema, type ParticipantInput } from "@/lib/schema";
+import { participantSchema, PHOTO_MAX_BYTES, type ParticipantInput } from "@/lib/schema";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
-import { Checkbox, Input, RadioGroup, Select, Textarea } from "@/components/Field";
+import { Checkbox, Field, Input, RadioGroup, Select, Textarea, controlClass, controlState } from "@/components/Field";
 import { EDUCATION_OPTIONS } from "@/components/constants";
 
 const ORIGIN_OPTIONS = [
   { value: "PW", label: "PW (Provinsi)" },
   { value: "PD", label: "PD (Kabupaten/Kota)" },
+];
+
+const GENDER_OPTIONS = [
+  { value: "LAKI_LAKI", label: "Laki-laki" },
+  { value: "PEREMPUAN", label: "Perempuan" },
 ];
 
 const SERMON_OPTIONS = [
@@ -35,6 +40,8 @@ const EMPTY = {
   nik: "",
   birthPlace: "",
   birthDate: "",
+  gender: "",
+  photo: "",
   address: "",
   whatsapp: "",
   lastEducation: "",
@@ -62,6 +69,8 @@ const FIELD_LABELS: Record<FieldKey, string> = {
   nik: "Nomor NIK KTP",
   birthPlace: "Tempat Lahir",
   birthDate: "Tanggal Lahir",
+  gender: "Jenis Kelamin",
+  photo: "Pas Foto",
   address: "Alamat",
   whatsapp: "No. WhatsApp",
   lastEducation: "Pendidikan Terakhir",
@@ -104,6 +113,29 @@ export function ParticipantForm() {
   const sermon = useWatch({ control, name: "sermonExperience" });
   const quran = useWatch({ control, name: "quranReading" });
   const consent = useWatch({ control, name: "consent" });
+  const gender = useWatch({ control, name: "gender" });
+
+  // ponytail: baca file via FileReader (base64) — form sudah JSON; upgrade ke FormData + route terpisah kalau butuh >1 MB.
+  const onPhotoChange = useCallback(
+    (file: File | undefined) => {
+      if (!file) {
+        setValue("photo", "", { shouldValidate: true });
+        return;
+      }
+      if (file.size > PHOTO_MAX_BYTES) {
+        setError("photo", { type: "manual", message: "Ukuran pas foto maksimal 1 MB" });
+        setValue("photo", "", { shouldValidate: false });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () =>
+        setValue("photo", String(reader.result), { shouldValidate: true });
+      reader.onerror = () =>
+        setError("photo", { type: "manual", message: "Pas foto gagal dibaca. Coba pilih file lain." });
+      reader.readAsDataURL(file);
+    },
+    [setError, setValue],
+  );
 
   useEffect(() => {
     if (sermon && sermon !== "LAINNYA") setValue("sermonExperienceOther", "");
@@ -232,6 +264,18 @@ export function ParticipantForm() {
       </Section>
 
       <Section n={2} title="Data Pribadi">
+        <RadioGroup
+          label="Jenis Kelamin"
+          required
+          name="gender"
+          columns={2}
+          options={GENDER_OPTIONS}
+          value={gender ?? ""}
+          onChange={(v) =>
+            setValue("gender", v as ParticipantInput["gender"], { shouldValidate: true })
+          }
+          error={opt("gender")}
+        />
         <div className="grid gap-6 md:grid-cols-2">
           <Input
             id="birthPlace"
@@ -249,6 +293,18 @@ export function ParticipantForm() {
             {...register("birthDate")}
           />
         </div>
+        <Field id="photo" label="Pas Foto" required hint="Format JPEG, PNG, atau WebP. Maksimal 1 MB." error={opt("photo")}>
+          <input
+            id="photo"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            aria-required
+            aria-invalid={errors.photo ? true : undefined}
+            aria-describedby="photo-hint photo-error"
+            onChange={(e) => onPhotoChange(e.target.files?.[0])}
+            className={`h-11 ${controlClass} file:mr-3 file:h-full file:border-0 file:bg-surface file:px-3 file:text-base file:text-ink ${controlState(opt("photo"))}`}
+          />
+        </Field>
         <Textarea
           id="address"
           label="Alamat"

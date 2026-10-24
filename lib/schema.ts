@@ -42,6 +42,15 @@ const optionalText = (max: number, label: string) =>
     z.string().max(max, `${label} maksimal ${max} karakter`).optional(),
   );
 
+/** Pas foto: base64 dari <input type=file>, maks 1 MB. Ekstensi divalidasi dari magic bytes server. */
+export const PHOTO_MAX_BYTES = 1024 * 1024;
+
+const photoSchema = z
+  .string({ error: "Pas foto wajib diunggah" })
+  .refine((s) => /^data:image\/(jpeg|png|webp);base64,/.test(s), "Pas foto harus JPEG, PNG, atau WebP")
+  .refine((s) => s.length * 0.75 <= PHOTO_MAX_BYTES, "Ukuran pas foto maksimal 1 MB")
+  .transform((s) => s.slice(s.indexOf(",") + 1));
+
 const todayIso = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -65,6 +74,8 @@ export const participantSchema = z
     nik: nikSchema,
     birthPlace: requiredText("Tempat lahir", 120),
     birthDate: birthDateSchema,
+    gender: z.enum(["LAKI_LAKI", "PEREMPUAN"], { error: "Jenis kelamin wajib dipilih" }),
+    photo: photoSchema,
     address: requiredText("Alamat", 5000),
     whatsapp: whatsappSchema,
     lastEducation: optionalText(100, "Pendidikan terakhir"),

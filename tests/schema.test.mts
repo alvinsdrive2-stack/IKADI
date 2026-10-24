@@ -13,6 +13,8 @@ const base = {
   nik: "3576014241026002",
   birthPlace: "Surabaya",
   birthDate: "1980-05-17",
+  gender: "LAKI_LAKI",
+  photo: "data:image/png;base64," + Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a]).toString("base64"),
   address: "Jl. Raya No. 1",
   whatsapp: "085987654321",
   occupation: "Guru",

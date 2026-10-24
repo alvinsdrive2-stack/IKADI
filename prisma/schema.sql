@@ -14,6 +14,7 @@ CREATE TABLE `participants` (
     `nik` VARCHAR(16) NOT NULL,
     `birth_place` VARCHAR(120) NOT NULL,
     `birth_date` DATE NOT NULL,
+    `gender` ENUM('LAKI_LAKI', 'PEREMPUAN') NULL,
     `address` TEXT NOT NULL,
     `whatsapp` VARCHAR(20) NOT NULL,
     `last_education` VARCHAR(100) NULL,
@@ -25,6 +26,7 @@ CREATE TABLE `participants` (
     `quran_reading` ENUM('TAJWID_BAIK', 'BIASA', 'TIDAK_LANCAR') NOT NULL,
     `training_reason` TEXT NOT NULL,
     `training_expectation` TEXT NOT NULL,
+    `photo_path` VARCHAR(255) NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
 

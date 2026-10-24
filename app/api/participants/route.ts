@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { participantSchema } from "@/lib/schema";
+import { saveParticipantPhoto } from "@/lib/photo";
 import { rateLimit } from "@/lib/rate-limit";
 import { clientIp, jsonError } from "@/lib/http";
 
@@ -41,24 +42,11 @@ export async function POST(request: Request) {
   }
 
   const d = parsed.data;
+  const { photo, gender, ...rest } = d;
   const data: Prisma.ParticipantCreateInput = {
-    originType: d.originType,
-    originName: d.originName,
-    fullName: d.fullName,
-    nik: d.nik,
-    birthPlace: d.birthPlace,
-    birthDate: new Date(`${d.birthDate}T00:00:00Z`),
-    address: d.address,
-    whatsapp: d.whatsapp,
-    lastEducation: d.lastEducation,
-    occupation: d.occupation,
-    expertise: d.expertise,
-    sermonExperience: d.sermonExperience,
-    sermonExperienceOther: d.sermonExperienceOther,
-    organizationExperience: d.organizationExperience,
-    quranReading: d.quranReading,
-    trainingReason: d.trainingReason,
-    trainingExpectation: d.trainingExpectation,
+    ...rest,
+    gender,
+    birthDate: new Date(`${rest.birthDate}T00:00:00Z`),
   };
 
   try {
@@ -66,7 +54,13 @@ export async function POST(request: Request) {
     const existing = await prisma.participant.findUnique({ where: { nik: d.nik }, select: { id: true } });
     if (existing) return Response.json(NIK_DUPLICATE, { status: 409 });
 
-    await prisma.participant.create({ data });
+    const created = await prisma.participant.create({ data });
+    try {
+      const photoPath = await saveParticipantPhoto(photo, String(created.id));
+      await prisma.participant.update({ where: { id: created.id }, data: { photoPath } });
+    } catch {
+      // Foto gagal ditulis: data peserta tetap tersimpan, foto bisa diunggah ulang nanti.
+    }
     return Response.json({ ok: true }, { status: 201 });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {

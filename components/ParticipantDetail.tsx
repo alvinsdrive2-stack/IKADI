@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { OriginBadge } from "@/components/Badge";
 import { SessionExpired } from "@/components/AdminNav";
-import { QURAN_LABELS, SERMON_LABELS, formatDate, formatDateTime } from "@/components/constants";
+import { GENDER_LABELS, QURAN_LABELS, SERMON_LABELS, formatDate, formatDateTime } from "@/components/constants";
 
 type Detail = {
   id: string;
@@ -15,6 +15,8 @@ type Detail = {
   nik: string;
   birthPlace: string;
   birthDate: string;
+  gender: string;
+  photoPath: string | null;
   address: string;
   whatsapp: string;
   lastEducation: string | null;
@@ -160,6 +162,9 @@ export function ParticipantDetail({ id }: { id: string }) {
       </Group>
 
       <Group title="Data pribadi">
+        <Item label="Jenis kelamin">
+          {GENDER_LABELS[d.gender] ?? d.gender}
+        </Item>
         <Item label="Tempat, tanggal lahir">
           {d.birthPlace}, {formatDate(d.birthDate)}
         </Item>
@@ -205,6 +210,22 @@ export function ParticipantDetail({ id }: { id: string }) {
         <Item label="Harapan setelah pelatihan" span={2}>
           {d.trainingExpectation}
         </Item>
+      </Group>
+
+      <Group title="Pas Foto">
+        {d.photoPath ? (
+          // eslint-disable-next-line @next/next/no-img-element -- file di-upload user, <Image> butuh remotePatterns config
+          <img
+            src={`/${d.photoPath}`}
+            alt={`Pas foto ${d.fullName}`}
+            width={320}
+            height={400}
+            loading="lazy"
+            className="max-w-40 rounded-lg border border-border"
+          />
+        ) : (
+          <p className="text-sm text-ink-muted">Pas foto belum diunggah.</p>
+        )}
       </Group>
     </div>
   );

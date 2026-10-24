@@ -22,6 +22,11 @@ export const QURAN_LABELS: Record<string, string> = {
   TIDAK_LANCAR: "Tidak Lancar",
 };
 
+export const GENDER_LABELS: Record<string, string> = {
+  LAKI_LAKI: "Laki-laki",
+  PEREMPUAN: "Perempuan",
+};
+
 export const formatDate = (iso: string) => {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;

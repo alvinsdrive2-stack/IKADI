@@ -52,3 +52,6 @@ next-env.d.ts
 # data dump (berisi PII — jangan di-commit)
 *.dump
 *.dump.sql
+
+# pas foto peserta (PII — simpan di server, jangan di-commit)
+/public/uploads

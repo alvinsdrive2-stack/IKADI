@@ -36,11 +36,15 @@ export async function extractKtp(buf: Buffer, filename = "ktp.jpg"): Promise<Ocr
       body: form,
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-  } catch {
+  } catch (err) {
+    // Timeout/fetch gagal — log penyebabnya biar 503 di client gak jadi misteri.
+    console.error("[ocr] fetch ke service gagal:", err);
     throw new OcrUnavailableError("OCR service tidak terjangkau");
   }
 
   if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    console.error(`[ocr] service error ${res.status}: ${detail.slice(0, 500)}`);
     throw new OcrUnavailableError(`OCR service error: ${res.status}`);
   }
 

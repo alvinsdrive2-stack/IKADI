@@ -28,7 +28,10 @@ def get_engine():
             if _engine is None:
                 from paddleocr import PaddleOCR
 
-                _engine = PaddleOCR(lang="id")
+                # enable_mkldnn=False: graph executor OneDNN di paddlepaddle
+                # 3.x melempar "ConvertPirAttribute2RuntimeAttribute not
+                # support" di sebagian CPU — jalankan tanpa MKLDNN.
+                _engine = PaddleOCR(lang="id", enable_mkldnn=False)
     return _engine
 
 

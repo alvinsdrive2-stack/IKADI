@@ -28,10 +28,21 @@ def get_engine():
             if _engine is None:
                 from paddleocr import PaddleOCR
 
-                # enable_mkldnn=False: graph executor OneDNN di paddlepaddle
-                # 3.x melempar "ConvertPirAttribute2RuntimeAttribute not
-                # support" di sebagian CPU — jalankan tanpa MKLDNN.
-                _engine = PaddleOCR(lang="id", enable_mkldnn=False)
+                # Mobile det+rec: jauh lebih cepat dari default server di CPU
+                # (target < 5 detik per KTP). enable_mkldnn=False: graph
+                # executor OneDNN paddlepaddle 3.x melempar
+                # "ConvertPirAttribute2RuntimeAttribute not support" di
+                # sebagian CPU — jalankan tanpa MKLDNN.
+                # text_det_limit: downscale sisi panjang ke 1280 sebelum deteksi.
+                _engine = PaddleOCR(
+                    lang="id",
+                    text_detection_model_name="PP-OCRv5_mobile_det",
+                    text_recognition_model_name="PP-OCRv5_mobile_rec",
+                    text_det_limit_side_len=1280,
+                    text_det_limit_type="max",
+                    cpu_threads=8,
+                    enable_mkldnn=False,
+                )
     return _engine
 
 

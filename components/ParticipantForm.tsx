@@ -251,6 +251,35 @@ export function ParticipantForm() {
     [setError, setValue],
   );
 
+  /**
+   * Turunkan resolusi foto untuk OCR: inference CPU jauh lebih cepat
+   * (target < 5 detik) dan bacaan teks tetap akurat. Kalau browser gak
+   * support createImageBitmap atau hasilnya malah lebih besar, pakai file asli.
+   */
+  const downscaleForOcr = useCallback(async (file: File, maxSide = 1500): Promise<Blob> => {
+    try {
+      if (typeof createImageBitmap !== "function") return file;
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        bitmap.close();
+        return file;
+      }
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/jpeg", 0.85),
+      );
+      return blob && blob.size < file.size ? blob : file;
+    } catch {
+      return file;
+    }
+  }, []);
+
   /** Upload KTP: base64 disimpan ke form dulu (submit tetap jalan tanpa OCR), lalu OCR autofill. */
   const onKtpChange = useCallback(
     (file: File | undefined) => {
@@ -276,10 +305,11 @@ export function ParticipantForm() {
       // OCR terpisah dari pembacaan base64 — kegagalan OCR tidak membatalkan isi form.
       setOcrLoading(true);
       setOcrError(null);
-      const form = new FormData();
-      form.append("file", file);
       (async () => {
         try {
+          const ocrBlob = await downscaleForOcr(file);
+          const form = new FormData();
+          form.append("file", ocrBlob, file.name || "ktp.jpg");
           const res = await fetch("/api/participants/ocr", { method: "POST", body: form });
           const body = await res.json().catch(() => null);
           if (res.ok && body?.ok) {
@@ -298,7 +328,7 @@ export function ParticipantForm() {
         }
       })();
     },
-    [applyOcr, setError, setValue],
+    [applyOcr, downscaleForOcr, setError, setValue],
   );
 
   useEffect(() => {

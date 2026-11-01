@@ -25,7 +25,8 @@ def _find_label(lines, label):
     for i, (_bbox, text, score) in enumerate(lines):
         t = _clean(text).upper()
         if t.startswith(prefix):
-            value = _clean(t[len(prefix):])
+            # Label kadang diikuti titik-titik ("Pekerjaan .. : X") sebelum nilai.
+            value = _clean(t[len(prefix):]).lstrip(".:- ")
             if value:
                 return i, value, score
     return None
@@ -63,7 +64,7 @@ def parse_ktp(lines):
     hit = _find_label(lines, "tempat/tgl lahir") or _find_label(lines, "tempat tgl lahir")
     if hit:
         _, v, s = hit
-        m = re.match(r"([A-Z .'\-]+?),?\s*(\d{2})[- ](\d{2})[- ](\d{4})", v)
+        m = re.match(r"([A-Z .'\-]+?),?\s*(\d{2})[- ./](\d{2})[- ./](\d{4})", v)
         if m:
             place, dd, mm, yy = m.group(1).strip(" ,"), m.group(2), m.group(3), m.group(4)
             out["birthPlace"] = {"value": place.title(), "confidence": float(s)}

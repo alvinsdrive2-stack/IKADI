@@ -111,3 +111,49 @@ def test_provinsi_fallback_tanpa_header():
 def test_kota_fallback_di_baris_mana_pun():
     out = parse_ktp([line("x", 0.9), line("KOTA SURABAYA", 0.87)])
     assert out["city"]["value"] == "Surabaya"
+
+
+# Kartu KTP fisik asli (foto, guilloche) — bacaan ideal dari kartu Surabaya.
+KTP_FISIK = [
+    line("PROVINSI JAWA TIMUR", 0.9),
+    line("KOTA SURABAYA", 0.9),
+    line("NIK : 3578010603040003", 0.85),
+    line("Nama : ANANDA ALVIANSYAH PUTRA P.", 0.8),
+    line("Tempat/Tgl Lahir : SURABAYA, 06-03-2004", 0.8),
+    line("Jenis kelamin : LAKI-LAKI Gol. Darah : B", 0.8),
+    line("Alamat : KEBRAON TEGAL NO. 22", 0.8),
+    line("RT/RW : 002/001", 0.8),
+    line("Kel/Desa : KEBRAON", 0.8),
+    line("Kecamatan : KARANG PILANG", 0.8),
+    line("Agama : KATHOLIK", 0.8),
+    line("Status Perkawinan: BELUM KAWIN", 0.8),
+    line("Pekerjaan .. : BELUM/TIDAK BEKERJA", 0.8),
+    line("Kewarganegaraan: WNI", 0.8),
+    line("Berlaku Hingga : SEUMUR HIDUP", 0.8),
+]
+
+
+def test_ktp_fisik_surabaya():
+    out = parse_ktp(KTP_FISIK)
+    assert out["nik"]["value"] == "3578010603040003"
+    assert out["fullName"]["value"] == "Ananda Alviansyah Putra P."
+    assert out["birthPlace"]["value"] == "Surabaya"
+    assert out["birthDate"]["value"] == "2004-03-06"
+    assert out["gender"]["value"] == "LAKI_LAKI"
+    assert out["addressKtp"]["value"] is not None
+    assert "Kebraon" in out["addressKtp"]["value"]
+    assert out["province"]["value"] == "Jawa Timur"
+    assert out["city"]["value"] == "Surabaya"
+    assert out["religion"]["value"] == "Katholik"
+    assert out["maritalStatus"]["value"] == "BELUM_MENIKAH"
+    assert out["occupation"]["value"] == "Belum/Tidak Bekerja"
+
+
+def test_pekerjaan_dengan_titik_titik():
+    out = parse_ktp([line("Pekerjaan .. : GURU", 0.9)])
+    assert out["occupation"]["value"] == "Guru"
+
+
+def test_tanggal_pemisah_titik():
+    out = parse_ktp([line("Tempat/Tgl Lahir : SURABAYA, 06.03.2004", 0.9)])
+    assert out["birthDate"]["value"] == "2004-03-06"

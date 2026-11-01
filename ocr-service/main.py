@@ -1,4 +1,6 @@
 """FastAPI wrapper PaddleOCR untuk KTP. Jalan lokal saja: uvicorn main:app --host 127.0.0.1 --port 8001"""
+import os
+import sys
 import threading
 import time
 
@@ -12,6 +14,9 @@ app = FastAPI(title="OCR KTP IKADI")
 
 MAX_BYTES = 10 * 1024 * 1024
 THRESHOLD = 0.85
+# OCR_DEBUG=1 -> tiap /extract mencetak baris mentah hasil OCR (teks + score)
+# ke log service, buat tuning parser dari bacaan asli.
+DEBUG = os.environ.get("OCR_DEBUG") == "1"
 
 _engine = None
 # PaddleX di balik PaddleOCR 3.x menolak inisialisasi ulang ("PDX has already
@@ -87,6 +92,10 @@ async def extract(file: UploadFile = File(...)):
             else:
                 bbox, (text, score) = item[0], item[1]
                 lines.append((bbox, text, float(score)))
+
+    if DEBUG:
+        for _b, text, score in lines:
+            print(f"[ocr-debug] {score:.2f} {text}", file=sys.stderr, flush=True)
 
     fields = parse_ktp(lines)
     return {

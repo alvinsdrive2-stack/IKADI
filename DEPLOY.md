@@ -159,6 +159,13 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
 
+OpenCV (di dalam PaddleOCR) butuh library sistem ini — tanpa itu `/extract`
+gagal dengan `libGL.so.1: cannot open shared object file`:
+
+```bash
+sudo apt install -y libgl1 libglib2.0-0
+```
+
 Buat folder penyimpanan foto KTP (di luar `public/`, tidak pernah statis):
 
 ```bash

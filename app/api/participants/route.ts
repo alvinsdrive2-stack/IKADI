@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isUniqueViolation, logRouteError } from "@/lib/route-log";
 import { participantSchema } from "@/lib/schema";
-import { saveParticipantPhoto } from "@/lib/photo";
+import { saveParticipantPhoto, saveParticipantKtp } from "@/lib/photo";
 import { rateLimit } from "@/lib/rate-limit";
 import { clientIp, jsonError } from "@/lib/http";
 
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
 
   const d = parsed.data;
   // consent cuma validasi UI — bukan kolom di tabel participants.
-  const { photo, gender, consent: _consent, ...rest } = d;
+  const { photo, ktp, gender, consent: _consent, ...rest } = d;
   const data: Prisma.ParticipantCreateInput = {
     ...rest,
     gender,
@@ -63,6 +63,14 @@ export async function POST(request: Request) {
         await prisma.participant.update({ where: { id: created.id }, data: { photoPath } });
       } catch {
         // Foto gagal ditulis: data peserta tetap tersimpan, foto bisa diunggah ulang nanti.
+      }
+    }
+    if (ktp) {
+      try {
+        const ktpPath = await saveParticipantKtp(ktp, String(created.id));
+        await prisma.participant.update({ where: { id: created.id }, data: { ktpPath } });
+      } catch {
+        // KTP gagal ditulis: data peserta tetap tersimpan, KTP bisa diunggah ulang nanti.
       }
     }
     return Response.json({ ok: true }, { status: 201 });

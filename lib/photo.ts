@@ -4,6 +4,12 @@ import path from "node:path";
 /** Direktori penyimpanan pas foto. Di-serve statis oleh `public/`. */
 export const PHOTO_DIR = path.join(process.cwd(), "public", "uploads", "participants");
 
+/**
+ * Foto KTP menyimpan NIK & alamat — tidak boleh di `public/`.
+ * Hanya di-serve lewat route admin yang butuh session.
+ */
+export const KTP_DIR = path.join(process.cwd(), "storage", "ktp");
+
 const EXT_BY_MAGIC: { magic: number[]; ext: string }[] = [
   { magic: [0xff, 0xd8, 0xff], ext: "jpg" }, // JPEG
   { magic: [0x89, 0x50, 0x4e, 0x47], ext: "png" }, // PNG
@@ -39,4 +45,26 @@ export async function saveParticipantPhoto(photo: string, participantId: string)
 export async function deleteParticipantPhoto(relPath: string): Promise<void> {
   if (!/^uploads\/participants\/\d+\.(jpg|png|webp)$/.test(relPath)) return;
   await rm(path.join(process.cwd(), "public", relPath), { force: true });
+}
+
+/**
+ * Simpan foto KTP sebagai `storage/ktp/<id>.<ext>` (di luar `public/`).
+ * Sama seperti pas foto: magic bytes dicek, id jadi nama file.
+ * Mengembalikan path relatif untuk kolom `ktp_path`.
+ */
+export async function saveParticipantKtp(ktp: string, participantId: string): Promise<string> {
+  const base64 = ktp.includes(",") ? ktp.slice(ktp.indexOf(",") + 1) : ktp;
+  const buf = Buffer.from(base64, "base64");
+  const ext = detectImageExt(buf);
+  if (!ext) throw new Error("KTP_INVALID");
+  await mkdir(KTP_DIR, { recursive: true });
+  const rel = `ktp/${participantId}.${ext}`;
+  await writeFile(path.join(KTP_DIR, `${participantId}.${ext}`), buf);
+  return rel;
+}
+
+/** Hapus foto KTP. Path sudah divalidasi saat ditulis; basename mencegah traversal. */
+export async function deleteParticipantKtp(relPath: string): Promise<void> {
+  if (!/^ktp\/\d+\.(jpg|png|webp)$/.test(relPath)) return;
+  await rm(path.join(KTP_DIR, path.basename(relPath)), { force: true });
 }

@@ -4,11 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { participantSchema, PHOTO_MAX_BYTES, type ParticipantInput } from "@/lib/schema";
+import { participantSchema, PHOTO_MAX_BYTES, KTP_MAX_BYTES, type ParticipantInput } from "@/lib/schema";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { Checkbox, Field, Input, RadioGroup, Select, Textarea, controlClass, controlState } from "@/components/Field";
-import { EDUCATION_OPTIONS } from "@/components/constants";
+import { EDUCATION_OPTIONS, MARITAL_OPTIONS, BLOOD_OPTIONS } from "@/components/constants";
 
 const ORIGIN_OPTIONS = [
   { value: "PW", label: "PW (Provinsi)" },
@@ -41,10 +41,19 @@ const EMPTY = {
   birthPlace: "",
   birthDate: "",
   gender: "",
+  maritalStatus: "",
+  bloodType: "",
   photo: "",
+  ktp: "",
+  addressKtp: "",
+  addressCurrent: "",
+  addressSameAsKtp: true,
+  province: "",
+  city: "",
   address: "",
   whatsapp: "",
   lastEducation: "",
+  studyField: "",
   occupation: "",
   expertise: "",
   sermonExperience: "",
@@ -67,13 +76,22 @@ const FIELD_LABELS: Record<FieldKey, string> = {
   originName: "Nama PW/PD IKADI",
   fullName: "Nama Lengkap & Gelar",
   nik: "Nomor NIK KTP",
+  gender: "Jenis Kelamin",
+  maritalStatus: "Status Pernikahan",
+  bloodType: "Golongan Darah",
   birthPlace: "Tempat Lahir",
   birthDate: "Tanggal Lahir",
-  gender: "Jenis Kelamin",
   photo: "Pas Foto",
+  ktp: "Foto KTP",
+  addressKtp: "Alamat sesuai KTP",
+  addressCurrent: "Alamat Tinggal Saat Ini",
+  addressSameAsKtp: "Alamat Tinggal Sama dengan KTP",
+  province: "Provinsi",
+  city: "Kabupaten/Kota",
   address: "Alamat",
   whatsapp: "No. WhatsApp",
   lastEducation: "Pendidikan Terakhir",
+  studyField: "Bidang Studi",
   occupation: "Pekerjaan",
   expertise: "Bidang Keahlian",
   sermonExperience: "Pengalaman Khutbah",
@@ -85,6 +103,36 @@ const FIELD_LABELS: Record<FieldKey, string> = {
   consent: "Persetujuan",
 };
 
+/** Field OCR -> field form. religion diabaikan (tidak ada kolomnya di DB). */
+const OCR_TO_FORM: Partial<Record<string, FieldKey>> = {
+  nik: "nik",
+  fullName: "fullName",
+  birthPlace: "birthPlace",
+  birthDate: "birthDate",
+  gender: "gender",
+  addressKtp: "addressKtp",
+  province: "province",
+  city: "city",
+  maritalStatus: "maritalStatus",
+  occupation: "occupation",
+};
+
+/** Urutan id DOM untuk scroll ke field low-confidence pertama. */
+const OCR_FIELD_ORDER: FieldKey[] = [
+  "nik",
+  "fullName",
+  "birthPlace",
+  "birthDate",
+  "gender",
+  "maritalStatus",
+  "addressKtp",
+  "province",
+  "city",
+  "occupation",
+];
+
+type OcrFields = Record<string, { value: string | null; confidence: number }>;
+
 export function ParticipantForm() {
   const router = useRouter();
   // ref callback -> fokus tanpa akses ref di render (aturan react-hooks/refs)
@@ -94,6 +142,10 @@ export function ParticipantForm() {
   );
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [summary, setSummary] = useState<{ field: FieldKey; message: string }[]>([]);
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrError, setOcrError] = useState<string | null>(null);
+  const [ocrConfidence, setOcrConfidence] = useState<Partial<Record<FieldKey, number>>>({});
+  const [ocrThreshold, setOcrThreshold] = useState<number | null>(null);
 
   const {
     register,
@@ -114,6 +166,68 @@ export function ParticipantForm() {
   const quran = useWatch({ control, name: "quranReading" });
   const consent = useWatch({ control, name: "consent" });
   const gender = useWatch({ control, name: "gender" });
+  const maritalStatus = useWatch({ control, name: "maritalStatus" });
+  const sameAsKtp = useWatch({ control, name: "addressSameAsKtp" }) ?? true;
+  const addressKtp = useWatch({ control, name: "addressKtp" });
+
+  /** Confidence hanya ditandai bila di bawah threshold dari service. */
+  const low = (k: FieldKey) => {
+    const c = ocrConfidence[k];
+    return c !== undefined && ocrThreshold !== null && c < ocrThreshold ? c : undefined;
+  };
+
+  /** Edit manual -> penanda OCR low-confidence field itu dihapus. */
+  const clearOcr = useCallback((k: FieldKey) => {
+    setOcrConfidence((prev) => {
+      if (!(k in prev)) return prev;
+      const next = { ...prev };
+      delete next[k];
+      return next;
+    });
+  }, []);
+
+  /** register + auto-hapus penanda OCR saat field diedit. */
+  const reg = useCallback(
+    (k: FieldKey) => {
+      const props = register(k);
+      return {
+        ...props,
+        onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+          props.onChange(e);
+          clearOcr(k);
+        },
+      };
+    },
+    // register stabil di RHF; clearOcr stabil via useCallback.
+    [register, clearOcr],
+  );
+
+  const applyOcr = useCallback(
+    (fields: OcrFields, threshold: number) => {
+      const conf: Partial<Record<FieldKey, number>> = {};
+      for (const [ocrKey, fieldKey] of Object.entries(OCR_TO_FORM)) {
+        const f = fields[ocrKey];
+        if (!fieldKey || !f) continue;
+        conf[fieldKey] = f.confidence;
+        if (f.value !== null) {
+          setValue(fieldKey, f.value as never, { shouldValidate: true });
+        }
+      }
+      setOcrConfidence(conf);
+      setOcrThreshold(threshold);
+
+      // Scroll + fokus ke field low-confidence pertama (UX: langsung ke yang perlu dicek).
+      const first = OCR_FIELD_ORDER.find((k) => conf[k] !== undefined && conf[k]! < threshold);
+      if (first) {
+        requestAnimationFrame(() => {
+          const el = document.getElementById(first);
+          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+          (el as HTMLElement | null)?.focus({ preventScroll: true });
+        });
+      }
+    },
+    [setValue],
+  );
 
   // ponytail: baca file via FileReader (base64) — form sudah JSON; upgrade ke FormData + route terpisah kalau butuh >1 MB.
   const onPhotoChange = useCallback(
@@ -137,9 +251,64 @@ export function ParticipantForm() {
     [setError, setValue],
   );
 
+  /** Upload KTP: base64 disimpan ke form dulu (submit tetap jalan tanpa OCR), lalu OCR autofill. */
+  const onKtpChange = useCallback(
+    (file: File | undefined) => {
+      if (!file) {
+        setValue("ktp", "", { shouldValidate: true });
+        setOcrError(null);
+        setOcrConfidence({});
+        return;
+      }
+      if (file.size > KTP_MAX_BYTES) {
+        setError("ktp", { type: "manual", message: "Ukuran foto KTP maksimal 10 MB" });
+        setValue("ktp", "", { shouldValidate: false });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () =>
+        setValue("ktp", String(reader.result), { shouldValidate: true });
+      reader.onerror = () =>
+        setError("ktp", { type: "manual", message: "Foto KTP gagal dibaca. Coba pilih file lain." });
+      reader.readAsDataURL(file);
+
+      // OCR terpisah dari pembacaan base64 — kegagalan OCR tidak membatalkan isi form.
+      setOcrLoading(true);
+      setOcrError(null);
+      const form = new FormData();
+      form.append("file", file);
+      (async () => {
+        try {
+          const res = await fetch("/api/participants/ocr", { method: "POST", body: form });
+          const body = await res.json().catch(() => null);
+          if (res.ok && body?.ok) {
+            applyOcr(body.fields as OcrFields, Number(body.threshold));
+          } else if (res.status === 503 || body?.code === "OCR_UNAVAILABLE") {
+            setOcrError("Layanan OCR sedang tidak tersedia. Silakan isi data secara manual.");
+          } else if (res.status === 429) {
+            setOcrError("Terlalu banyak percobaan OCR. Tunggu beberapa menit lalu coba lagi.");
+          } else {
+            setOcrError(String(body?.message ?? "OCR gagal. Silakan isi data secara manual."));
+          }
+        } catch {
+          setOcrError("Koneksi bermasalah. Data KTP tersimpan, tapi OCR tidak jalan — isi manual.");
+        } finally {
+          setOcrLoading(false);
+        }
+      })();
+    },
+    [applyOcr, setError, setValue],
+  );
+
   useEffect(() => {
     if (sermon && sermon !== "LAINNYA") setValue("sermonExperienceOther", "");
   }, [sermon, setValue]);
+
+  // Dicentang "sesuai KTP" -> alamat tinggal selalu ikut alamat KTP (disabled).
+  useEffect(() => {
+    if (sameAsKtp) setValue("addressCurrent", addressKtp ?? "");
+  }, [sameAsKtp, addressKtp, setValue]);
 
   const isOther = sermon === "LAINNYA";
 
@@ -248,7 +417,8 @@ export function ParticipantForm() {
           required
           autoComplete="name"
           error={opt("fullName")}
-          {...register("fullName")}
+          ocrLow={low("fullName")}
+          {...reg("fullName")}
         />
         <Input
           id="nik"
@@ -259,60 +429,166 @@ export function ParticipantForm() {
           maxLength={17}
           hint="16 digit angka sesuai KTP, tanpa spasi."
           error={opt("nik")}
-          {...register("nik")}
+          ocrLow={low("nik")}
+          {...reg("nik")}
         />
       </Section>
 
-      <Section n={2} title="Data Pribadi">
-        <RadioGroup
-          label="Jenis Kelamin"
-          required
-          name="gender"
-          columns={2}
-          options={GENDER_OPTIONS}
-          value={gender ?? ""}
-          onChange={(v) =>
-            setValue("gender", v as ParticipantInput["gender"], { shouldValidate: true })
-          }
-          error={opt("gender")}
-        />
+      <Section n={2} title="Dokumen KTP">
+        <Field
+          id="ktp"
+          label="Foto KTP"
+          hint="Opsional. Format JPEG, PNG, atau WebP. Maksimal 10 MB. Jika diunggah, data terisi otomatis dari hasil pembacaan KTP."
+          error={opt("ktp")}
+        >
+          <input
+            id="ktp"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            aria-invalid={errors.ktp ? true : undefined}
+            aria-describedby="ktp-hint ktp-error"
+            onChange={(e) => onKtpChange(e.target.files?.[0])}
+            className={`h-11 ${controlClass} file:mr-3 file:h-full file:border-0 file:bg-surface file:px-3 file:text-base file:text-ink ${controlState(opt("ktp"))}`}
+          />
+        </Field>
+        {ocrLoading && (
+          <p role="status" className="text-sm text-ink-muted">
+            Sedang membaca KTP...
+          </p>
+        )}
+        {ocrError && (
+          <div ref={focusOnMount} tabIndex={-1}>
+            <Alert tone="error">{ocrError}</Alert>
+          </div>
+        )}
+      </Section>
+
+      <Section n={3} title="Data Pribadi">
+        <div id="gender">
+          <RadioGroup
+            label="Jenis Kelamin"
+            required
+            name="gender"
+            columns={2}
+            options={GENDER_OPTIONS}
+            value={gender ?? ""}
+            onChange={(v) => {
+              setValue("gender", v as ParticipantInput["gender"], { shouldValidate: true });
+              clearOcr("gender");
+            }}
+            error={opt("gender")}
+            ocrLow={low("gender")}
+          />
+        </div>
+        <div id="maritalStatus">
+          <RadioGroup
+            label="Status Pernikahan"
+            required
+            name="maritalStatus"
+            columns={2}
+            options={MARITAL_OPTIONS}
+            value={maritalStatus ?? ""}
+            onChange={(v) => {
+              setValue("maritalStatus", v as ParticipantInput["maritalStatus"], { shouldValidate: true });
+              clearOcr("maritalStatus");
+            }}
+            error={opt("maritalStatus")}
+            ocrLow={low("maritalStatus")}
+          />
+        </div>
         <div className="grid gap-6 md:grid-cols-2">
+          <Select
+            id="bloodType"
+            label="Golongan Darah"
+            required
+            options={[
+              { value: "", label: "Pilih golongan darah", disabled: true },
+              ...BLOOD_OPTIONS,
+            ]}
+            error={opt("bloodType")}
+            {...reg("bloodType")}
+          />
           <Input
             id="birthPlace"
             label="Tempat Lahir"
             required
             error={opt("birthPlace")}
-            {...register("birthPlace")}
+            ocrLow={low("birthPlace")}
+            {...reg("birthPlace")}
           />
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
           <Input
             id="birthDate"
             label="Tanggal Lahir"
             required
             type="date"
             error={opt("birthDate")}
-            {...register("birthDate")}
+            ocrLow={low("birthDate")}
+            {...reg("birthDate")}
           />
+          <Field id="photo" label="Pas Foto" hint="Opsional. Format JPEG, PNG, atau WebP. Maksimal 1 MB." error={opt("photo")}>
+            <input
+              id="photo"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              aria-invalid={errors.photo ? true : undefined}
+              aria-describedby="photo-hint photo-error"
+              onChange={(e) => onPhotoChange(e.target.files?.[0])}
+              className={`h-11 ${controlClass} file:mr-3 file:h-full file:border-0 file:bg-surface file:px-3 file:text-base file:text-ink ${controlState(opt("photo"))}`}
+            />
+          </Field>
         </div>
-        <Field id="photo" label="Pas Foto" hint="Opsional. Format JPEG, PNG, atau WebP. Maksimal 1 MB." error={opt("photo")}>
-          <input
-            id="photo"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            aria-invalid={errors.photo ? true : undefined}
-            aria-describedby="photo-hint photo-error"
-            onChange={(e) => onPhotoChange(e.target.files?.[0])}
-            className={`h-11 ${controlClass} file:mr-3 file:h-full file:border-0 file:bg-surface file:px-3 file:text-base file:text-ink ${controlState(opt("photo"))}`}
-          />
-        </Field>
+      </Section>
+
+      <Section n={4} title="Alamat & Kontak">
         <Textarea
-          id="address"
-          label="Alamat"
+          id="addressKtp"
+          label="Alamat sesuai KTP"
           required
           rows={3}
-          hint="Desa/Kelurahan, Kecamatan, Kabupaten/Kota, Provinsi."
-          error={opt("address")}
-          {...register("address")}
+          hint="Salin persis dari KTP: jalan, RT/RW, kelurahan/desa, kecamatan."
+          error={opt("addressKtp")}
+          ocrLow={low("addressKtp")}
+          {...reg("addressKtp")}
         />
+        <Checkbox
+          id="addressSameAsKtp"
+          checked={sameAsKtp === true}
+          onChange={(v) =>
+            setValue("addressSameAsKtp", v as unknown as ParticipantInput["addressSameAsKtp"], {
+              shouldValidate: true,
+            })
+          }
+          label="Alamat tinggal saya saat ini sama dengan alamat KTP"
+        />
+        <Textarea
+          id="addressCurrent"
+          label="Alamat Tinggal Saat Ini"
+          rows={3}
+          hint={sameAsKtp ? "Terisi otomatis dari alamat KTP." : "Wajib diisi jika berbeda dengan alamat KTP."}
+          disabled={sameAsKtp === true}
+          error={opt("addressCurrent")}
+          {...reg("addressCurrent")}
+        />
+        <div className="grid gap-6 md:grid-cols-2">
+          <Input
+            id="province"
+            label="Provinsi"
+            required
+            error={opt("province")}
+            ocrLow={low("province")}
+            {...reg("province")}
+          />
+          <Input
+            id="city"
+            label="Kabupaten/Kota"
+            required
+            error={opt("city")}
+            ocrLow={low("city")}
+            {...reg("city")}
+          />
+        </div>
         <Input
           id="whatsapp"
           label="No. WhatsApp"
@@ -326,7 +602,7 @@ export function ParticipantForm() {
         />
       </Section>
 
-      <Section n={3} title="Latar Belakang">
+      <Section n={5} title="Latar Belakang">
         <div className="grid gap-6 md:grid-cols-2">
           <Select
             id="lastEducation"
@@ -339,23 +615,33 @@ export function ParticipantForm() {
             {...register("lastEducation")}
           />
           <Input
+            id="studyField"
+            label="Bidang Studi"
+            hint="Opsional — bidang studi akademis terakhir."
+            error={opt("studyField")}
+            {...register("studyField")}
+          />
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Input
             id="occupation"
             label="Pekerjaan"
             required
             error={opt("occupation")}
-            {...register("occupation")}
+            ocrLow={low("occupation")}
+            {...reg("occupation")}
+          />
+          <Input
+            id="expertise"
+            label="Bidang Keahlian"
+            hint="Opsional."
+            error={opt("expertise")}
+            {...register("expertise")}
           />
         </div>
-        <Input
-          id="expertise"
-          label="Bidang Keahlian"
-          hint="Opsional."
-          error={opt("expertise")}
-          {...register("expertise")}
-        />
       </Section>
 
-      <Section n={4} title="Pengalaman">
+      <Section n={6} title="Pengalaman">
         <div id="sermonExperience">
           <RadioGroup
             label="Pengalaman Khutbah"
@@ -413,7 +699,7 @@ export function ParticipantForm() {
         />
       </Section>
 
-      <Section n={5} title="Motivasi">
+      <Section n={7} title="Motivasi">
         <Textarea
           id="trainingReason"
           label="Alasan Mengikuti Pelatihan"
@@ -432,7 +718,7 @@ export function ParticipantForm() {
         />
       </Section>
 
-      <Section n={6} title="Persetujuan">
+      <Section n={8} title="Persetujuan">
         <Checkbox
           id="consent"
           checked={consent === true}

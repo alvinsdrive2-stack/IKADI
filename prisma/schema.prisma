@@ -30,6 +30,21 @@ enum QuranReading {
   TIDAK_LANCAR
 }
 
+enum MaritalStatus {
+  BELUM_MENIKAH
+  SUDAH_MENIKAH
+  CERAI_HIDUP
+  CERAI_MATI
+}
+
+enum BloodType {
+  A
+  B
+  AB
+  O
+  TIDAK_TAHU
+}
+
 model Participant {
   id                      BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
   originType              OriginType       @map("origin_type")
@@ -39,9 +54,17 @@ model Participant {
   birthPlace              String           @map("birth_place") @db.VarChar(120)
   birthDate               DateTime         @map("birth_date") @db.Date
   gender                  Gender?          @map("gender")
+  maritalStatus           MaritalStatus?   @map("marital_status")
+  bloodType               BloodType?       @map("blood_type")
   address                 String           @db.Text
+  addressKtp              String?          @map("address_ktp") @db.Text
+  addressCurrent          String?          @map("address_current") @db.Text
+  addressSameAsKtp        Boolean          @default(false) @map("address_same_as_ktp")
+  province                String?          @db.VarChar(100)
+  city                    String?          @db.VarChar(100)
   whatsapp                String           @db.VarChar(20)
   lastEducation           String?          @map("last_education") @db.VarChar(100)
+  studyField              String?          @map("study_field") @db.VarChar(150)
   occupation              String           @db.VarChar(150)
   expertise               String?          @db.Text
   sermonExperience        SermonExperience @map("sermon_experience")
@@ -51,6 +74,7 @@ model Participant {
   trainingReason          String           @map("training_reason") @db.Text
   trainingExpectation     String           @map("training_expectation") @db.Text
   photoPath               String?          @map("photo_path") @db.VarChar(255)
+  ktpPath                 String?          @map("ktp_path") @db.VarChar(255)
   createdAt               DateTime         @default(now()) @map("created_at")
   updatedAt               DateTime         @default(now()) @updatedAt @map("updated_at")
 

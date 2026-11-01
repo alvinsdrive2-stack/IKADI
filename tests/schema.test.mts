@@ -14,7 +14,13 @@ const base = {
   birthPlace: "Surabaya",
   birthDate: "1980-05-17",
   gender: "LAKI_LAKI",
+  maritalStatus: "SUDAH_MENIKAH",
+  bloodType: "O",
   photo: "data:image/png;base64," + Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a]).toString("base64"),
+  addressKtp: "Jl. Raya No. 1",
+  addressSameAsKtp: true,
+  province: "Jawa Timur",
+  city: "Sidoarjo",
   address: "Jl. Raya No. 1",
   whatsapp: "085987654321",
   occupation: "Guru",
@@ -79,7 +85,7 @@ test("AC-08: WA tetap string, awalan 0 / +62 utuh", () => {
 });
 
 test("AC-03: setiap field wajib menolak string kosong / spasi / hilang", () => {
-  const required = ["originType", "originName", "fullName", "nik", "birthPlace", "birthDate", "address", "whatsapp", "occupation", "sermonExperience", "quranReading", "trainingReason", "trainingExpectation"];
+  const required = ["originType", "originName", "fullName", "nik", "birthPlace", "birthDate", "maritalStatus", "bloodType", "addressKtp", "province", "city", "whatsapp", "occupation", "sermonExperience", "quranReading", "trainingReason", "trainingExpectation"];
   for (const field of required) {
     for (const blank of ["", "   "]) {
       const r = parse({ [field]: blank });
@@ -90,6 +96,30 @@ test("AC-03: setiap field wajib menolak string kosong / spasi / hilang", () => {
     delete missing[field];
     assert.equal(participantSchema.safeParse(missing).success, false, `${field} hilang harus ditolak`);
   }
+});
+
+test("alamat: addressSameAsKtp mengisi addressCurrent & address legacy", () => {
+  const r = parse({});
+  assert.ok(r.success);
+  assert.equal(r.data.addressCurrent, base.addressKtp, "dicentang -> alamat tinggal = KTP");
+  assert.equal(r.data.address, base.addressKtp, "legacy address fallback ke KTP");
+  assert.equal(parse({ addressSameAsKtp: false }).success, false, "beda alamat tanpa addressCurrent ditolak");
+  const beda = parse({ addressSameAsKtp: false, addressCurrent: " Jl. Baru " });
+  assert.ok(beda.success);
+  assert.equal(beda.data.addressCurrent, "Jl. Baru");
+  assert.equal(beda.data.address, "Jl. Baru");
+});
+
+test("ktp opsional: kosong -> undefined, format & ukuran 10 MB divalidasi", () => {
+  const kosong = parse({ ktp: "" });
+  assert.ok(kosong.success);
+  assert.equal(kosong.data.ktp, undefined);
+  assert.equal(parse({ ktp: "data:image/gif;base64,R0lGOD" }).success, false, "GIF ditolak");
+  // 10 MB biner ~= 13.98M karakter base64.
+  const besar = parse({ ktp: "data:image/png;base64," + "A".repeat(15 * 1024 * 1024) });
+  assert.equal(besar.success, false, "di atas 10 MB ditolak");
+  const pas = parse({ ktp: "data:image/jpeg;base64," + "A".repeat(1024) });
+  assert.ok(pas.success, "data URL kecil diterima");
 });
 
 test("consent harus literal true", () => {

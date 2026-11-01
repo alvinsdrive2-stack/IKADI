@@ -94,6 +94,12 @@ export async function getParticipantPhotoPath(id: bigint) {
   return r?.photoPath ?? null;
 }
 
+/** Path relatif foto KTP (mis. "ktp/12.jpg") atau null. */
+export async function getParticipantKtpPath(id: bigint) {
+  const r = await prisma.participant.findUnique({ where: { id }, select: { ktpPath: true } });
+  return r?.ktpPath ?? null;
+}
+
 export async function getStats() {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);

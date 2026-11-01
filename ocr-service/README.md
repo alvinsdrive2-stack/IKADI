@@ -1,0 +1,78 @@
+# OCR KTP Service
+
+Microservice Python (FastAPI + PaddleOCR) yang membaca foto KTP dan balikin field + confidence. Jalan lokal saja, tidak pernah diekspos ke publik — Next.js app yang memanggilnya.
+
+## Setup
+
+```bash
+cd ocr-service
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# Linux/macOS:
+# source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Catatan Windows: `paddlepaddle` kadang butuh versi CPU spesifik — kalau instal gagal, pasang `paddlepaddle==2.6.1` dulu baru `pip install -r requirements.txt`.
+
+## Jalan
+
+```bash
+uvicorn main:app --host 127.0.0.1 --port 8001
+```
+
+Model PaddleOCR diunduh otomatis saat request pertama (lazy init) — request pertama bakal lambat.
+
+## Endpoint
+
+### `GET /health`
+
+```json
+{"ok": true}
+```
+
+### `POST /extract` — `multipart/form-data`, field `file`
+
+Maks 10 MB, JPEG/PNG/WebP. Balasan:
+
+```json
+{
+  "ok": true,
+  "fields": {
+    "nik":          {"value": "3576014241026002", "confidence": 0.97},
+    "fullName":     {"value": "H. Ahmad Fauzi",   "confidence": 0.91},
+    "birthPlace":   {"value": "Sidoarjo",          "confidence": 0.88},
+    "birthDate":    {"value": "1980-05-17",        "confidence": 0.74},
+    "gender":       {"value": "LAKI_LAKI",         "confidence": 0.95},
+    "addressKtp":   {"value": "Jl. Raya No. 1, ...", "confidence": 0.62},
+    "province":     {"value": "Jawa Timur",        "confidence": 0.90},
+    "city":         {"value": "Sidoarjo",          "confidence": 0.85},
+    "religion":     {"value": "Islam",             "confidence": 0.97},
+    "maritalStatus":{"value": "SUDAH_MENIKAH",     "confidence": 0.93},
+    "occupation":   {"value": "Guru",              "confidence": 0.95}
+  },
+  "threshold": 0.85,
+  "engine": "paddleocr",
+  "durationMs": 1840
+}
+```
+
+- `confidence` 0..1 = rata-rata `rec_score` baris pembentuk field. Validasi gagal (NIK bukan 16 digit, tanggal kalender tidak valid) → `value: null`, `confidence: 0`.
+- `religion` tidak punya kolom di DB — client boleh mengabaikannya.
+- Error: `400` file kosong, `413` > 10 MB, `422` OCR gagal.
+
+## Test parser (tanpa Paddle)
+
+```bash
+python -m pytest tests/ -v
+```
+
+## Konfigurasi sisi Next.js
+
+Set di `.env` aplikasi utama (bukan di sini):
+
+- `OCR_SERVICE_URL` — default `http://127.0.0.1:8001`
+- `OCR_TIMEOUT_MS` — default `20000`
+
+Lihat `DEPLOY.md` untuk PM2.

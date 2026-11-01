@@ -12,14 +12,31 @@ type Common = {
   hint?: string;
   error?: string;
   required?: boolean;
+  /** Nilai confidence OCR bila di bawah threshold — menandai field merah statis. */
+  ocrLow?: number;
 };
 
 /** Kelas kontrol: border control-border 4.6:1, state error tetap merah + latar lembut. */
 export const controlClass =
   "w-full rounded-md border bg-surface text-base text-ink transition-colors hover:border-ink-muted focus:border-primary focus:outline-none disabled:bg-bg";
 
-export const controlState = (error?: string) =>
-  error ? "border-danger bg-danger-soft/40" : "border-control-border";
+/** Penanda hasil OCR ber-confidence rendah — merah statis, tanpa animasi (WCAG 2.3.3). */
+export function OcrHint({
+  id,
+  confidence,
+}: {
+  id: string;
+  confidence: number;
+}) {
+  return (
+    <p id={id} className="text-sm font-medium text-danger">
+      ⚠ Hasil OCR {Math.round(confidence * 100)}% — periksa kembali data ini.
+    </p>
+  );
+}
+
+export const controlState = (error?: string, ocrLow?: boolean) =>
+  error || ocrLow ? "border-danger bg-danger-soft/40" : "border-control-border";
 
 export function ErrorText({ id, children }: { id: string; children: React.ReactNode }) {
   return (
@@ -46,6 +63,7 @@ export function Field({
   hint,
   error,
   required,
+  ocrLow,
   children,
 }: Common & { id: string; children: React.ReactNode }) {
   return (
@@ -65,12 +83,17 @@ export function Field({
       )}
       {children}
       {error && <ErrorText id={`${id}-error`}>{error}</ErrorText>}
+      {ocrLow !== undefined && <OcrHint id={`${id}-ocr`} confidence={ocrLow} />}
     </div>
   );
 }
 
-const describedBy = (id: string, hint?: string, error?: string) =>
-  [hint ? `${id}-hint` : null, error ? `${id}-error` : null]
+const describedBy = (id: string, hint?: string, error?: string, ocrLow?: number) =>
+  [
+    hint ? `${id}-hint` : null,
+    error ? `${id}-error` : null,
+    ocrLow !== undefined ? `${id}-ocr` : null,
+  ]
     .filter(Boolean)
     .join(" ") || undefined;
 
@@ -79,19 +102,20 @@ export function Input({
   hint,
   error,
   required,
+  ocrLow,
   ...props
 }: Common & InputHTMLAttributes<HTMLInputElement>) {
   const autoId = useId();
   const id = props.id ?? autoId;
   return (
-    <Field id={id} label={label} hint={hint} error={error} required={required}>
+    <Field id={id} label={label} hint={hint} error={error} required={required} ocrLow={ocrLow}>
       <input
         {...props}
         id={id}
         aria-required={required || undefined}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy(id, hint, error)}
-        className={`h-11 ${controlClass} px-3 ${controlState(error)}`}
+        aria-invalid={error || ocrLow !== undefined ? true : undefined}
+        aria-describedby={describedBy(id, hint, error, ocrLow)}
+        className={`h-11 ${controlClass} px-3 ${controlState(error, ocrLow !== undefined)}`}
       />
     </Field>
   );
@@ -102,19 +126,20 @@ export function Textarea({
   hint,
   error,
   required,
+  ocrLow,
   ...props
 }: Common & TextareaHTMLAttributes<HTMLTextAreaElement>) {
   const autoId = useId();
   const id = props.id ?? autoId;
   return (
-    <Field id={id} label={label} hint={hint} error={error} required={required}>
+    <Field id={id} label={label} hint={hint} error={error} required={required} ocrLow={ocrLow}>
       <textarea
         {...props}
         id={id}
         aria-required={required || undefined}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy(id, hint, error)}
-        className={`min-h-28 resize-y px-3 py-2.5 ${controlClass} ${controlState(error)}`}
+        aria-invalid={error || ocrLow !== undefined ? true : undefined}
+        aria-describedby={describedBy(id, hint, error, ocrLow)}
+        className={`min-h-28 resize-y px-3 py-2.5 ${controlClass} ${controlState(error, ocrLow !== undefined)}`}
       />
     </Field>
   );
@@ -128,6 +153,7 @@ export function Select({
   hint,
   error,
   required,
+  ocrLow,
   options,
   ...props
 }: Common &
@@ -137,14 +163,14 @@ export function Select({
   const autoId = useId();
   const id = props.id ?? autoId;
   return (
-    <Field id={id} label={label} hint={hint} error={error} required={required}>
+    <Field id={id} label={label} hint={hint} error={error} required={required} ocrLow={ocrLow}>
       <select
         {...props}
         id={id}
         aria-required={required || undefined}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy(id, hint, error)}
-        className={`h-11 appearance-none ${chevron} ${controlClass} pl-3 ${controlState(error)}`}
+        aria-invalid={error || ocrLow !== undefined ? true : undefined}
+        aria-describedby={describedBy(id, hint, error, ocrLow)}
+        className={`h-11 appearance-none ${chevron} ${controlClass} pl-3 ${controlState(error, ocrLow !== undefined)}`}
       >
         {options.map((o) => (
           <option key={o.value} value={o.value} disabled={o.disabled}>
@@ -160,6 +186,7 @@ export function RadioGroup({
   label,
   error,
   required,
+  ocrLow,
   name,
   options,
   value,
@@ -171,6 +198,8 @@ export function RadioGroup({
   hint?: string;
   error?: string;
   required?: boolean;
+  /** Confidence OCR di bawah threshold — menandai grup merah statis. */
+  ocrLow?: number;
   name: string;
   options: { value: string; label: string }[];
   value: string;
@@ -181,11 +210,12 @@ export function RadioGroup({
 }) {
   const uid = useId();
   const errorId = `${name}-${uid}-error`;
+  const ocrId = `${name}-${uid}-ocr`;
   return (
     <fieldset
       aria-required={required || undefined}
-      aria-invalid={error ? true : undefined}
-      aria-describedby={error ? errorId : undefined}
+      aria-invalid={error || ocrLow !== undefined ? true : undefined}
+      aria-describedby={[error ? errorId : null, ocrLow !== undefined ? ocrId : null].filter(Boolean).join(" ") || undefined}
       aria-controls={controlsId}
       className="min-w-0"
     >
@@ -201,7 +231,9 @@ export function RadioGroup({
         {options.map((o) => (
           <label
             key={o.value}
-            className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-control-border bg-surface px-3 text-base text-ink has-[:checked]:border-primary has-[:checked]:bg-primary-soft has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus"
+            className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-md border bg-surface px-3 text-base text-ink has-[:checked]:border-primary has-[:checked]:bg-primary-soft has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus ${
+              ocrLow !== undefined ? "border-danger bg-danger-soft/40" : "border-control-border"
+            }`}
           >
             <input
               type="radio"
@@ -219,6 +251,11 @@ export function RadioGroup({
       {error && (
         <div className="mt-1.5">
           <ErrorText id={errorId}>{error}</ErrorText>
+        </div>
+      )}
+      {ocrLow !== undefined && (
+        <div className="mt-1.5">
+          <OcrHint id={ocrId} confidence={ocrLow} />
         </div>
       )}
     </fieldset>

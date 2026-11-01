@@ -55,3 +55,11 @@ next-env.d.ts
 
 # pas foto peserta (PII — simpan di server, jangan di-commit)
 /public/uploads
+
+# foto KTP peserta (NIK & alamat — PII, jangan pernah di-commit)
+/storage
+
+# ocr-service python
+.venv/
+__pycache__/
+.pytest_cache/

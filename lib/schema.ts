@@ -45,14 +45,21 @@ const optionalText = (max: number, label: string) =>
 /** Pas foto: base64 dari <input type=file>, opsional, maks 1 MB. Ekstensi divalidasi dari magic bytes server. */
 export const PHOTO_MAX_BYTES = 1024 * 1024;
 
-const photoSchema = z.preprocess(
-  (v) => (typeof v === "string" && v.trim() !== "" ? v : undefined),
-  z
-    .string({ error: "Pas foto harus JPEG, PNG, atau WebP" })
-    .refine((s) => /^data:image\/(jpeg|png|webp);base64,/.test(s), "Pas foto harus JPEG, PNG, atau WebP")
-    .refine((s) => s.length * 0.75 <= PHOTO_MAX_BYTES, "Ukuran pas foto maksimal 1 MB")
-    .optional(),
-);
+/** Foto KTP: base64, opsional, maks 10 MB. Disimpan ke storage/ktp (private, bukan public). */
+export const KTP_MAX_BYTES = 10 * 1024 * 1024;
+
+const dataUrlImage = (label: string, maxBytes: number, maxLabel: string) =>
+  z.preprocess(
+    (v) => (typeof v === "string" && v.trim() !== "" ? v : undefined),
+    z
+      .string({ error: `${label} harus JPEG, PNG, atau WebP` })
+      .refine((s) => /^data:image\/(jpeg|png|webp);base64,/.test(s), `${label} harus JPEG, PNG, atau WebP`)
+      .refine((s) => s.length * 0.75 <= maxBytes, `Ukuran ${maxLabel} maksimal ${maxBytes / (1024 * 1024)} MB`)
+      .optional(),
+  );
+
+const photoSchema = dataUrlImage("Pas foto", PHOTO_MAX_BYTES, "pas foto");
+const ktpSchema = dataUrlImage("Foto KTP", KTP_MAX_BYTES, "foto KTP");
 
 const todayIso = () => {
   const d = new Date();
@@ -78,10 +85,27 @@ export const participantSchema = z
     birthPlace: requiredText("Tempat lahir", 120),
     birthDate: birthDateSchema,
     gender: z.enum(["LAKI_LAKI", "PEREMPUAN"], { error: "Jenis kelamin wajib dipilih" }),
+    maritalStatus: z.enum(["BELUM_MENIKAH", "SUDAH_MENIKAH", "CERAI_HIDUP", "CERAI_MATI"], {
+      error: "Status pernikahan wajib dipilih",
+    }),
+    bloodType: z.enum(["A", "B", "AB", "O", "TIDAK_TAHU"], {
+      error: "Golongan darah wajib dipilih",
+    }),
     photo: photoSchema,
-    address: requiredText("Alamat", 5000),
+    ktp: ktpSchema,
+    // Kolom lama; diisi otomatis dari addressCurrent/addressKtp di route (kompatibilitas admin & laporan).
+    address: optionalText(5000, "Alamat"),
+    addressKtp: requiredText("Alamat sesuai KTP", 5000),
+    addressCurrent: optionalText(5000, "Alamat tinggal saat ini"),
+    addressSameAsKtp: z.preprocess(
+      (v) => (typeof v === "boolean" ? v : false),
+      z.boolean(),
+    ),
+    province: requiredText("Provinsi", 100),
+    city: requiredText("Kabupaten/Kota", 100),
     whatsapp: whatsappSchema,
     lastEducation: optionalText(100, "Pendidikan terakhir"),
+    studyField: optionalText(150, "Bidang studi"),
     occupation: requiredText("Pekerjaan", 150),
     expertise: optionalText(5000, "Bidang keahlian"),
     sermonExperience: z.enum(
@@ -105,11 +129,22 @@ export const participantSchema = z
         message: "Keterangan wajib diisi jika memilih Lainnya",
       });
     }
+    if (!v.addressSameAsKtp && !v.addressCurrent) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["addressCurrent"],
+        message: "Alamat tinggal wajib diisi jika berbeda dengan alamat KTP",
+      });
+    }
   })
   .transform((v) => ({
     ...v,
     sermonExperienceOther:
       v.sermonExperience === "LAINNYA" ? v.sermonExperienceOther : undefined,
+    // Dicentang "sesuai KTP" -> alamat tinggal selalu sama dengan alamat KTP.
+    addressCurrent: v.addressSameAsKtp ? v.addressKtp : v.addressCurrent,
+    // Kolom lama diberi nilai fallback agar admin & laporan tidak pecah.
+    address: v.addressCurrent ?? v.addressKtp,
   }));
 
 export type ParticipantInput = z.input<typeof participantSchema>;

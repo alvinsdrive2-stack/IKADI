@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { OriginBadge } from "@/components/Badge";
 import { SessionExpired } from "@/components/AdminNav";
-import { GENDER_LABELS, QURAN_LABELS, SERMON_LABELS, formatDate, formatDateTime } from "@/components/constants";
+import { GENDER_LABELS, MARITAL_LABELS, BLOOD_LABELS, QURAN_LABELS, SERMON_LABELS, formatDate, formatDateTime } from "@/components/constants";
 
 type Detail = {
   id: string;
@@ -16,10 +16,18 @@ type Detail = {
   birthPlace: string;
   birthDate: string;
   gender: string;
+  maritalStatus: string | null;
+  bloodType: string | null;
   photoPath: string | null;
+  ktpPath: string | null;
   address: string;
+  addressKtp: string | null;
+  addressCurrent: string | null;
+  province: string | null;
+  city: string | null;
   whatsapp: string;
   lastEducation: string | null;
+  studyField: string | null;
   occupation: string;
   expertise: string | null;
   sermonExperience: string;
@@ -165,6 +173,12 @@ export function ParticipantDetail({ id }: { id: string }) {
         <Item label="Jenis kelamin">
           {GENDER_LABELS[d.gender] ?? d.gender}
         </Item>
+        <Item label="Status pernikahan">
+          {d.maritalStatus ? MARITAL_LABELS[d.maritalStatus] ?? d.maritalStatus : "-"}
+        </Item>
+        <Item label="Golongan darah">
+          {d.bloodType ? BLOOD_LABELS[d.bloodType] ?? d.bloodType : "-"}
+        </Item>
         <Item label="Tempat, tanggal lahir">
           {d.birthPlace}, {formatDate(d.birthDate)}
         </Item>
@@ -176,13 +190,19 @@ export function ParticipantDetail({ id }: { id: string }) {
             {d.whatsapp}
           </a>
         </Item>
-        <Item label="Alamat" span={2}>
-          {d.address}
+        <Item label="Provinsi">{d.province ?? "-"}</Item>
+        <Item label="Kabupaten/Kota">{d.city ?? "-"}</Item>
+        <Item label="Alamat sesuai KTP" span={2}>
+          {d.addressKtp ?? "-"}
+        </Item>
+        <Item label="Alamat tinggal saat ini" span={2}>
+          {d.addressCurrent ?? "-"}
         </Item>
       </Group>
 
       <Group title="Latar belakang & pengalaman">
         <Item label="Pendidikan terakhir">{d.lastEducation ?? "-"}</Item>
+        <Item label="Bidang studi">{d.studyField ?? "-"}</Item>
         <Item label="Pekerjaan">{d.occupation}</Item>
         <Item label="Bidang keahlian" span={2}>
           {d.expertise ?? "-"}
@@ -225,6 +245,21 @@ export function ParticipantDetail({ id }: { id: string }) {
           />
         ) : (
           <p className="text-sm text-ink-muted">Pas foto belum diunggah.</p>
+        )}
+      </Group>
+
+      <Group title="Foto KTP">
+        {d.ktpPath ? (
+          <a
+            href={`/api/admin/participants/${encodeURIComponent(d.id)}/ktp`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary underline underline-offset-2"
+          >
+            Lihat foto KTP (berisi NIK &amp; alamat — jangan dibagikan)
+          </a>
+        ) : (
+          <p className="text-sm text-ink-muted">Foto KTP belum diunggah.</p>
         )}
       </Group>
     </div>

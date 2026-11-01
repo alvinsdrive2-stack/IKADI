@@ -11,6 +11,13 @@ const base = {
   nik: "3576014241026002",
   birthPlace: "Surabaya",
   birthDate: "1980-05-17",
+  gender: "LAKI_LAKI",
+  maritalStatus: "SUDAH_MENIKAH",
+  bloodType: "O",
+  addressKtp: "Jl. Raya No. 1, Kec. Taman",
+  addressSameAsKtp: true,
+  province: "Jawa Timur",
+  city: "Sidoarjo",
   address: "Jl. Raya No. 1",
   whatsapp: "085987654321",
   occupation: "Guru",
@@ -25,6 +32,28 @@ const ok = participantSchema.safeParse(base);
 assert.ok(ok.success, "baseline harus valid");
 assert.equal(ok.data.originName, "Jawa Timur", "trim originName");
 assert.equal(ok.data.lastEducation, undefined, "field opsional kosong jadi undefined");
+assert.equal(ok.data.addressCurrent, base.addressKtp, "alamat tinggal ikut KTP saat dicentang");
+assert.equal(ok.data.address, base.addressKtp, "kolom legacy address fallback ke addressKtp");
+
+// Checkbox dilepas -> addressCurrent jadi wajib.
+assert.equal(
+  participantSchema.safeParse({ ...base, addressSameAsKtp: false, addressCurrent: undefined }).success,
+  false,
+  "beda alamat tanpa addressCurrent harus gagal",
+);
+const beda = participantSchema.safeParse({
+  ...base,
+  addressSameAsKtp: false,
+  addressCurrent: " Jl. Baru No. 9 ",
+});
+assert.ok(beda.success);
+assert.equal(beda.data.addressCurrent, "Jl. Baru No. 9", "trim addressCurrent");
+assert.equal(beda.data.address, "Jl. Baru No. 9", "kolom legacy address pakai addressCurrent");
+
+for (const k of ["maritalStatus", "bloodType", "addressKtp", "province", "city"] as const) {
+  const { [k]: _drop, ...rest } = base;
+  assert.equal(participantSchema.safeParse(rest).success, false, `field wajib hilang: ${k}`);
+}
 
 const quoted = participantSchema.safeParse({ ...base, nik: " '3576014241026002 ", whatsapp: "'085987654321" });
 assert.ok(quoted.success);

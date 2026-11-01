@@ -30,7 +30,13 @@ const base = {
   birthPlace: "Surabaya",
   birthDate: "1980-05-17",
   gender: "LAKI_LAKI",
+  maritalStatus: "SUDAH_MENIKAH",
+  bloodType: "O",
   photo: "data:image/png;base64," + Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a]).toString("base64"),
+  addressKtp: "Desa Sukamaju, Kec. Taman, Sidoarjo, Jawa Timur",
+  addressSameAsKtp: true,
+  province: "Jawa Timur",
+  city: "Sidoarjo",
   address: "Desa Sukamaju, Kec. Taman, Sidoarjo, Jawa Timur",
   whatsapp: "085987654321",
   occupation: "Guru",
@@ -56,7 +62,7 @@ test("AC-02: payload valid -> 201, tepat satu baris", async () => {
 });
 
 test("AC-03: semua field wajib kosong -> 400 + error per field, tidak menyimpan", async () => {
-  const required = ["originType", "originName", "fullName", "nik", "birthPlace", "birthDate", "address", "whatsapp", "occupation", "sermonExperience", "quranReading", "trainingReason", "trainingExpectation", "consent"];
+  const required = ["originType", "originName", "fullName", "nik", "birthPlace", "birthDate", "maritalStatus", "bloodType", "addressKtp", "province", "city", "whatsapp", "occupation", "sermonExperience", "quranReading", "trainingReason", "trainingExpectation", "consent"];
   const body: Record<string, unknown> = { ...base };
   for (const k of required) body[k] = "";
   const res = await post(body);
@@ -120,6 +126,30 @@ test("AC-06b: unique constraint (P2002) dari create -> 409, bukan 500", async ()
   const res = await post(base);
   assert.equal(res.status, 409);
   assert.equal((await res.json()).code, "NIK_DUPLICATE");
+});
+
+test("field KTP baru: addressSameAsKtp true tanpa addressCurrent -> 201, alamat tinggal = alamat KTP", async () => {
+  const res = await post({ ...base, addressCurrent: undefined });
+  assert.equal(res.status, 201);
+  assert.equal(state.rows[0].addressCurrent, base.addressKtp);
+  assert.equal(state.rows[0].address, base.addressKtp);
+});
+
+test("ktp > 10 MB -> 400 VALIDATION", async () => {
+  // 15M karakter base64 ~= 11.25 MB biner, di atas batas 10 MB.
+  const big = "data:image/png;base64," + "A".repeat(15 * 1024 * 1024);
+  const res = await post({ ...base, ktp: big });
+  assert.equal(res.status, 400);
+  assert.ok((await res.json()).errors.ktp);
+  assert.equal(state.rows.length, 0);
+});
+
+test("ktp valid -> 201 + tersimpan via saveParticipantKtp (mock saved)", async () => {
+  const ktp = "data:image/png;base64," + Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a]).toString("base64");
+  const { saved } = (await import("./support/mock-photo.mjs")) as { saved: Array<Record<string, unknown>> };
+  const res = await post({ ...base, ktp });
+  assert.equal(res.status, 201);
+  assert.ok(saved.some((s) => "ktpBase64" in s), "ktp harus tersimpan lewat saveParticipantKtp");
 });
 
 test("AC-07: NIK diawali kutip -> disimpan bersih", async () => {

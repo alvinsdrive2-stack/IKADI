@@ -3,6 +3,8 @@ export type OriginTypeValue = "PW" | "PD";
 export type GenderValue = "LAKI_LAKI" | "PEREMPUAN";
 export type SermonValue = "SERING" | "KADANG_KADANG" | "BELUM_PERNAH" | "LAINNYA";
 export type QuranValue = "TAJWID_BAIK" | "BIASA" | "TIDAK_LANCAR";
+export type MaritalValue = "BELUM_MENIKAH" | "SUDAH_MENIKAH" | "CERAI_HIDUP" | "CERAI_MATI";
+export type BloodValue = "A" | "B" | "AB" | "O" | "TIDAK_TAHU";
 
 export type ParticipantListItem = {
   id: string;
@@ -30,10 +32,19 @@ export type ParticipantDetail = ParticipantListItem & {
   birthPlace: string;
   birthDate: string;
   gender: GenderValue;
+  maritalStatus: MaritalValue | null;
+  bloodType: BloodValue | null;
   photoPath: string | null;
+  ktpPath: string | null;
   address: string;
+  addressKtp: string | null;
+  addressCurrent: string | null;
+  addressSameAsKtp: boolean;
+  province: string | null;
+  city: string | null;
   occupation: string;
   expertise: string | null;
+  studyField: string | null;
   sermonExperience: SermonValue;
   sermonExperienceOther: string | null;
   organizationExperience: string | null;
@@ -47,7 +58,15 @@ export type StatsResponse = { ok: true; total: number; pw: number; pd: number; t
 
 export type ApiError = {
   ok: false;
-  code: "UNAUTHORIZED" | "VALIDATION" | "NIK_DUPLICATE" | "RATE_LIMIT" | "NOT_FOUND" | "SERVER_ERROR" | "BAD_REQUEST";
+  code:
+    | "UNAUTHORIZED"
+    | "VALIDATION"
+    | "NIK_DUPLICATE"
+    | "RATE_LIMIT"
+    | "NOT_FOUND"
+    | "SERVER_ERROR"
+    | "BAD_REQUEST"
+    | "OCR_UNAVAILABLE";
   message: string;
   errors?: Record<string, string>;
 };

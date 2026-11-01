@@ -27,6 +27,24 @@ export const GENDER_LABELS: Record<string, string> = {
   PEREMPUAN: "Perempuan",
 };
 
+export const MARITAL_LABELS: Record<string, string> = {
+  BELUM_MENIKAH: "Belum Menikah",
+  SUDAH_MENIKAH: "Sudah Menikah",
+  CERAI_HIDUP: "Cerai Hidup",
+  CERAI_MATI: "Cerai Mati",
+};
+
+export const BLOOD_LABELS: Record<string, string> = {
+  A: "A",
+  B: "B",
+  AB: "AB",
+  O: "O",
+  TIDAK_TAHU: "Tidak Tahu",
+};
+
+export const MARITAL_OPTIONS = Object.entries(MARITAL_LABELS).map(([value, label]) => ({ value, label }));
+export const BLOOD_OPTIONS = Object.entries(BLOOD_LABELS).map(([value, label]) => ({ value, label }));
+
 export const formatDate = (iso: string) => {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;

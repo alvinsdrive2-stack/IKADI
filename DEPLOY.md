@@ -64,6 +64,9 @@ SESSION_SECRET="hasil-dari-perintah-di-bawah"
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD="PASSWORD_ADMIN_KUAT"
 NODE_ENV="production"
+# Opsional — OCR KTP (default sudah sesuai):
+# OCR_SERVICE_URL="http://127.0.0.1:8001"
+# OCR_TIMEOUT_MS="20000"
 ```
 
 Buat `SESSION_SECRET` (minimal 32 karakter):
@@ -144,6 +147,44 @@ Buka port kalau perlu:
 ```bash
 sudo ufw allow 3000/tcp
 ```
+
+## 8b. Layanan OCR KTP (opsional, untuk autofill form)
+
+Microservice Python (FastAPI + PaddleOCR) di `ocr-service/`. Jalan di
+`127.0.0.1:8001`, hanya dipanggil aplikasi Next.js — tidak diekspos ke luar.
+
+```bash
+cd /var/www/ikadi/ocr-service
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+```
+
+Buat folder penyimpanan foto KTP (di luar `public/`, tidak pernah statis):
+
+```bash
+mkdir -p /var/www/ikadi/storage/ktp
+```
+
+Jalankan lewat PM2:
+
+```bash
+cd /var/www/ikadi/ocr-service
+pm2 start .venv/bin/uvicorn --name ikadi-ocr -- main:app --host 127.0.0.1 --port 8001
+pm2 save
+```
+
+Cek:
+
+```bash
+pm2 logs ikadi-ocr --lines 20
+curl http://127.0.0.1:8001/health   # {"ok":true}
+```
+
+Model PaddleOCR diunduh saat request pertama — request pertama lambat, itu normal.
+Kalau OCR tidak jalan, form tetap bisa dipakai: upload KTP hanya gagal autofill,
+peserta isi manual (route balas 503 `OCR_UNAVAILABLE`).
+
+Update rilis: `cd ocr-service && .venv/bin/pip install -r requirements.txt && pm2 restart ikadi-ocr`.
 
 ## 9. Autostart saat reboot
 

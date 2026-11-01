@@ -10,6 +10,7 @@ const args = [
   "tests/schema.test.mts",
   "tests/design-sync.test.mts",
   "tests/participants-route.test.mts",
+  "tests/ocr-route.test.mts",
   "tests/http-smoke.test.mts",
 ];
 

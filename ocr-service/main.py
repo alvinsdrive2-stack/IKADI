@@ -2,6 +2,8 @@
 import threading
 import time
 
+import cv2
+import numpy as np
 from fastapi import FastAPI, File, HTTPException, UploadFile
 
 from parser import parse_ktp
@@ -44,16 +46,27 @@ async def extract(file: UploadFile = File(...)):
         raise HTTPException(status_code=413, detail="Ukuran maksimal 10 MB")
 
     start = time.monotonic()
+    # PaddleOCR 3.x predict() menerima ndarray, bukan bytes mentah.
+    img = cv2.imdecode(np.frombuffer(raw, np.uint8), cv2.IMREAD_COLOR)
+    if img is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Gambar tidak bisa dibaca (korup atau bukan JPEG/PNG/WebP)",
+        )
     try:
-        result = get_engine().ocr(raw, cls=True)
+        result = get_engine().predict(img)
     except Exception as exc:  # Paddle gagal (format aneh, gambar korup)
         raise HTTPException(status_code=422, detail=f"OCR gagal: {exc}") from exc
 
-    # PaddleOCR v3: [[{"transcription": str, "rec_score": float, "rec_polys": bbox}, ...]]
-    # v2 lama: [[[bbox, (text, score)], ...]]
+    # PaddleOCR 3.x: result = list per input; tiap item dict dengan rec_texts,
+    # rec_scores, rec_polys yang paralel. Fallback v2: [[(bbox, (text, score)), ...]]
     lines = []
-    if result and result[0]:
-        for item in result[0]:
+    page = result[0] if isinstance(result, (list, tuple)) and result else result
+    if isinstance(page, dict) and "rec_texts" in page:
+        for text, score, poly in zip(page["rec_texts"], page["rec_scores"], page["rec_polys"]):
+            lines.append((poly, text, float(score)))
+    else:
+        for item in (page or []):
             if isinstance(item, dict):
                 lines.append((item.get("rec_polys") or item.get("rec_boxes"),
                               item.get("transcription", ""), float(item.get("rec_score", 0.0))))

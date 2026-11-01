@@ -1,4 +1,5 @@
 """FastAPI wrapper PaddleOCR untuk KTP. Jalan lokal saja: uvicorn main:app --host 127.0.0.1 --port 8001"""
+import threading
 import time
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
@@ -11,15 +12,21 @@ MAX_BYTES = 10 * 1024 * 1024
 THRESHOLD = 0.85
 
 _engine = None
+# PaddleX di balik PaddleOCR 3.x menolak inisialisasi ulang ("PDX has already
+# been initialized"), jadi init wajib terjadi tepat sekali per proses: request
+# bersamaan antre di lock (double-checked), bukan bikin engine kedua.
+_engine_lock = threading.Lock()
 
 
 def get_engine():
     """PaddleOCR lazy-load: berat, hanya diinisialisasi saat request pertama."""
     global _engine
     if _engine is None:
-        from paddleocr import PaddleOCR
+        with _engine_lock:
+            if _engine is None:
+                from paddleocr import PaddleOCR
 
-        _engine = PaddleOCR(lang="id")
+                _engine = PaddleOCR(lang="id")
     return _engine
 
 

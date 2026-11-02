@@ -26,6 +26,15 @@ LABEL_ALIASES = {
     "pekerjaan": ("pokerjaan",),
 }
 
+# Kata label KTP — kehadirannya di kata mana pun menandakan baris itu bukan
+# nilai nama (mis. "EMPAT TGL LAHIR" = "Tempat/Tgl Lahir" yang kepotong).
+_LABEL_WORDS = {
+    "TEMPAT", "TGL", "LAHIR", "JENIS", "KELAMIN", "GOL", "GEL", "BOL", "DARAH",
+    "ALAMAT", "RT", "RW", "KEL", "KEC", "DESA", "KECAMATAN", "AGAMA", "STATUS",
+    "PERKAWINAN", "PEKERJAAN", "POKERJAAN", "KEWARGANEGARAAN", "BERLAKU",
+    "SEUMUR", "HINGGA", "PROVINSI", "KOTA", "KABUPATEN", "NIK",
+}
+
 # Kode provinsi Kemendagri = 2 digit awal NIK — deterministik, bebas salah baca.
 NIK_PROVINCE = {
     "11": "Aceh", "12": "Sumatera Utara", "13": "Sumatera Barat", "14": "Riau",
@@ -157,9 +166,9 @@ def parse_ktp(lines):
             if (len(t) < 4 or len(t) > 40 or len(words) < 2
                     or not all(re.fullmatch(r"[A-Z.']+", w) for w in words)):
                 continue
-            if re.match(r"(TEMPAT|TGL|LAHIR|JENIS|KELAMIN|GOL|DARAH|ALAMAT|RT|RW|KEL|"
-                        r"KEC|AGAMA|STATUS|PERKAWINAN|PEKERJAAN|KEWARGANEGARAAN|"
-                        r"BERLAKU|SEUMUR|PROVINSI|KOTA|KABUPATEN)\b", t):
+            # kata label di POSISI MANA pun membatalkan kandidat — "EMPAT TGL
+            # LAHIR" (sisa "Tempat/Tgl Lahir" kepotong) bukan nama.
+            if any(w in _LABEL_WORDS for w in words):
                 continue
             out["fullName"] = {"value": t.title(), "confidence": float(score)}
             break

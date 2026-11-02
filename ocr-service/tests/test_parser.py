@@ -255,6 +255,17 @@ def test_nama_fallback_tanpa_label():
     assert out["fullName"]["value"] == "Ir Pamostanghutagalung"
 
 
+def test_nama_fallback_tolak_sisa_label_ttl():
+    # "Tempat/Tgl Lahir" kepotong jadi "EMPAT TGL LAHIR" — bukan nama
+    lines = [
+        line("IK : 1271200404660005", 0.89),
+        line("EMPAT TGL LAHIR", 0.85),
+        line("MEDAN 04-04-1966", 0.88),
+    ]
+    out = parse_ktp(lines)
+    assert out["fullName"]["value"] is None
+
+
 def test_gender_fuzzy_nilai_salah_baca():
     out = parse_ktp([line("Jenis Kelamin : LAKE LAKT", 0.83)])
     assert out["gender"]["value"] == "LAKI_LAKI"

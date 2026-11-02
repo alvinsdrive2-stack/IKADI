@@ -26,10 +26,20 @@ const base = {
   trainingReason: "Ingin memperdalam",
   trainingExpectation: "Bisa khutbah",
   consent: true,
+  ktp: "data:image/jpeg;base64,/9j/4AAQSkZJRg==",
 };
 
 const ok = participantSchema.safeParse(base);
 assert.ok(ok.success, "baseline harus valid");
+
+// Foto KTP wajib (diambil dari kamera di form).
+assert.equal(participantSchema.safeParse({ ...base, ktp: undefined }).success, false, "ktp kosong harus ditolak");
+assert.equal(participantSchema.safeParse({ ...base, ktp: "   " }).success, false, "ktp spasi harus ditolak");
+assert.equal(
+  participantSchema.safeParse({ ...base, ktp: "data:image/gif;base64,R0lGOD" }).success,
+  false,
+  "ktp gif harus ditolak",
+);
 assert.equal(ok.data.originName, "Jawa Timur", "trim originName");
 assert.equal(ok.data.lastEducation, undefined, "field opsional kosong jadi undefined");
 assert.equal(ok.data.addressCurrent, base.addressKtp, "alamat tinggal ikut KTP saat dicentang");

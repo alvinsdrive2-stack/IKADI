@@ -470,13 +470,15 @@ export function ParticipantForm() {
         <Field
           id="ktp"
           label="Foto KTP"
-          hint="Opsional. Format JPEG, PNG, atau WebP. Maksimal 10 MB. Jika diunggah, data terisi otomatis dari hasil pembacaan KTP."
+          required
+          hint="Wajib. Kamera langsung terbuka saat tombol ditekan — foto KTP dari sini, data terisi otomatis."
           error={opt("ktp")}
         >
           <input
             id="ktp"
             type="file"
             accept="image/jpeg,image/png,image/webp"
+            capture="environment"
             aria-invalid={errors.ktp ? true : undefined}
             aria-describedby="ktp-hint ktp-error"
             onChange={(e) => onKtpChange(e.target.files?.[0])}

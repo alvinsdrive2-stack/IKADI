@@ -45,7 +45,7 @@ const optionalText = (max: number, label: string) =>
 /** Pas foto: base64 dari <input type=file>, opsional, maks 1 MB. Ekstensi divalidasi dari magic bytes server. */
 export const PHOTO_MAX_BYTES = 1024 * 1024;
 
-/** Foto KTP: base64, opsional, maks 10 MB. Disimpan ke storage/ktp (private, bukan public). */
+/** Foto KTP: base64, WAJIB (foto langsung dari kamera di form), maks 10 MB. Disimpan ke storage/ktp (private, bukan public). */
 export const KTP_MAX_BYTES = 10 * 1024 * 1024;
 
 const dataUrlImage = (label: string, maxBytes: number, maxLabel: string) =>
@@ -59,7 +59,15 @@ const dataUrlImage = (label: string, maxBytes: number, maxLabel: string) =>
   );
 
 const photoSchema = dataUrlImage("Pas foto", PHOTO_MAX_BYTES, "pas foto");
-const ktpSchema = dataUrlImage("Foto KTP", KTP_MAX_BYTES, "foto KTP");
+// ponytail: KTP wajib — pakai optionalText-style agar string kosong jadi
+// error "wajib", bukan lolos sebagai undefined.
+const ktpSchema = z.preprocess(
+  (v) => (typeof v === "string" && v.trim() !== "" ? v : undefined),
+  z
+    .string({ error: "Foto KTP wajib diisi" })
+    .refine((s) => /^data:image\/(jpeg|png|webp);base64,/.test(s), "Foto KTP harus JPEG, PNG, atau WebP")
+    .refine((s) => s.length * 0.75 <= KTP_MAX_BYTES, `Ukuran foto KTP maksimal ${KTP_MAX_BYTES / (1024 * 1024)} MB`),
+);
 
 const todayIso = () => {
   const d = new Date();

@@ -1,6 +1,8 @@
 # OCR KTP Service
 
-Microservice Python (FastAPI + PaddleOCR) yang membaca foto KTP dan balikin field + confidence. Jalan lokal saja, tidak pernah diekspos ke publik — Next.js app yang memanggilnya.
+Microservice Python (FastAPI + RapidOCR/onnxruntime) yang membaca foto KTP dan balikin field + confidence. Jalan lokal saja, tidak pernah diekspos ke publik — Next.js app yang memanggilnya.
+
+Model: PP-OCRv5 det mobile (multi) + rec latin mobile via onnxruntime. Dipilih dari benchmark foto KTP fisik asli — rec latin mobile mengalahkan rec ch server (dict zh merusak teks Latin) dengan waktu warm ~0.8s di CPU; pengganti PaddleOCR lama yang lambat (MKLDNN harus dimatikan) dan sering gagal parse.
 
 ## Setup
 
@@ -14,15 +16,13 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Catatan Windows: `paddlepaddle` kadang butuh versi CPU spesifik — kalau instal gagal, pasang `paddlepaddle==2.6.1` dulu baru `pip install -r requirements.txt`.
-
 ## Jalan
 
 ```bash
 uvicorn main:app --host 127.0.0.1 --port 8001
 ```
 
-Model PaddleOCR diunduh otomatis saat request pertama (lazy init) — request pertama bakal lambat.
+Model RapidOCR diunduh otomatis saat request pertama (lazy init) — request pertama bakal lambat.
 
 ## Endpoint
 
@@ -53,8 +53,8 @@ Maks 10 MB, JPEG/PNG/WebP. Balasan:
     "occupation":   {"value": "Guru",              "confidence": 0.95}
   },
   "threshold": 0.85,
-  "engine": "paddleocr",
-  "durationMs": 1840
+  "engine": "rapidocr",
+  "durationMs": 900
 }
 ```
 
@@ -62,7 +62,7 @@ Maks 10 MB, JPEG/PNG/WebP. Balasan:
 - `religion` tidak punya kolom di DB — client boleh mengabaikannya.
 - Error: `400` file kosong, `413` > 10 MB, `422` OCR gagal.
 
-## Test parser (tanpa Paddle)
+## Test parser (tanpa model)
 
 ```bash
 python -m pytest tests/ -v

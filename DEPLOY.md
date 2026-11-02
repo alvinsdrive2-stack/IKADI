@@ -150,7 +150,7 @@ sudo ufw allow 3000/tcp
 
 ## 8b. Layanan OCR KTP (opsional, untuk autofill form)
 
-Microservice Python (FastAPI + PaddleOCR) di `ocr-service/`. Jalan di
+Microservice Python (FastAPI + RapidOCR/onnxruntime) di `ocr-service/`. Jalan di
 `127.0.0.1:8001`, hanya dipanggil aplikasi Next.js — tidak diekspos ke luar.
 
 ```bash
@@ -159,8 +159,8 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
 
-OpenCV (di dalam PaddleOCR) butuh library sistem ini — tanpa itu `/extract`
-gagal dengan `libGL.so.1: cannot open shared object file`:
+OpenCV dipakai versi `opencv-python-headless` — tidak butuh `libGL`. Kalau
+`/extract` tetap gagal dengan error `libGL.so.1`, pasang:
 
 ```bash
 sudo apt install -y libgl1 libglib2.0-0
@@ -187,7 +187,7 @@ pm2 logs ikadi-ocr --lines 20
 curl http://127.0.0.1:8001/health   # {"ok":true}
 ```
 
-Model PaddleOCR diunduh saat request pertama — request pertama lambat, itu normal.
+Model RapidOCR diunduh saat request pertama — request pertama lambat, itu normal.
 Kalau OCR tidak jalan, form tetap bisa dipakai: upload KTP hanya gagal autofill,
 peserta isi manual (route balas 503 `OCR_UNAVAILABLE`).
 

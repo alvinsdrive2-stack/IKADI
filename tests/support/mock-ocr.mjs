@@ -29,7 +29,7 @@ export function resetOcr() {
       occupation: { value: "Guru", confidence: 0.95 },
     },
     threshold: 0.85,
-    engine: "paddleocr",
+    engine: "rapidocr",
     durationMs: 12,
   };
 }

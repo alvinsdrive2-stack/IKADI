@@ -1,6 +1,8 @@
 fastapi>=0.115
 uvicorn[standard]>=0.30
 python-multipart>=0.0.9
-paddleocr>=2.7
-paddlepaddle>=2.6
+rapidocr>=3.10,<4
+onnxruntime>=1.18
+opencv-python-headless>=4.9
+numpy>=1.26
 pillow>=10.0

@@ -1,4 +1,4 @@
-"""Parser KTP dari hasil PaddleOCR. Terima list baris (bbox, text, score); pure function, unit-testable tanpa Paddle."""
+"""Parser KTP dari baris OCR. Terima list (bbox, text, score); pure function, unit-testable tanpa engine OCR."""
 import re
 from datetime import date
 
@@ -19,16 +19,73 @@ def _clean(text):
     return re.sub(r"\s+", " ", text.replace(":", " ")).strip()
 
 
+# Typo label dari bacaan OCR nyata (PP-OCRv5 latin mobile salah baca
+# "Pekerjaan" jadi "Pokerjaan" di foto KTP fisik).
+LABEL_ALIASES = {
+    "pekerjaan": ("pokerjaan",),
+}
+
+
+def _bbox_xy(bbox):
+    """Poly 4 titik -> (x0, y0, x1, y1); None kalau bbox tidak tersedia/bentuk aneh."""
+    if bbox is None:
+        return None
+    try:
+        pts = [(float(p[0]), float(p[1])) for p in bbox]
+    except (TypeError, ValueError, IndexError):
+        return None
+    if len(pts) < 2:
+        return None
+    xs = [p[0] for p in pts]
+    ys = [p[1] for p in pts]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def _group_rows(lines):
+    """Gabung box yang sebaris visual (y-center berdekatan) jadi satu baris:
+    teks join urut kiri-ke-kanan, bbox gabungan, score rata-rata.
+
+    Layout KTP dua kolom (label kiri, nilai kanan) sering dipisah OCR jadi dua
+    box; label "_find_label" butuh mereka menyatu. Baris tanpa bbox dilewat
+    apa adanya (input sintetis/legacy).
+    """
+    geo, plain = [], []
+    for bbox, text, score in lines:
+        b = _bbox_xy(bbox)
+        (geo if b is not None else plain).append((b, _clean(text), float(score)))
+    geo.sort(key=lambda it: ((it[0][1] + it[0][3]) / 2, it[0][0]))
+    # Baris visual dibandingkan ke ANCHOR (box pertama row), bukan bbox gabungan:
+    # bbox gabungan makin tinggi tiap merge -> threshold ikut membesar -> semua
+    # row nyambung jadi satu (chain drift).
+    rows = []  # (yc_anchor, h_anchor, bbox_gabungan, items)
+    for b, text, score in geo:
+        x0, y0, x1, y1 = b
+        yc, h = (y0 + y1) / 2, max(y1 - y0, 1.0)
+        if rows:
+            ayc, ah, rb, ritems = rows[-1]
+            if abs(yc - ayc) <= 0.6 * max(h, ah):
+                nb = (min(rb[0], x0), min(rb[1], y0), max(rb[2], x1), max(rb[3], y1))
+                rows[-1] = (ayc, ah, nb, ritems + [(x0, text, score)])
+                continue
+        rows.append((yc, h, b, [(x0, text, score)]))
+    merged = []
+    for _ayc, _ah, b, ritems in rows:
+        ritems.sort(key=lambda it: it[0])
+        text = " ".join(t for _x, t, _s in ritems if t)
+        merged.append((b, text, _avg([s for _x, _t, s in ritems])))
+    return [(None, t, s) for _b, t, s in plain] + merged
+
+
 def _find_label(lines, label):
-    """Cari baris yang diawali `label`. Return (index, nilai setelah label, score) atau None."""
-    prefix = label.upper()
-    for i, (_bbox, text, score) in enumerate(lines):
-        t = _clean(text).upper()
-        if t.startswith(prefix):
-            # Label kadang diikuti titik-titik ("Pekerjaan .. : X") sebelum nilai.
-            value = _clean(t[len(prefix):]).lstrip(".:- ")
-            if value:
-                return i, value, score
+    """Cari baris yang diawali `label` (atau alias typonya). Return (index, nilai setelah label, score) atau None."""
+    for prefix in (label.upper(),) + tuple(a.upper() for a in LABEL_ALIASES.get(label, ())):
+        for i, (_bbox, text, score) in enumerate(lines):
+            t = _clean(text).upper()
+            if t.startswith(prefix):
+                # Label kadang diikuti titik-titik ("Pekerjaan .. : X") sebelum nilai.
+                value = _clean(t[len(prefix):]).lstrip(".:- ")
+                if value:
+                    return i, value, score
     return None
 
 
@@ -37,11 +94,12 @@ def _avg(scores):
 
 
 def parse_ktp(lines):
-    """lines: list of (bbox, text, rec_score) dari PaddleOCR.
+    """lines: list of (bbox, text, rec_score) dari engine OCR (bbox poly 4 titik).
 
     Return dict key -> {"value": str|None, "confidence": float 0..1}.
     Confidence = rec_score baris pembentuk field (rata-rata bila multi-baris); 0.0 kalau validasi gagal.
     """
+    lines = _group_rows(list(lines))
     out = {
         k: {"value": None, "confidence": 0.0}
         for k in ("nik", "fullName", "birthPlace", "birthDate", "gender",
@@ -117,11 +175,6 @@ def parse_ktp(lines):
                 out["maritalStatus"] = {"value": enum, "confidence": float(s)}
                 break
 
-    hit = _find_label(lines, "pekerjaan")
-    if hit:
-        _, v, s = hit
-        out["occupation"] = {"value": v.title(), "confidence": float(s)}
-
     # Provinsi & kota: header KTP biasanya "PROVINSI X" lalu "KABUPATEN/KOTA Y" di baris atas.
     for _bbox, text, score in lines[:6]:
         t = _clean(text).upper()
@@ -152,6 +205,17 @@ def parse_ktp(lines):
             if m:
                 out["city"] = {"value": m.group(1).title(), "confidence": float(score)}
                 break
+
+    hit = _find_label(lines, "pekerjaan")
+    if hit:
+        _, v, s = hit
+        v_up = v.upper().replace("TIDAKBEKERJA", "TIDAK BEKERJA")
+        # Area stempel/ttd KTP (nama kota + tanggal) sering sebaris dengan nilai
+        # pekerjaan — buang trailing nama kota yang sudah terdeteksi.
+        city = out["city"]["value"]
+        if city:
+            v_up = re.sub(r",?\s*(KOTA|KABUPATEN|KAB)?\s*" + re.escape(city.upper()) + r"\s*$", "", v_up).strip()
+        out["occupation"] = {"value": v_up.title(), "confidence": float(s)}
 
     # Validasi akhir: NIK wajib 16 digit, selain itu dibuang.
     if out["nik"]["value"] and not re.fullmatch(r"\d{16}", out["nik"]["value"]):

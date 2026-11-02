@@ -26,6 +26,22 @@ LABEL_ALIASES = {
     "pekerjaan": ("pokerjaan",),
 }
 
+# Kode provinsi Kemendagri = 2 digit awal NIK — deterministik, bebas salah baca.
+NIK_PROVINCE = {
+    "11": "Aceh", "12": "Sumatera Utara", "13": "Sumatera Barat", "14": "Riau",
+    "15": "Jambi", "16": "Sumatera Selatan", "17": "Bengkulu", "18": "Lampung",
+    "19": "Kepulauan Bangka Belitung", "21": "Kepulauan Riau", "31": "DKI Jakarta",
+    "32": "Jawa Barat", "33": "Jawa Tengah", "34": "DI Yogyakarta", "35": "Jawa Timur",
+    "36": "Banten", "51": "Bali", "52": "Nusa Tenggara Barat",
+    "53": "Nusa Tenggara Timur", "61": "Kalimantan Barat", "62": "Kalimantan Tengah",
+    "63": "Kalimantan Selatan", "64": "Kalimantan Timur", "65": "Kalimantan Utara",
+    "71": "Sulawesi Utara", "72": "Sulawesi Tengah", "73": "Sulawesi Selatan",
+    "74": "Sulawesi Tenggara", "75": "Gorontalo", "76": "Sulawesi Barat",
+    "81": "Maluku", "82": "Maluku Utara", "91": "Papua Barat", "92": "Papua",
+    "93": "Papua Selatan", "94": "Papua Tengah", "95": "Papua Pegunungan",
+    "96": "Papua Barat Daya",
+}
+
 
 def _bbox_xy(bbox):
     """Poly 4 titik -> (x0, y0, x1, y1); None kalau bbox tidak tersedia/bentuk aneh."""
@@ -110,17 +126,43 @@ def parse_ktp(lines):
                   "maritalStatus", "occupation")
     }
 
-    # NIK: 16 digit berurutan di baris mana pun (label KTP sering terpisah dari angkanya).
-    for _bbox, text, score in lines:
-        m = re.search(r"(\d{16})", text.replace(" ", ""))
+    # NIK: 16 digit berurutan di baris mana pun (label KTP sering terpisah dari
+    # angkanya). Salah baca umum foto fisik: satu digit '4' terbaca '+'.
+    nik_line = None
+    for i, (_bbox, text, score) in enumerate(lines):
+        compact = re.sub(r"[\s:]+", " ", text).strip()
+        m = re.search(r"\d{16}", compact)
+        if not m:
+            # salah baca '+' untuk '4': run 16 karakter digit/plus
+            run = re.search(r"(?<![0-9+])[0-9+]{16}(?![0-9+])", compact)
+            if run and "+" in run.group(0):
+                fixed = run.group(0).replace("+", "4")
+                if re.fullmatch(r"\d{16}", fixed):
+                    m = re.match(r"\d{16}", fixed)
         if m:
-            out["nik"] = {"value": m.group(1), "confidence": float(score)}
+            out["nik"] = {"value": m.group(0), "confidence": float(score)}
+            nik_line = i
             break
 
     hit = _find_label(lines, "nama")
     if hit:
         _, v, s = hit
         out["fullName"] = {"value": v.title(), "confidence": float(s)}
+    elif nik_line is not None:
+        # Fallback nama: label "Nama" tak terbaca — nama = baris huruf murni
+        # (>= 2 kata) pertama setelah baris NIK.
+        for _bbox, text, score in lines[nik_line + 1:]:
+            t = _clean(text).upper().strip(".:- ")
+            words = t.split()
+            if (len(t) < 4 or len(t) > 40 or len(words) < 2
+                    or not all(re.fullmatch(r"[A-Z.']+", w) for w in words)):
+                continue
+            if re.match(r"(TEMPAT|TGL|LAHIR|JENIS|KELAMIN|GOL|DARAH|ALAMAT|RT|RW|KEL|"
+                        r"KEC|AGAMA|STATUS|PERKAWINAN|PEKERJAAN|KEWARGANEGARAAN|"
+                        r"BERLAKU|SEUMUR|PROVINSI|KOTA|KABUPATEN)\b", t):
+                continue
+            out["fullName"] = {"value": t.title(), "confidence": float(score)}
+            break
 
     hit = _find_label(lines, "tempat/tgl lahir") or _find_label(lines, "tempat tgl lahir")
     if hit:
@@ -167,11 +209,46 @@ def parse_ktp(lines):
     hit = _find_label(lines, "jenis kelamin")
     if hit:
         _, v, s = hit
-        v_up = v.upper()
+        v_up = v.upper().strip()
         if "LAKI" in v_up:
             out["gender"] = {"value": "LAKI_LAKI", "confidence": float(s)}
         elif "PEREMPUAN" in v_up:
             out["gender"] = {"value": "PEREMPUAN", "confidence": float(s)}
+        else:
+            # nilai salah baca ("LAKE LAKT") — fuzzy terhadap nilai baku,
+            # bandingkan bentuk tanpa spasi/tanda baca biar rasio tak tergerus
+            v_norm = re.sub(r"[^A-Z]", "", v_up)
+            if 6 <= len(v_norm) <= 12:
+                for needle, enum in (("LAKILAKI", "LAKI_LAKI"), ("PEREMPUAN", "PEREMPUAN")):
+                    if difflib.SequenceMatcher(None, v_norm, needle).ratio() >= 0.75:
+                        out["gender"] = {"value": enum, "confidence": float(s)}
+                        break
+
+    # Fallback gender: label & nilai terpisah baris (nilai gak menyusul label)
+    # atau keduanya salah baca — fuzzy nilai baku di baris mana pun.
+    if not out["gender"]["value"]:
+        # bandingkan chunk 1-3 kata berurutan — baris fisik sering menyatu
+        # dengan label golongan darah ("LAKE LAKT GEL DARAH B")
+        for _bbox, text, score in lines:
+            seg = text.split(":")[-1] if ":" in text else text
+            t = _clean(seg).upper().strip(".:- ")
+            t = re.sub(r"^JENIS\s*KELAMIN\s*", "", t)
+            words = re.findall(r"[A-Z]{2,}", t)
+            for a in range(len(words)):
+                for b in range(a + 1, min(a + 4, len(words) + 1)):
+                    chunk = "".join(words[a:b])
+                    if not 6 <= len(chunk) <= 12:
+                        continue
+                    for needle, enum in (("LAKILAKI", "LAKI_LAKI"), ("PEREMPUAN", "PEREMPUAN")):
+                        if difflib.SequenceMatcher(None, chunk, needle).ratio() >= 0.75:
+                            out["gender"] = {"value": enum, "confidence": float(score)}
+                            break
+                    if out["gender"]["value"]:
+                        break
+                if out["gender"]["value"]:
+                    break
+            if out["gender"]["value"]:
+                break
 
     # Golongan darah: label "Gol. Darah" sering terbaca "Bol/Ool/Gal Darah"
     # dan nempel di baris jenis kelamin. Salah baca nilai umum: 8→B, 0→O, 3/4→A.
@@ -247,36 +324,43 @@ def parse_ktp(lines):
         if best:
             out["maritalStatus"] = {"value": known[best[1]], "confidence": best[2]}
 
-    # Provinsi & kota: header KTP biasanya "PROVINSI X" lalu "KABUPATEN/KOTA Y" di baris atas.
-    for _bbox, text, score in lines[:6]:
-        t = _clean(text).upper()
-        m = re.match(r"^PROVINSI\s+(.+)$", t)
-        if m and not out["province"]["value"]:
-            out["province"] = {"value": m.group(1).title(), "confidence": float(score)}
-            continue
-        m = re.match(r"^(KABUPATEN|KOTA|KAB)\s+(.+)$", t)
-        if m and not out["city"]["value"]:
-            out["city"] = {"value": m.group(2).title(), "confidence": float(score)}
-
-    # Fallback provinsi: cocokkan nama provinsi di teks mana pun.
+    # Provinsi: kode NIK (2 digit awal, Kemendagri) deterministik — lebih andal
+    # dari bacaan header yang sering terpotong ("SUMATERA" utk "SUMATERA UTARA").
+    # Dihitung sebelum pekerjaan — nilai pekerjaan dibersihkan pakai nama kota.
+    nik_val = out["nik"]["value"]
+    if nik_val and nik_val[:2] in NIK_PROVINCE:
+        out["province"] = {"value": NIK_PROVINCE[nik_val[:2]],
+                           "confidence": out["nik"]["confidence"]}
     if not out["province"]["value"]:
-        for _bbox, text, score in lines:
+        for _bbox, text, score in lines[:6]:
             t = _clean(text).upper()
-            for p in PROVINCES:
-                if p in t:
-                    out["province"] = {"value": p.title(), "confidence": float(score)}
-                    break
-            if out["province"]["value"]:
-                break
-
-    # Fallback kota: "KABUPATEN/KOTA X" di mana pun.
-    if not out["city"]["value"]:
-        for _bbox, text, score in lines:
-            t = _clean(text).upper()
-            m = re.match(r"^(?:KABUPATEN/KOTA|KABUPATEN|KOTA|KAB)\s+(.+)$", t)
+            m = re.match(r"^PROVINSI\s+(.+)$", t)
             if m:
-                out["city"] = {"value": m.group(1).title(), "confidence": float(score)}
+                out["province"] = {"value": m.group(1).title(), "confidence": float(score)}
                 break
+        else:
+            # Fallback: cocokkan nama provinsi lengkap di teks mana pun.
+            for _bbox, text, score in lines:
+                t = _clean(text).upper()
+                for p in PROVINCES:
+                    if p in t:
+                        out["province"] = {"value": p.title(), "confidence": float(score)}
+                        break
+                if out["province"]["value"]:
+                    break
+
+    # Kota/kabupaten: kumpulkan semua kandidat lalu pilih nama TERPANJANG —
+    # bacaan terpotong sering muncul ganda (header "KOTA MEDA" vs stempel
+    # "KOTA MEDAN"), dan baris stempel sering menyatu dengan teks lain.
+    cands = []
+    for _bbox, text, score in lines:
+        t = _clean(text).upper()
+        for m in re.finditer(r"(?:KABUPATEN|KOTA)\s+([A-Z]+(?:\s+[A-Z]+)?)", t):
+            cands.append((len(m.group(1)), m.group(1), float(score)))
+    if cands:
+        cands.sort(key=lambda c: c[0], reverse=True)
+        _, name, score = cands[0]
+        out["city"] = {"value": name.title(), "confidence": score}
 
     hit = _find_label(lines, "pekerjaan")
     if hit:

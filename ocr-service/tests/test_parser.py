@@ -236,3 +236,41 @@ def test_alamat_rtrw_menyatu_dengan_label_typo():
     # "BTRW" & "002/003" menyatu satu baris setelah merge visual
     out = parse_ktp([line("Alamat : KEBRAONTEGAL NO 22", 0.94), line("BTRW 002/003", 0.78)])
     assert "002/003" in out["addressKtp"]["value"]
+
+
+# --- Kasus KTP hasil scan PDF (bacaan nyata) ---
+
+def test_nik_digit_empat_terbaca_plus():
+    out = parse_ktp([line("IK : 127120040+660005", 0.95)])
+    assert out["nik"]["value"] == "1271200404660005"
+
+
+def test_nama_fallback_tanpa_label():
+    lines = [
+        line("IK : 1271200404660005", 0.89),
+        line("IR PAMOSTANGHUTAGALUNG", 0.98),
+        line("Tempat/Tgl Lahir : MEDAN, 04-04-1966", 0.88),
+    ]
+    out = parse_ktp(lines)
+    assert out["fullName"]["value"] == "Ir Pamostanghutagalung"
+
+
+def test_gender_fuzzy_nilai_salah_baca():
+    out = parse_ktp([line("Jenis Kelamin : LAKE LAKT", 0.83)])
+    assert out["gender"]["value"] == "LAKI_LAKI"
+
+
+def test_provinsi_dari_kode_nik():
+    out = parse_ktp([
+        line("PROVINSI SUMATERA", 0.97),  # kepotong
+        line("IK : 1271200404660005", 0.89),
+    ])
+    assert out["province"]["value"] == "Sumatera Utara"
+
+
+def test_city_pilih_kandidat_terpanjang():
+    out = parse_ktp([
+        line("KOTA MEDA", 0.97),        # header kepotong
+        line("KOTA MEDAN", 1.00),       # stempel lengkap
+    ])
+    assert out["city"]["value"] == "Medan"

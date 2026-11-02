@@ -21,6 +21,7 @@ export function resetOcr() {
       birthPlace: { value: "Sidoarjo", confidence: 0.88 },
       birthDate: { value: "1980-05-17", confidence: 0.74 },
       gender: { value: "LAKI_LAKI", confidence: 0.95 },
+      bloodType: { value: "B", confidence: 0.83 },
       addressKtp: { value: "Jl. Raya No. 1, Rt/Rw 02/03, Kel/Desa Sukamaju, Kecamatan Taman", confidence: 0.62 },
       province: { value: "Jawa Timur", confidence: 0.9 },
       city: { value: "Sidoarjo", confidence: 0.85 },

@@ -1,8 +1,22 @@
 # OCR KTP Service
 
-Microservice Python (FastAPI + RapidOCR/onnxruntime) yang membaca foto KTP dan balikin field + confidence. Jalan lokal saja, tidak pernah diekspos ke publik — Next.js app yang memanggilnya.
+Microservice Python (FastAPI) yang membaca foto KTP dan balikin field + confidence. Jalan lokal saja, tidak pernah diekspos ke publik — Next.js app yang memanggilnya.
 
-Model: PP-OCRv5 det mobile (multi) + rec latin mobile via onnxruntime. Dipilih dari benchmark foto KTP fisik asli — rec latin mobile mengalahkan rec ch server (dict zh merusak teks Latin) dengan waktu warm ~0.8s di CPU; pengganti PaddleOCR lama yang lambat (MKLDNN harus dimatikan) dan sering gagal parse.
+Dua jalur, otomatis:
+
+1. **VLM Zhipu (utama, kalau `GLM_API_KEY` diset)** — akurat di foto miring/gelap. WAJIB key **platform** ([open.bigmodel.cn](https://open.bigmodel.cn) / z.ai), model default `glm-4v-flash` (free tier). Key **coding plan tidak bisa**: modelnya text-only, image di-drop, dan model akan MENGARANG isi KTP (terverifikasi — jawaban tampak valid tapi palsu).
+2. **RapidOCR/onnxruntime (fallback lokal)** — PP-OCRv5 det mobile (multi) + rec latin mobile, tanpa data keluar server. Dipilih dari benchmark foto KTP fisik asli — rec latin mobile mengalahkan rec ch server (dict zh merusak teks Latin) dengan waktu warm ~0.8s di CPU.
+
+## Variabel lingkungan VLM
+
+| Env | Default | Keterangan |
+|---|---|---|
+| `GLM_API_KEY` | (kosong) | Key platform Zhipu. Kosong = RapidOCR lokal saja. |
+| `GLM_BASE_URL` | `https://open.bigmodel.cn/api/paas/v4` | Ganti `https://api.z.ai/api/paas/v4` kalau key dari z.ai. |
+| `GLM_VLM_MODEL` | `glm-4v-flash` | Model vision. |
+| `VLM_TIMEOUT_S` | `20` | Timeout VLM; lewat = fallback lokal. |
+
+Jawaban VLM divalidasi ketat: NIK wajib 16 digit, `birthDate` `YYYY-MM-DD`, enum (`gender`/`bloodType`/`maritalStatus`) harus sesuai — nilai tak valid dibuang jadi `null`, bukan ditelan mentah.
 
 ## Setup
 

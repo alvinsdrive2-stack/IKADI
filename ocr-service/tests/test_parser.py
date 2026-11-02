@@ -157,3 +157,82 @@ def test_pekerjaan_dengan_titik_titik():
 def test_tanggal_pemisah_titik():
     out = parse_ktp([line("Tempat/Tgl Lahir : SURABAYA, 06.03.2004", 0.9)])
     assert out["birthDate"]["value"] == "2004-03-06"
+
+
+# --- Kasus foto KTP fisik miring (bacaan RapidOCR nyata) ---
+
+def bline(text, score, x0=0, y0=0, x1=100, y1=20):
+    """Baris dengan bbox nyata (poly 4 titik) supaya _group_rows bekerja."""
+    return ([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], text, score)
+
+
+def test_gol_darah_sebaris_jenis_kelamin():
+    out = parse_ktp([line("Jenis Kelamin : LAKI-LAKI Gol. Darah : B", 0.9)])
+    assert out["bloodType"]["value"] == "B"
+
+
+def test_gol_darah_typo_split_box():
+    # foto fisik: label "Bol Barah" + nilai "3B" (AB) di box kanan sebaris
+    lines = [
+        bline("Bol Barah", 0.83, x0=380, y0=300, x1=480, y1=320),
+        bline("3B", 0.53, x0=620, y0=300, x1=650, y1=318),
+    ]
+    out = parse_ktp(lines)
+    assert out["bloodType"]["value"] == "AB"
+
+
+def test_gol_darah_digit_salah_baca():
+    out = parse_ktp([line("Gol Darah : 8", 0.9)])  # 8 = B salah baca
+    assert out["bloodType"]["value"] == "B"
+    out = parse_ktp([line("Gal.Darah:0", 0.9)])  # 0 = O
+    assert out["bloodType"]["value"] == "O"
+
+
+def test_ttl_fallback_label_rusak():
+    out = parse_ktp([line("Tempat:gE anlr : SURABAYA, 06-03-2004", 0.88)])
+    assert out["birthPlace"]["value"] == "Surabaya"
+    assert out["birthDate"]["value"] == "2004-03-06"
+
+
+def test_ttl_fallback_tanpa_kolon():
+    out = parse_ktp([line("TEMPAT LAHIR SIDOARJO 17-05-1980", 0.9)])
+    assert out["birthPlace"]["value"] == "Sidoarjo"
+    assert out["birthDate"]["value"] == "1980-05-17"
+
+
+def test_ttl_fallback_abaikan_baris_ttd():
+    out = parse_ktp([line("KOTA SURABAYA 18-03-2021", 0.98)])
+    assert out["birthDate"]["value"] is None
+
+
+def test_status_fuzzy_nilai_salah_baca():
+    out = parse_ktp([line("Status-Perkavirtan:", 0.82), line("BELUM KSAWIN", 0.84)])
+    assert out["maritalStatus"]["value"] == "BELUM_MENIKAH"
+
+
+def test_status_fuzzy_label_nilai_menyatu():
+    # label & nilai satu baris setelah merge visual
+    out = parse_ktp([line("Status-Perkavirtan: BELUM KSAWIN", 0.83)])
+    assert out["maritalStatus"]["value"] == "BELUM_MENIKAH"
+
+
+def test_alamat_rtrw_typo_tidak_memotong():
+    lines = [
+        line("Alamat : KEBRAONTEGAL NO 22", 0.94),
+        line("BTRW", 0.70),
+        line("002/003", 0.87),
+        line("Kel/Besa : KEBRAON", 0.90),
+        line("Kecamatan : KARANG PILANG", 0.95),
+        line("KOTA SURABAYA", 0.98),  # area ttd — tidak boleh ikut
+    ]
+    out = parse_ktp(lines)
+    addr = out["addressKtp"]["value"]
+    assert "002/003" in addr
+    assert "Kecamatan Karang Pilang" in addr
+    assert "Kota Surabaya" not in addr
+
+
+def test_alamat_rtrw_menyatu_dengan_label_typo():
+    # "BTRW" & "002/003" menyatu satu baris setelah merge visual
+    out = parse_ktp([line("Alamat : KEBRAONTEGAL NO 22", 0.94), line("BTRW 002/003", 0.78)])
+    assert "002/003" in out["addressKtp"]["value"]

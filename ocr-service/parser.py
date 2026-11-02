@@ -1,4 +1,5 @@
 """Parser KTP dari baris OCR. Terima list (bbox, text, score); pure function, unit-testable tanpa engine OCR."""
+import difflib
 import re
 from datetime import date
 
@@ -52,7 +53,9 @@ def _group_rows(lines):
     geo, plain = [], []
     for bbox, text, score in lines:
         b = _bbox_xy(bbox)
-        (geo if b is not None else plain).append((b, _clean(text), float(score)))
+        # jangan buang ":" di sini — fallback TTL memisah label/nilai dengan
+        # kolon; pemakai lain membersihkan sendiri via _clean.
+        (geo if b is not None else plain).append((b, re.sub(r"\s+", " ", text).strip(), float(score)))
     geo.sort(key=lambda it: ((it[0][1] + it[0][3]) / 2, it[0][0]))
     # Baris visual dibandingkan ke ANCHOR (box pertama row), bukan bbox gabungan:
     # bbox gabungan makin tinggi tiap merge -> threshold ikut membesar -> semua
@@ -103,7 +106,7 @@ def parse_ktp(lines):
     out = {
         k: {"value": None, "confidence": 0.0}
         for k in ("nik", "fullName", "birthPlace", "birthDate", "gender",
-                  "addressKtp", "province", "city", "religion",
+                  "bloodType", "addressKtp", "province", "city", "religion",
                   "maritalStatus", "occupation")
     }
 
@@ -134,6 +137,33 @@ def parse_ktp(lines):
         else:
             out["birthPlace"] = {"value": v.title(), "confidence": float(s)}
 
+    # Fallback TTL: label "Tempat/Tgl Lahir" sering tak terbaca di foto miring
+    # ("Tempat:gE anlr") — cari baris berpola "tempat, dd-mm-yyyy" langsung.
+    if not out["birthDate"]["value"]:
+        for _bbox, text, score in lines:
+            t = _clean(text).upper()
+            if re.search(r"BERLAKU|SEUMUR|HINGGA", t):
+                continue  # area ttd: "Berlaku Hingga SEUMUR HIDUP"
+            # segmen setelah ":" terakhir = nilai, terbebas dari sisa label rusak
+            seg = text.split(":")[-1] if ":" in text else text
+            m = re.search(r"([A-Z .'\-]{3,}?),?\s*(\d{2})[- ./](\d{2})[- ./](\d{4})", seg.upper())
+            if not m:
+                continue
+            place = m.group(1).strip(" ,")
+            if re.match(r"^(KOTA|KABUPATEN|KAB)\b", place):
+                continue  # "KOTA SURABAYA 18-03-2021" = tanggal terbit, bukan lahir
+            # buang kata sisa label yang tak terbaca ("TEMPATGEANLR")
+            place = " ".join(w for w in place.split() if not re.search(r"TEMPAT|TGL|LAHIR", w))
+            if not place:
+                continue
+            try:
+                date(int(m.group(4)), int(m.group(3)), int(m.group(2)))
+            except ValueError:
+                continue
+            out["birthPlace"] = {"value": place.title(), "confidence": float(score)}
+            out["birthDate"] = {"value": f"{m.group(4)}-{m.group(3)}-{m.group(2)}", "confidence": float(score)}
+            break
+
     hit = _find_label(lines, "jenis kelamin")
     if hit:
         _, v, s = hit
@@ -143,7 +173,24 @@ def parse_ktp(lines):
         elif "PEREMPUAN" in v_up:
             out["gender"] = {"value": "PEREMPUAN", "confidence": float(s)}
 
-    # Alamat: baris label + baris RT/RW/Kel/Kec berikutnya (heuristik posisi berurutan).
+    # Golongan darah: label "Gol. Darah" sering terbaca "Bol/Ool/Gal Darah"
+    # dan nempel di baris jenis kelamin. Salah baca nilai umum: 8→B, 0→O, 3/4→A.
+    # Nilai valid di form: A/B/AB/O.
+    for _bbox, text, score in lines:
+        t = _clean(text).upper()
+        m = re.search(r"[BGLO][A-Z .]*[BD]ARAH\s*\.?\s*:?\s*(.*)$", t)
+        if not m:
+            continue
+        v = m.group(1)
+        v = v.replace("8", "B").replace("0", "O").replace("3", "A").replace("4", "A")
+        m2 = re.search(r"\b(AB|A|B|O)\b", v)
+        if m2:
+            out["bloodType"] = {"value": m2.group(1), "confidence": float(score)}
+            break
+
+    # Alamat: baris label + baris RT/RW/Kel/Kec berikutnya. Baris non-match
+    # dilewati (foto miring bikin "RT/RW" terbaca "BTRW"), blok berhenti di
+    # baris kecamatan — setelah itu area ttd (nama kota + tanggal terbit).
     hit = _find_label(lines, "alamat")
     if hit:
         i, v, s = hit
@@ -154,8 +201,12 @@ def parse_ktp(lines):
             if re.match(r"(RT|RW|KEL|DESA|KECAMATAN|KABUPATEN|KOTA)\b", t):
                 parts.append(t)
                 scores.append(float(score))
-            else:
-                break
+                if t.startswith("KECAMATAN"):
+                    break
+            elif re.search(r"\d{2,3}/\d{2,3}", t):
+                # "BTRW 002/003" (label RT/RW salah baca menyatu) — ambil angkanya
+                parts.append(re.search(r"\d{2,3}/\d{2,3}", t).group(0))
+                scores.append(float(score))
         out["addressKtp"] = {"value": ", ".join(parts).title(), "confidence": _avg(scores)}
 
     hit = _find_label(lines, "agama")
@@ -174,6 +225,27 @@ def parse_ktp(lines):
             if needle in v_up:
                 out["maritalStatus"] = {"value": enum, "confidence": float(s)}
                 break
+
+    # Fallback status: label & nilai salah baca di foto miring
+    # ("Status-Perkavirtan" / "BELUM KSAWIN") — cocokkan fuzzy ke nilai baku.
+    if not out["maritalStatus"]["value"]:
+        known = {"BELUM KAWIN": "BELUM_MENIKAH", "BELUM MENIKAH": "BELUM_MENIKAH",
+                 "CERAI HIDUP": "CERAI_HIDUP", "CERAI MATI": "CERAI_MATI",
+                 "MENIKAH": "SUDAH_MENIKAH", "KAWIN": "SUDAH_MENIKAH"}
+        best = None
+        for _bbox, text, score in lines:
+            # label & nilai sering menyatu di satu baris ("Status-Perkavirtan:
+            # BELUM KSAWIN") — pakai segmen setelah kolon terakhir kalau ada.
+            seg = text.split(":")[-1] if ":" in text else text
+            t = _clean(seg).upper().strip(".:- ")
+            if len(t) < 5 or len(t) > 25:
+                continue
+            for k in known:
+                r = difflib.SequenceMatcher(None, t, k).ratio()
+                if r >= 0.8 and (best is None or r > best[0]):
+                    best = (r, k, float(score))
+        if best:
+            out["maritalStatus"] = {"value": known[best[1]], "confidence": best[2]}
 
     # Provinsi & kota: header KTP biasanya "PROVINSI X" lalu "KABUPATEN/KOTA Y" di baris atas.
     for _bbox, text, score in lines[:6]:

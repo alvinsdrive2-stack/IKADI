@@ -1,8 +1,8 @@
-"""OCR KTP: VLM (API Zhipu) utama + RapidOCR (onnxruntime) fallback lokal.
+"""OCR KTP: VLM (OpenRouter/Zhipu, OpenAI-compatible) utama + RapidOCR (onnxruntime) fallback lokal.
 
 Jalan lokal saja: uvicorn main:app --host 127.0.0.1 --port 8001
-VLM aktif kalau GLM_API_KEY diset dan model vision tersedia; selain itu
-otomatis pakai RapidOCR lokal (data tidak keluar server).
+VLM aktif kalau VLM_API_KEY diset; selain itu otomatis pakai RapidOCR lokal
+(data tidak keluar server). VLM error/timeout = fallback RapidOCR.
 """
 import base64
 import json
@@ -35,12 +35,19 @@ THRESHOLD = 0.85
 # ke log service, buat tuning parser dari bacaan asli.
 DEBUG = os.environ.get("OCR_DEBUG") == "1"
 
-# VLM Zhipu. PENTING: harus key PLATFORM (open.bigmodel.cn / z.ai), bukan key
-# coding plan — model coding plan text-only, image di-drop, model akan
-# mengarang isi KTP (terverifikasi). glm-4v-flash: free tier, cepat.
-GLM_API_KEY = os.environ.get("GLM_API_KEY", "")
-GLM_BASE_URL = os.environ.get("GLM_BASE_URL", "https://open.bigmodel.cn/api/paas/v4")
-GLM_VLM_MODEL = os.environ.get("GLM_VLM_MODEL", "glm-4v-flash")
+# VLM provider apa pun yang OpenAI-compatible (default OpenRouter; Zhipu
+# platform juga bisa lewat VLM_BASE_URL). PENTING dua jebakan key, dua-duanya
+# sudah terverifikasi:
+# 1. OpenRouter: key harus API key biasa dari openrouter.ai/keys. Management/
+#    provisioning key ("is_management_key": true) cuma ngatur akun — chat
+#    completions balas 401 "User not found".
+# 2. Z.ai: key coding plan text-only, image di-drop, model MENGARANG isi KTP.
+#    VLM vision Zhipu wajib key platform (open.bigmodel.cn / z.ai paas/v4).
+# Model :free OpenRouter kena rate limit harian — kena limit = fallback
+# RapidOCR lokal, form tetap jalan.
+VLM_API_KEY = os.environ.get("VLM_API_KEY", "")
+VLM_BASE_URL = os.environ.get("VLM_BASE_URL", "https://api.ezkielyna.store/v1")
+VLM_MODEL = os.environ.get("VLM_MODEL", "deepseek-v4.1-flash-1017")
 VLM_TIMEOUT_S = float(os.environ.get("VLM_TIMEOUT_S", "20"))
 
 FIELD_KEYS = ("nik", "fullName", "birthPlace", "birthDate", "gender", "bloodType",
@@ -99,13 +106,13 @@ def _parse_vlm_fields(data):
 
 
 async def vlm_extract(raw):
-    """Kirim gambar ke VLM Zhipu, balikin fields ter-normalisasi; None kalau
-    VLM tidak dikonfigurasi/gagal (pemanggil jatuh ke RapidOCR lokal)."""
-    if not GLM_API_KEY:
+    """Kirim gambar ke VLM (OpenRouter/Zhipu), balikin fields ter-normalisasi;
+    None kalau VLM tidak dikonfigurasi (pemanggil jatuh ke RapidOCR lokal)."""
+    if not VLM_API_KEY:
         return None
     b64 = base64.b64encode(raw).decode()
     payload = {
-        "model": GLM_VLM_MODEL,
+        "model": VLM_MODEL,
         "messages": [{
             "role": "user",
             "content": [
@@ -118,8 +125,8 @@ async def vlm_extract(raw):
     }
     async with httpx.AsyncClient(timeout=VLM_TIMEOUT_S) as client:
         r = await client.post(
-            f"{GLM_BASE_URL}/chat/completions",
-            headers={"Authorization": f"Bearer {GLM_API_KEY}"},
+            f"{VLM_BASE_URL}/chat/completions",
+            headers={"Authorization": f"Bearer {VLM_API_KEY}"},
             json=payload,
         )
         r.raise_for_status()
@@ -183,13 +190,13 @@ async def extract(file: UploadFile = File(...)):
             detail="Gambar tidak bisa dibaca (korup atau bukan JPEG/PNG/WebP)",
         )
 
-    # Jalur 1: VLM Zhipu (kalau dikonfigurasi) — akurat di foto miring/gelap.
+    # Jalur 1: VLM (kalau dikonfigurasi) — akurat di foto miring/gelap.
     fields = None
     engine = "rapidocr"
     try:
         fields = await vlm_extract(raw)
         if fields is not None:
-            engine = f"vlm:{GLM_VLM_MODEL}"
+            engine = f"vlm:{VLM_MODEL}"
     except Exception as exc:
         print(f"[vlm-fallback] {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
 

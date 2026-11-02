@@ -4,16 +4,16 @@ Microservice Python (FastAPI) yang membaca foto KTP dan balikin field + confiden
 
 Dua jalur, otomatis:
 
-1. **VLM Zhipu (utama, kalau `GLM_API_KEY` diset)** — akurat di foto miring/gelap. WAJIB key **platform** ([open.bigmodel.cn](https://open.bigmodel.cn) / z.ai), model default `glm-4v-flash` (free tier). Key **coding plan tidak bisa**: modelnya text-only, image di-drop, dan model akan MENGARANG isi KTP (terverifikasi — jawaban tampak valid tapi palsu).
+1. **VLM (utama, kalau `VLM_API_KEY` diset)** — provider OpenAI-compatible apa pun (default gateway yang terverifikasi vision passthrough). Akurat di foto miring/gelap. Dua jebakan key, dua-duanya sudah terverifikasi: (a) OpenRouter — pakai API key biasa dari [openrouter.ai/keys](https://openrouter.ai/keys); management/provisioning key cuma ngatur akun, chat completions balas `401 "User not found"`. (b) Z.ai — key coding plan text-only, image di-drop, model MENGARANG isi KTP; VLM vision Zhipu wajib key platform ([open.bigmodel.cn](https://open.bigmodel.cn) / z.ai `paas/v4`). (c) Gateway pihak ketiga — verifikasi dulu modelnya benar-benar multimodal: kirim KTP asli, cocokkan NIK/nama; jawaban rapi tapi salah = image di-drop (text-only).
 2. **RapidOCR/onnxruntime (fallback lokal)** — PP-OCRv5 det mobile (multi) + rec latin mobile, tanpa data keluar server. Dipilih dari benchmark foto KTP fisik asli — rec latin mobile mengalahkan rec ch server (dict zh merusak teks Latin) dengan waktu warm ~0.8s di CPU.
 
 ## Variabel lingkungan VLM
 
 | Env | Default | Keterangan |
 |---|---|---|
-| `GLM_API_KEY` | (kosong) | Key platform Zhipu. Kosong = RapidOCR lokal saja. |
-| `GLM_BASE_URL` | `https://open.bigmodel.cn/api/paas/v4` | Ganti `https://api.z.ai/api/paas/v4` kalau key dari z.ai. |
-| `GLM_VLM_MODEL` | `glm-4v-flash` | Model vision. |
+| `VLM_API_KEY` | (kosong) | Key provider. Kosong = RapidOCR lokal saja. |
+| `VLM_BASE_URL` | `https://api.ezkielyna.store/v1` | Endpoint OpenAI-compatible (terverifikasi vision passthrough). |
+| `VLM_MODEL` | `deepseek-v4.1-flash-1017` | Model VLM. Di gateway default, `deepseek-v4-flash` (tanpa `.1`) balas JSON kosong — pakai yang `.1`. |
 | `VLM_TIMEOUT_S` | `20` | Timeout VLM; lewat = fallback lokal. |
 
 Jawaban VLM divalidasi ketat: NIK wajib 16 digit, `birthDate` `YYYY-MM-DD`, enum (`gender`/`bloodType`/`maritalStatus`) harus sesuai — nilai tak valid dibuang jadi `null`, bukan ditelan mentah.

@@ -191,10 +191,9 @@ Model RapidOCR diunduh saat request pertama — request pertama lambat, itu norm
 Kalau OCR tidak jalan, form tetap bisa dipakai: upload KTP hanya gagal autofill,
 peserta isi manual (route balas 503 `OCR_UNAVAILABLE`).
 
-Opsional — VLM Zhipu sebagai jalur utama (akurat di foto miring/gelap), RapidOCR
-jadi fallback otomatis. Butuh key **platform** [open.bigmodel.cn](https://open.bigmodel.cn)
-(model `glm-4v-flash`, free tier) — key coding plan TIDAK bisa (text-only, hasil
-karangan). Set env lalu restart:
+Opsional — VLM sebagai jalur utama (akurat di foto miring/gelap), RapidOCR
+jadi fallback otomatis. Provider OpenAI-compatible apa pun (default OpenRouter).
+Set env lalu restart:
 
 ```bash
 pm2 restart ikadi-ocr --update-env   # dengan env di bawah terpasang
@@ -203,12 +202,19 @@ pm2 restart ikadi-ocr --update-env   # dengan env di bawah terpasang
 Env (via `pm2 start ... --env` / ecosystem / shell profile):
 
 ```
-GLM_API_KEY=<key platform zhipu>
+VLM_API_KEY=<key provider>
 # opsional:
-# GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
-# GLM_VLM_MODEL=glm-4v-flash
+# VLM_BASE_URL=https://api.ezkielyna.store/v1
+# VLM_MODEL=deepseek-v4.1-flash-1017
 # VLM_TIMEOUT_S=20
 ```
+
+Jebakan key, sudah terverifikasi: OpenRouter — API key biasa dari
+openrouter.ai/keys; management/provisioning key (`is_management_key: true`)
+cuma ngatur akun, chat completions balas `401 "User not found"`. Z.ai — key
+coding plan text-only, image di-drop, model MENGARANG isi KTP; vision wajib
+key platform (open.bigmodel.cn / z.ai `paas/v4`). Model `:free` kena rate
+limit harian — kena limit = fallback RapidOCR lokal, form tetap jalan.
 
 Update rilis: `cd ocr-service && .venv/bin/pip install -r requirements.txt && pm2 restart ikadi-ocr`.
 

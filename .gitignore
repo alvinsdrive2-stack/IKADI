@@ -48,6 +48,8 @@ next-env.d.ts
 
 # agent lokal
 /.claude/
+/.impeccable/
+/.commandcode/
 
 # data dump (berisi PII — jangan di-commit)
 *.dump

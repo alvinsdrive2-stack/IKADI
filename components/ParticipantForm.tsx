@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -68,6 +68,9 @@ const EMPTY = {
 const NETWORK =
   "Koneksi bermasalah. Data belum terkirim — periksa internet lalu coba lagi.";
 
+/** Draf disimpan tanpa gambar: base64 KTP bisa 10 MB, jauh di atas kuota localStorage. */
+const DRAFT_KEY = "ikadi:draft:v1";
+
 type FieldKey = keyof ParticipantInput;
 
 /** Urutan DOM = urutan visual (dipakai ErrorSummary). */
@@ -103,6 +106,10 @@ const FIELD_LABELS: Record<FieldKey, string> = {
   consent: "Persetujuan",
 };
 
+const DRAFT_FIELDS = (Object.keys(FIELD_LABELS) as FieldKey[]).filter(
+  (k) => k !== "ktp" && k !== "photo",
+);
+
 /** Field OCR -> field form. religion diabaikan (tidak ada kolomnya di DB). */
 const OCR_TO_FORM: Partial<Record<string, FieldKey>> = {
   nik: "nik",
@@ -135,6 +142,40 @@ const OCR_FIELD_ORDER: FieldKey[] = [
 
 type OcrFields = Record<string, { value: string | null; confidence: number }>;
 
+/** Cara mengisi. KTP wajib di ketiganya — bedanya hanya apakah data terisi otomatis. */
+type Mode = "foto" | "galeri" | "manual";
+type View = "choice" | "review" | "form";
+
+type Step = {
+  key: string;
+  title: string;
+  fields: readonly FieldKey[];
+};
+
+/** Empat langkah; urutan field di sini juga urutan validasi per langkah. */
+const STEPS: readonly Step[] = [
+  {
+    key: "dokumen",
+    title: "Dokumen & kontak",
+    fields: ["ktp", "addressKtp", "addressSameAsKtp", "addressCurrent", "province", "city", "whatsapp"],
+  },
+  {
+    key: "identitas",
+    title: "Identitas",
+    fields: ["originType", "originName", "fullName", "nik", "gender", "maritalStatus", "bloodType", "birthPlace", "birthDate", "photo"],
+  },
+  {
+    key: "latar",
+    title: "Latar belakang",
+    fields: ["occupation", "lastEducation", "studyField", "expertise", "sermonExperience", "sermonExperienceOther", "organizationExperience", "quranReading"],
+  },
+  {
+    key: "kirim",
+    title: "Motivasi & persetujuan",
+    fields: ["trainingReason", "trainingExpectation", "consent"],
+  },
+];
+
 export function ParticipantForm() {
   const router = useRouter();
   // ref callback -> fokus tanpa akses ref di render (aturan react-hooks/refs)
@@ -142,6 +183,9 @@ export function ParticipantForm() {
     (el: HTMLDivElement | null) => el?.focus(),
     [],
   );
+  const [view, setView] = useState<View>("choice");
+  const [mode, setMode] = useState<Mode>("foto");
+  const [step, setStep] = useState(0);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [summary, setSummary] = useState<{ field: FieldKey; message: string }[]>([]);
   const [ocrLoading, setOcrLoading] = useState(false);
@@ -155,6 +199,10 @@ export function ParticipantForm() {
     handleSubmit,
     setValue,
     setError,
+    reset,
+    getValues,
+    getFieldState,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<ParticipantInput>({
     resolver: zodResolver(participantSchema),
@@ -171,6 +219,8 @@ export function ParticipantForm() {
   const maritalStatus = useWatch({ control, name: "maritalStatus" });
   const sameAsKtp = useWatch({ control, name: "addressSameAsKtp" }) ?? true;
   const addressKtp = useWatch({ control, name: "addressKtp" });
+  const ktpValue = useWatch({ control, name: "ktp" });
+  const photoValue = useWatch({ control, name: "photo" });
 
   /** Confidence hanya ditandai bila di bawah threshold dari service. */
   const low = (k: FieldKey) => {
@@ -217,16 +267,6 @@ export function ParticipantForm() {
       }
       setOcrConfidence(conf);
       setOcrThreshold(threshold);
-
-      // Scroll + fokus ke field low-confidence pertama (UX: langsung ke yang perlu dicek).
-      const first = OCR_FIELD_ORDER.find((k) => conf[k] !== undefined && conf[k]! < threshold);
-      if (first) {
-        requestAnimationFrame(() => {
-          const el = document.getElementById(first);
-          el?.scrollIntoView({ behavior: "smooth", block: "center" });
-          (el as HTMLElement | null)?.focus({ preventScroll: true });
-        });
-      }
     },
     [setValue],
   );
@@ -304,9 +344,14 @@ export function ParticipantForm() {
         setError("ktp", { type: "manual", message: "Foto KTP gagal dibaca. Coba pilih file lain." });
       reader.readAsDataURL(file);
 
+      // Jalur manual: foto tetap wajib, tapi tidak ada pembacaan otomatis.
+      if (mode === "manual") return;
+
       // OCR terpisah dari pembacaan base64 — kegagalan OCR tidak membatalkan isi form.
       setOcrLoading(true);
       setOcrError(null);
+      setOcrConfidence({});
+      setView("review");
       (async () => {
         try {
           const ocrBlob = await downscaleForOcr(file);
@@ -330,7 +375,7 @@ export function ParticipantForm() {
         }
       })();
     },
-    [applyOcr, downscaleForOcr, setError, setValue],
+    [applyOcr, downscaleForOcr, mode, setError, setValue],
   );
 
   useEffect(() => {
@@ -342,7 +387,61 @@ export function ParticipantForm() {
     if (sameAsKtp) setValue("addressCurrent", addressKtp ?? "");
   }, [sameAsKtp, addressKtp, setValue]);
 
+  // Draf: pulihkan sekali saat mount. Gambar tidak ikut disimpan.
+  const draftLoaded = useRef(false);
+  useEffect(() => {
+    if (draftLoaded.current) return;
+    draftLoaded.current = true;
+    try {
+      const raw = window.localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Partial<ParticipantInput>;
+      reset({ ...EMPTY, ...saved } as ParticipantInput);
+    } catch {
+      // localStorage diblokir/penuh — formulir tetap jalan tanpa draf.
+    }
+  }, [reset]);
+
+  const persistDraft = useCallback(() => {
+    try {
+      const values = getValues() as Record<string, unknown>;
+      const out: Record<string, unknown> = {};
+      for (const k of DRAFT_FIELDS) out[k] = values[k];
+      window.localStorage.setItem(DRAFT_KEY, JSON.stringify(out));
+    } catch {
+      // Kuota penuh / mode privat — abaikan, draf cuma kenyamanan.
+    }
+  }, [getValues]);
+
   const isOther = sermon === "LAINNYA";
+  const current = STEPS[step];
+  const isLast = step === STEPS.length - 1;
+
+  const goStep = useCallback((next: number) => {
+    setStep(Math.max(0, Math.min(STEPS.length - 1, next)));
+    if (typeof document !== "undefined") {
+      requestAnimationFrame(() =>
+        document.getElementById("form-langkah")?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
+    }
+  }, []);
+
+  const nextStep = useCallback(async () => {
+    persistDraft();
+    const ok = await trigger([...current.fields]);
+    if (!ok) {
+      // getFieldState membaca state terbaru setelah trigger; `errors` dari closure masih lama.
+      const firstBad = current.fields.find((k) => getFieldState(k).invalid);
+      if (firstBad) requestAnimationFrame(() => document.getElementById(firstBad)?.focus());
+      return;
+    }
+    goStep(step + 1);
+  }, [current.fields, getFieldState, goStep, persistDraft, step, trigger]);
+
+  const prevStep = useCallback(() => {
+    persistDraft();
+    goStep(step - 1);
+  }, [goStep, persistDraft, step]);
 
   const onInvalid = () => {
     const items = (Object.keys(FIELD_LABELS) as FieldKey[])
@@ -350,6 +449,12 @@ export function ParticipantForm() {
       .map((k) => ({ field: k, message: String(errors[k]?.message ?? "") }));
     setSummary(items);
     setGlobalError(null);
+    // Lompat ke langkah yang memuat error pertama — kalau tidak, ringkasan menunjuk field di layar lain.
+    const first = items[0]?.field;
+    if (first) {
+      const idx = STEPS.findIndex((s) => s.fields.includes(first));
+      if (idx >= 0) goStep(idx);
+    }
   };
 
   const onSubmit = handleSubmit(async (values) => {
@@ -363,6 +468,11 @@ export function ParticipantForm() {
       });
 
       if (res.status === 201) {
+        try {
+          window.localStorage.removeItem(DRAFT_KEY);
+        } catch {
+          // abaikan
+        }
         router.push("/daftar/sukses");
         return;
       }
@@ -397,8 +507,136 @@ export function ParticipantForm() {
 
   const opt = (k: FieldKey) => (errors[k]?.message ? String(errors[k]?.message) : undefined);
 
+  const chooseMode = (m: Mode) => {
+    setMode(m);
+    setView("form");
+    setStep(0);
+  };
+
+  if (view === "choice") {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold text-ink">Mau diisi bagaimana?</h2>
+          <p className="mt-1 text-base text-ink-muted">
+            Pilih yang paling gampang buat Anda.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <ModeOption
+            onSelect={() => chooseMode("foto")}
+            title="Foto KTP sekarang"
+            body="Kamera terbuka, data terisi otomatis. Paling cepat."
+            badge="Tercepat"
+            icon={
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5" aria-hidden>
+                <path d="M4 8h3l1.5-2h7L17 8h3v10H4z" />
+                <circle cx="12" cy="12.5" r="3" />
+              </svg>
+            }
+          />
+          <ModeOption
+            onSelect={() => chooseMode("galeri")}
+            title="Pilih foto KTP dari galeri"
+            body="Kalau fotonya sudah ada di ponsel."
+            icon={
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5" aria-hidden>
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+                <circle cx="9" cy="10" r="1.6" />
+                <path d="m4 18 5-5 3 3 3-3 4 4" />
+              </svg>
+            }
+          />
+          <ModeOption
+            onSelect={() => chooseMode("manual")}
+            title="Isi sendiri dulu"
+            body="Ketik manual, data tidak terisi otomatis. Foto KTP tetap diminta di langkah pertama."
+            icon={
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5" aria-hidden>
+                <rect x="2" y="6" width="20" height="12" rx="2" />
+                <path d="M8 14h8M6 10h.01M10 10h.01" strokeLinecap="round" />
+              </svg>
+            }
+          />
+        </div>
+
+        <p className="rounded-md bg-bg p-3 text-sm text-ink-muted">
+          Ketiga cara tetap wajib melampirkan foto KTP. Bedanya hanya di apakah data terisi otomatis.
+        </p>
+      </div>
+    );
+  }
+
+  if (view === "review") {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold text-ink">Cek hasil baca KTP</h2>
+          <p className="mt-1 text-base text-ink-muted">
+            Cocokkan dengan KTP. Yang ditandai kuning perlu Anda periksa.
+          </p>
+        </div>
+
+        {ocrLoading && (
+          <p role="status" className="rounded-md border border-border bg-surface p-4 text-sm text-ink-muted">
+            Sedang membaca KTP...
+          </p>
+        )}
+
+        {ocrError && <Alert tone="error">{ocrError}</Alert>}
+
+        {!ocrLoading && (
+          <ul className="divide-y divide-border rounded-md border border-border bg-surface">
+            {OCR_FIELD_ORDER.map((k) => {
+              const c = ocrConfidence[k];
+              const value = String(getValues(k as never) ?? "").trim();
+              if (c === undefined && !value) return null;
+              const sus = low(k);
+              return (
+                <li key={k} className="flex items-center gap-3 px-4 py-3">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm text-ink-muted">{FIELD_LABELS[k]}</span>
+                    <span className="block break-words text-base font-semibold text-ink">
+                      {value || "—"}
+                    </span>
+                  </span>
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                      sus !== undefined
+                        ? "bg-accent-soft text-accent-ink"
+                        : "bg-primary-soft text-primary-ink"
+                    }`}
+                  >
+                    {sus !== undefined ? "cek" : "terbaca"}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <div className="sticky bottom-0 -mx-1 flex gap-3 rounded-t-xl border-t border-border bg-surface p-3">
+          <Button
+            variant="secondary"
+            className="flex-none"
+            onClick={() => {
+              setView("choice");
+              setOcrError(null);
+            }}
+          >
+            Ulangi
+          </Button>
+          <Button className="flex-1" onClick={() => setView("form")}>
+            {ocrError ? "Lanjut isi manual" : "Benar, lanjut"}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <form noValidate onSubmit={onSubmit} className="space-y-10" aria-busy={isSubmitting}>
+    <form noValidate onSubmit={onSubmit} className="space-y-6" aria-busy={isSubmitting}>
       {summary.length > 0 && (
         <div
           ref={focusOnMount}
@@ -424,388 +662,476 @@ export function ParticipantForm() {
         </div>
       )}
 
-      <Section n={1} title="Identitas">
-        <RadioGroup
-          label="Asal IKADI"
-          required
-          name="originType"
-          columns={2}
-          options={ORIGIN_OPTIONS}
-          value={originType ?? ""}
-          onChange={(v) => setValue("originType", v as ParticipantInput["originType"], { shouldValidate: true })}
-          error={opt("originType")}
-        />
-        <Input
-          id="originName"
-          label="Nama PW/PD IKADI"
-          required
-          placeholder={originType === "PD" ? "Contoh: PD IKADI Kab. Sleman" : "Contoh: PW IKADI DIY"}
-          error={opt("originName")}
-          {...register("originName")}
-        />
-        <Input
-          id="fullName"
-          label="Nama Lengkap & Gelar"
-          required
-          autoComplete="name"
-          error={opt("fullName")}
-          ocrLow={low("fullName")}
-          {...reg("fullName")}
-        />
-        <Input
-          id="nik"
-          label="Nomor NIK KTP"
-          required
-          inputMode="numeric"
-          autoComplete="off"
-          maxLength={17}
-          hint="16 digit angka sesuai KTP, tanpa spasi."
-          error={opt("nik")}
-          ocrLow={low("nik")}
-          {...reg("nik")}
-        />
-      </Section>
-
-      <Section n={2} title="Dokumen KTP">
-        <Field
-          id="ktp"
-          label="Foto KTP"
-          required
-          hint="Wajib. Kamera langsung terbuka saat tombol ditekan — foto KTP dari sini, data terisi otomatis."
-          error={opt("ktp")}
-        >
-          <input
-            id="ktp"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            capture="environment"
-            aria-invalid={errors.ktp ? true : undefined}
-            aria-describedby="ktp-hint ktp-error"
-            onChange={(e) => onKtpChange(e.target.files?.[0])}
-            className={`h-11 ${controlClass} file:mr-3 file:h-full file:border-0 file:bg-surface file:px-3 file:text-base file:text-ink ${controlState(opt("ktp"))}`}
-          />
-        </Field>
-        {ocrLoading && (
-          <p role="status" className="text-sm text-ink-muted">
-            Sedang membaca KTP...
-          </p>
-        )}
-        {ocrError && (
-          <div ref={focusOnMount} tabIndex={-1}>
-            <Alert tone="error">{ocrError}</Alert>
-          </div>
-        )}
-      </Section>
-
-      <Section n={3} title="Data Pribadi">
-        <div id="gender">
-          <RadioGroup
-            label="Jenis Kelamin"
-            required
-            name="gender"
-            columns={2}
-            options={GENDER_OPTIONS}
-            value={gender ?? ""}
-            onChange={(v) => {
-              setValue("gender", v as ParticipantInput["gender"], { shouldValidate: true });
-              clearOcr("gender");
-            }}
-            error={opt("gender")}
-            ocrLow={low("gender")}
+      <div className="space-y-1.5" id="form-langkah">
+        <div className="flex items-center justify-between text-sm font-semibold text-ink-muted">
+          <span>
+            Langkah {step + 1} dari {STEPS.length}
+          </span>
+          <span aria-live="polite">{current.title}</span>
+        </div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-border">
+          <div
+            className="h-full rounded-full bg-primary transition-all"
+            style={{ width: `${Math.round(((step + 1) / STEPS.length) * 100)}%` }}
           />
         </div>
-        <div id="maritalStatus">
-          <RadioGroup
-            label="Status Pernikahan"
-            required
-            name="maritalStatus"
-            columns={2}
-            options={MARITAL_OPTIONS}
-            value={maritalStatus ?? ""}
-            onChange={(v) => {
-              setValue("maritalStatus", v as ParticipantInput["maritalStatus"], { shouldValidate: true });
-              clearOcr("maritalStatus");
-            }}
-            error={opt("maritalStatus")}
-            ocrLow={low("maritalStatus")}
-          />
-        </div>
-        <div className="grid gap-6 md:grid-cols-2">
-          <Select
-            id="bloodType"
-            label="Golongan Darah"
-            required
-            options={[
-              { value: "", label: "Pilih golongan darah", disabled: true },
-              ...BLOOD_OPTIONS,
-            ]}
-            error={opt("bloodType")}
-            {...reg("bloodType")}
-          />
-          <Input
-            id="birthPlace"
-            label="Tempat Lahir"
-            required
-            error={opt("birthPlace")}
-            ocrLow={low("birthPlace")}
-            {...reg("birthPlace")}
-          />
-        </div>
-        <div className="grid gap-6 md:grid-cols-2">
-          <Input
-            id="birthDate"
-            label="Tanggal Lahir"
-            required
-            type="date"
-            error={opt("birthDate")}
-            ocrLow={low("birthDate")}
-            {...reg("birthDate")}
-          />
-          <Field id="photo" label="Pas Foto" hint="Opsional. Format JPEG, PNG, atau WebP. Maksimal 1 MB." error={opt("photo")}>
-            <input
-              id="photo"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              aria-invalid={errors.photo ? true : undefined}
-              aria-describedby="photo-hint photo-error"
-              onChange={(e) => onPhotoChange(e.target.files?.[0])}
-              className={`h-11 ${controlClass} file:mr-3 file:h-full file:border-0 file:bg-surface file:px-3 file:text-base file:text-ink ${controlState(opt("photo"))}`}
-            />
-          </Field>
-        </div>
-      </Section>
-
-      <Section n={4} title="Alamat & Kontak">
-        <Textarea
-          id="addressKtp"
-          label="Alamat sesuai KTP"
-          required
-          rows={3}
-          hint="Salin persis dari KTP: jalan, RT/RW, kelurahan/desa, kecamatan."
-          error={opt("addressKtp")}
-          ocrLow={low("addressKtp")}
-          {...reg("addressKtp")}
-        />
-        <Checkbox
-          id="addressSameAsKtp"
-          checked={sameAsKtp === true}
-          onChange={(v) =>
-            setValue("addressSameAsKtp", v as unknown as ParticipantInput["addressSameAsKtp"], {
-              shouldValidate: true,
-            })
-          }
-          label="Alamat tinggal saya saat ini sama dengan alamat KTP"
-        />
-        <Textarea
-          id="addressCurrent"
-          label="Alamat Tinggal Saat Ini"
-          rows={3}
-          hint={sameAsKtp ? "Terisi otomatis dari alamat KTP." : "Wajib diisi jika berbeda dengan alamat KTP."}
-          disabled={sameAsKtp === true}
-          error={opt("addressCurrent")}
-          {...reg("addressCurrent")}
-        />
-        <div className="grid gap-6 md:grid-cols-2">
-          <Input
-            id="province"
-            label="Provinsi"
-            required
-            error={opt("province")}
-            ocrLow={low("province")}
-            {...reg("province")}
-          />
-          <Input
-            id="city"
-            label="Kabupaten/Kota"
-            required
-            error={opt("city")}
-            ocrLow={low("city")}
-            {...reg("city")}
-          />
-        </div>
-        <Input
-          id="whatsapp"
-          label="No. WhatsApp"
-          required
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          hint="Contoh: 085987654321 atau +6285987654321."
-          error={opt("whatsapp")}
-          {...register("whatsapp")}
-        />
-      </Section>
-
-      <Section n={5} title="Latar Belakang">
-        <div className="grid gap-6 md:grid-cols-2">
-          <Select
-            id="lastEducation"
-            label="Pendidikan Terakhir"
-            options={[
-              { value: "", label: "Pilih pendidikan", disabled: true },
-              ...EDUCATION_OPTIONS.map((o) => ({ value: o, label: o })),
-            ]}
-            error={opt("lastEducation")}
-            {...register("lastEducation")}
-          />
-          <Input
-            id="studyField"
-            label="Bidang Studi"
-            hint="Opsional — bidang studi akademis terakhir."
-            error={opt("studyField")}
-            {...register("studyField")}
-          />
-        </div>
-        <div className="grid gap-6 md:grid-cols-2">
-          <Input
-            id="occupation"
-            label="Pekerjaan"
-            required
-            error={opt("occupation")}
-            ocrLow={low("occupation")}
-            {...reg("occupation")}
-          />
-          <Input
-            id="expertise"
-            label="Bidang Keahlian"
-            hint="Opsional."
-            error={opt("expertise")}
-            {...register("expertise")}
-          />
-        </div>
-      </Section>
-
-      <Section n={6} title="Pengalaman">
-        <div id="sermonExperience">
-          <RadioGroup
-            label="Pengalaman Khutbah"
-            required
-            name="sermonExperience"
-            columns={1}
-            options={SERMON_OPTIONS}
-            value={sermon ?? ""}
-            onChange={(v) => {
-              setValue(
-                "sermonExperience",
-                v as ParticipantInput["sermonExperience"],
-                { shouldValidate: true },
-              );
-              if (v === "LAINNYA") {
-                requestAnimationFrame(() =>
-                  document.getElementById("sermonExperienceOther")?.focus(),
-                );
-              }
-            }}
-            error={opt("sermonExperience")}
-            controlsId={isOther ? "sermonExperienceOther" : undefined}
-          />
-        </div>
-        {isOther && (
-          <Textarea
-            id="sermonExperienceOther"
-            label="Keterangan Pengalaman Khutbah"
-            rows={2}
-            error={opt("sermonExperienceOther")}
-            {...register("sermonExperienceOther")}
-          />
-        )}
-        <Textarea
-          id="organizationExperience"
-          label="Pengalaman Organisasi - Jabatan"
-          rows={2}
-          hint="Opsional."
-          error={opt("organizationExperience")}
-          {...register("organizationExperience")}
-        />
-        <RadioGroup
-          label="Kemampuan Membaca Al-Qur'an"
-          required
-          name="quranReading"
-          columns={1}
-          options={QURAN_OPTIONS}
-          value={quran ?? ""}
-          onChange={(v) =>
-            setValue("quranReading", v as ParticipantInput["quranReading"], {
-              shouldValidate: true,
-            })
-          }
-          error={opt("quranReading")}
-        />
-      </Section>
-
-      <Section n={7} title="Motivasi">
-        <Textarea
-          id="trainingReason"
-          label="Alasan Mengikuti Pelatihan"
-          required
-          rows={3}
-          error={opt("trainingReason")}
-          {...register("trainingReason")}
-        />
-        <Textarea
-          id="trainingExpectation"
-          label="Harapan Setelah Pelatihan"
-          required
-          rows={3}
-          error={opt("trainingExpectation")}
-          {...register("trainingExpectation")}
-        />
-      </Section>
-
-      <Section n={8} title="Persetujuan">
-        <Checkbox
-          id="consent"
-          checked={consent === true}
-          onChange={(v) =>
-            setValue("consent", v as unknown as ParticipantInput["consent"], {
-              shouldValidate: true,
-            })
-          }
-          error={opt("consent")}
-          label={
-            <>
-              Saya memahami data yang saya isi digunakan untuk pendataan KTA IKADI
-              dan saya dapat dihubungi melalui nomor WhatsApp yang dicantumkan.
-            </>
-          }
-        />
-      </Section>
-
-      <div className="space-y-4">
-        {globalError && (
-          <div key={globalError} ref={focusOnMount} tabIndex={-1}>
-            <Alert tone="error">{globalError}</Alert>
-          </div>
-        )}
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          loading={isSubmitting}
-          className="w-full min-w-40 sm:w-auto"
-        >
-          {isSubmitting ? "Mengirim..." : "Kirim Data"}
-        </Button>
-        <p className="text-sm text-ink-muted">
-          Kolom bertanda{" "}
-          <span className="text-primary" aria-hidden>
-            *
-          </span>{" "}
-          wajib diisi.
-        </p>
       </div>
+
+      {step === 0 && (
+        <StepPanel n={1} title="Dokumen & kontak">
+          <KtpField
+            mode={mode}
+            hasKtp={Boolean(ktpValue)}
+            error={opt("ktp")}
+            onChange={onKtpChange}
+          />
+          <Textarea
+            id="addressKtp"
+            label="Alamat sesuai KTP"
+            required
+            rows={3}
+            hint="Salin persis dari KTP: jalan, RT/RW, kelurahan/desa, kecamatan."
+            error={opt("addressKtp")}
+            ocrLow={low("addressKtp")}
+            {...reg("addressKtp")}
+          />
+          <Checkbox
+            id="addressSameAsKtp"
+            checked={sameAsKtp === true}
+            onChange={(v) =>
+              setValue("addressSameAsKtp", v as unknown as ParticipantInput["addressSameAsKtp"], {
+                shouldValidate: true,
+              })
+            }
+            label="Alamat tinggal saya saat ini sama dengan alamat KTP"
+          />
+          <Textarea
+            id="addressCurrent"
+            label="Alamat Tinggal Saat Ini"
+            rows={3}
+            hint={sameAsKtp ? "Terisi otomatis dari alamat KTP." : "Wajib diisi jika berbeda dengan alamat KTP."}
+            disabled={sameAsKtp === true}
+            error={opt("addressCurrent")}
+            {...reg("addressCurrent")}
+          />
+          <div className="grid gap-6 md:grid-cols-2">
+            <Input
+              id="province"
+              label="Provinsi"
+              required
+              error={opt("province")}
+              ocrLow={low("province")}
+              {...reg("province")}
+            />
+            <Input
+              id="city"
+              label="Kabupaten/Kota"
+              required
+              error={opt("city")}
+              ocrLow={low("city")}
+              {...reg("city")}
+            />
+          </div>
+          <Input
+            id="whatsapp"
+            label="No. WhatsApp"
+            required
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            hint="Contoh: 085987654321 atau +6285987654321."
+            error={opt("whatsapp")}
+            {...register("whatsapp")}
+          />
+        </StepPanel>
+      )}
+
+      {step === 1 && (
+        <StepPanel n={2} title="Identitas">
+          <div id="originType">
+            <RadioGroup
+              label="Asal IKADI"
+              required
+              name="originType"
+              columns={2}
+              options={ORIGIN_OPTIONS}
+              value={originType ?? ""}
+              onChange={(v) => setValue("originType", v as ParticipantInput["originType"], { shouldValidate: true })}
+              error={opt("originType")}
+            />
+          </div>
+          <Input
+            id="originName"
+            label="Nama PW/PD IKADI"
+            required
+            placeholder={originType === "PD" ? "Contoh: PD IKADI Kab. Sleman" : "Contoh: PW IKADI DIY"}
+            error={opt("originName")}
+            {...register("originName")}
+          />
+          <Input
+            id="fullName"
+            label="Nama Lengkap & Gelar"
+            required
+            autoComplete="name"
+            error={opt("fullName")}
+            ocrLow={low("fullName")}
+            {...reg("fullName")}
+          />
+          <Input
+            id="nik"
+            label="Nomor NIK KTP"
+            required
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={17}
+            hint="16 digit angka sesuai KTP, tanpa spasi."
+            error={opt("nik")}
+            ocrLow={low("nik")}
+            {...reg("nik")}
+          />
+          <div id="gender">
+            <RadioGroup
+              label="Jenis Kelamin"
+              required
+              name="gender"
+              columns={2}
+              options={GENDER_OPTIONS}
+              value={gender ?? ""}
+              onChange={(v) => {
+                setValue("gender", v as ParticipantInput["gender"], { shouldValidate: true });
+                clearOcr("gender");
+              }}
+              error={opt("gender")}
+              ocrLow={low("gender")}
+            />
+          </div>
+          <div id="maritalStatus">
+            <RadioGroup
+              label="Status Pernikahan"
+              required
+              name="maritalStatus"
+              columns={2}
+              options={MARITAL_OPTIONS}
+              value={maritalStatus ?? ""}
+              onChange={(v) => {
+                setValue("maritalStatus", v as ParticipantInput["maritalStatus"], { shouldValidate: true });
+                clearOcr("maritalStatus");
+              }}
+              error={opt("maritalStatus")}
+              ocrLow={low("maritalStatus")}
+            />
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            <Select
+              id="bloodType"
+              label="Golongan Darah"
+              required
+              options={[
+                { value: "", label: "Pilih golongan darah", disabled: true },
+                ...BLOOD_OPTIONS,
+              ]}
+              error={opt("bloodType")}
+              {...reg("bloodType")}
+            />
+            <Input
+              id="birthPlace"
+              label="Tempat Lahir"
+              required
+              error={opt("birthPlace")}
+              ocrLow={low("birthPlace")}
+              {...reg("birthPlace")}
+            />
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            <Input
+              id="birthDate"
+              label="Tanggal Lahir"
+              required
+              type="date"
+              error={opt("birthDate")}
+              ocrLow={low("birthDate")}
+              {...reg("birthDate")}
+            />
+            <Field id="photo" label="Pas Foto" hint="Opsional. Format JPEG, PNG, atau WebP. Maksimal 1 MB." error={opt("photo")}>
+              <input
+                id="photo"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                aria-invalid={errors.photo ? true : undefined}
+                aria-describedby="photo-hint photo-error"
+                onChange={(e) => onPhotoChange(e.target.files?.[0])}
+                className={`h-11 ${controlClass} file:mr-3 file:h-full file:border-0 file:bg-surface file:px-3 file:text-base file:text-ink ${controlState(opt("photo"))}`}
+              />
+              {Boolean(photoValue) && (
+                <p className="text-sm font-medium text-primary">Pas foto sudah dipilih.</p>
+              )}
+            </Field>
+          </div>
+        </StepPanel>
+      )}
+
+      {step === 2 && (
+        <StepPanel n={3} title="Latar belakang">
+          <div className="grid gap-6 md:grid-cols-2">
+            <Input
+              id="occupation"
+              label="Pekerjaan"
+              required
+              error={opt("occupation")}
+              ocrLow={low("occupation")}
+              {...reg("occupation")}
+            />
+            <Select
+              id="lastEducation"
+              label="Pendidikan Terakhir"
+              options={[
+                { value: "", label: "Pilih pendidikan", disabled: true },
+                ...EDUCATION_OPTIONS.map((o) => ({ value: o, label: o })),
+              ]}
+              error={opt("lastEducation")}
+              {...register("lastEducation")}
+            />
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            <Input
+              id="studyField"
+              label="Bidang Studi"
+              hint="Opsional — bidang studi akademis terakhir."
+              error={opt("studyField")}
+              {...register("studyField")}
+            />
+            <Input
+              id="expertise"
+              label="Bidang Keahlian"
+              hint="Opsional."
+              error={opt("expertise")}
+              {...register("expertise")}
+            />
+          </div>
+          <div id="sermonExperience">
+            <RadioGroup
+              label="Pengalaman Khutbah"
+              required
+              name="sermonExperience"
+              columns={1}
+              options={SERMON_OPTIONS}
+              value={sermon ?? ""}
+              onChange={(v) => {
+                setValue(
+                  "sermonExperience",
+                  v as ParticipantInput["sermonExperience"],
+                  { shouldValidate: true },
+                );
+                if (v === "LAINNYA") {
+                  requestAnimationFrame(() =>
+                    document.getElementById("sermonExperienceOther")?.focus(),
+                  );
+                }
+              }}
+              error={opt("sermonExperience")}
+              controlsId={isOther ? "sermonExperienceOther" : undefined}
+            />
+          </div>
+          {isOther && (
+            <Textarea
+              id="sermonExperienceOther"
+              label="Keterangan Pengalaman Khutbah"
+              rows={2}
+              error={opt("sermonExperienceOther")}
+              {...register("sermonExperienceOther")}
+            />
+          )}
+          <Textarea
+            id="organizationExperience"
+            label="Pengalaman Organisasi - Jabatan"
+            rows={2}
+            hint="Opsional."
+            error={opt("organizationExperience")}
+            {...register("organizationExperience")}
+          />
+          <div id="quranReading">
+            <RadioGroup
+              label="Kemampuan Membaca Al-Qur'an"
+              required
+              name="quranReading"
+              columns={1}
+              options={QURAN_OPTIONS}
+              value={quran ?? ""}
+              onChange={(v) =>
+                setValue("quranReading", v as ParticipantInput["quranReading"], {
+                  shouldValidate: true,
+                })
+              }
+              error={opt("quranReading")}
+            />
+          </div>
+        </StepPanel>
+      )}
+
+      {step === 3 && (
+        <StepPanel n={4} title="Motivasi & persetujuan">
+          <Textarea
+            id="trainingReason"
+            label="Alasan Mengikuti Pelatihan"
+            required
+            rows={3}
+            error={opt("trainingReason")}
+            {...register("trainingReason")}
+          />
+          <Textarea
+            id="trainingExpectation"
+            label="Harapan Setelah Pelatihan"
+            required
+            rows={3}
+            error={opt("trainingExpectation")}
+            {...register("trainingExpectation")}
+          />
+          <div id="consent">
+            <Checkbox
+              id="consent"
+              checked={consent === true}
+              onChange={(v) =>
+                setValue("consent", v as unknown as ParticipantInput["consent"], {
+                  shouldValidate: true,
+                })
+              }
+              error={opt("consent")}
+              label={
+                <>
+                  Saya memahami data yang saya isi digunakan untuk pendataan KTA IKADI
+                  dan saya dapat dihubungi melalui nomor WhatsApp yang dicantumkan.
+                </>
+              }
+            />
+          </div>
+        </StepPanel>
+      )}
+
+      {globalError && (
+        <div key={globalError} ref={focusOnMount} tabIndex={-1}>
+          <Alert tone="error">{globalError}</Alert>
+        </div>
+      )}
+
+      <div className="sticky bottom-0 -mx-1 flex gap-3 rounded-t-xl border-t border-border bg-surface p-3 shadow-raised">
+        {step > 0 && (
+          <Button variant="secondary" className="flex-none" onClick={prevStep} disabled={isSubmitting}>
+            Kembali
+          </Button>
+        )}
+        {isLast ? (
+          <Button type="submit" disabled={isSubmitting} loading={isSubmitting} className="flex-1">
+            {isSubmitting ? "Mengirim..." : "Kirim Data"}
+          </Button>
+        ) : (
+          <Button className="flex-1" onClick={nextStep}>
+            Lanjut
+          </Button>
+        )}
+      </div>
+
+      <p className="text-sm text-ink-muted">
+        Kolom bertanda{" "}
+        <span className="text-primary" aria-hidden>
+          *
+        </span>{" "}
+        wajib diisi.
+      </p>
     </form>
   );
 }
 
-function Section({
-    n,
-    title,
-    children,
-  }: {
-    n: number;
-    title: string;
-    children: React.ReactNode;
-  }) {
+/** Kartu pilihan cara mengisi. Seluruh kartu bisa diketuk (target > 48px). */
+function ModeOption({
+  title,
+  body,
+  badge,
+  icon,
+  onSelect,
+}: {
+  title: string;
+  body: string;
+  badge?: string;
+  icon: React.ReactNode;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="flex w-full items-start gap-3 rounded-xl border border-control-border bg-surface p-4 text-left transition-colors hover:border-primary hover:bg-bg"
+    >
+      <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-base font-semibold text-ink">{title}</span>
+        <span className="block text-sm text-ink-muted">{body}</span>
+      </span>
+      {badge && (
+        <span className="shrink-0 rounded-full bg-primary-soft px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-primary-ink">
+          {badge}
+        </span>
+      )}
+    </button>
+  );
+}
+
+/**
+ * Foto KTP wajib di semua jalur. Mode menentukan sumber gambar:
+ * `foto` = kamera, `galeri` = pemilih file, `manual` = pemilih file tanpa OCR.
+ */
+function KtpField({
+  mode,
+  hasKtp,
+  error,
+  onChange,
+}: {
+  mode: Mode;
+  hasKtp: boolean;
+  error?: string;
+  onChange: (file: File | undefined) => void;
+}) {
+  const hint =
+    mode === "manual"
+      ? "Wajib. Pilih foto KTP dari perangkat — data tidak akan terbaca otomatis."
+      : "Wajib. Foto dari sini membuat data terisi otomatis.";
+
+  return (
+    <Field id="ktp" label="Foto KTP" required hint={hint} error={error}>
+      <div className="space-y-2">
+        <input
+          id="ktp"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          capture={mode === "foto" ? "environment" : undefined}
+          aria-invalid={error ? true : undefined}
+          aria-describedby="ktp-hint ktp-error"
+          onChange={(e) => onChange(e.target.files?.[0])}
+          className={`h-11 ${controlClass} file:mr-3 file:h-full file:border-0 file:bg-surface file:px-3 file:text-base file:text-ink ${controlState(error)}`}
+        />
+        {hasKtp && (
+          <p className="flex items-center gap-1.5 text-sm font-medium text-primary">
+            <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="size-4 shrink-0">
+              <path d="m5 13 4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Foto KTP sudah dilampirkan.
+          </p>
+        )}
+      </div>
+    </Field>
+  );
+}
+
+function StepPanel({
+  n,
+  title,
+  children,
+}: {
+  n: number;
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <fieldset className="rounded-xl border border-border bg-surface p-5 shadow-card sm:p-6 lg:p-8">
       <legend className="px-1 text-lg font-semibold text-ink">

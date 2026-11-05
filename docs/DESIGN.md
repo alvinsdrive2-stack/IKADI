@@ -434,5 +434,6 @@ Dark mode (biaya QA kontras, belum diminta) · drawer/modal detail (halaman penu
 | `admin-login.html` | Kartu login + state error |
 | `admin-dashboard.html` | Topbar, 4 stat, filter, chip aktif, tabel 8 baris, pagination |
 | `admin-detail.html` | Detail peserta, banner privasi, salin NIK |
+| `mobile-flow.html` | Usulan alur ponsel: pilih cara isi (foto KTP / galeri / manual), kamera berbingkai, layar cek hasil OCR, form bertahap + CTA menempel |
 
 Yang **belum** ada mockup: `/daftar/sukses` (spesifikasi di 4.3), empty state dashboard (3.11), loading skeleton. Ikuti spesifikasi teks di atas.

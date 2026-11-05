@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KTA Mobile Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* palet project docs/DESIGN.md — satu tema terang, disengaja (DESIGN.md §7) */
+  --primary:#166534; --primary-hover:#14532D; --primary-soft:#DCFCE7; --primary-ink:#14532D;
+  --accent:#D4AF37; --accent-soft:#FBF5DE; --accent-ink:#7A5C0A;
+  --ink:#1F2937; --muted:#4B5563; --line:#D1D5DB; --control:#6B7280;
+  --danger:#B91C1C; --danger-soft:#FEF2F2;
+  --page:#F3F6F3; --surface:#FFFFFF; --sunken:#EAF1EA;
+  --shadow:0 1px 2px rgb(20 83 45/.05), 0 2px 10px -3px rgb(20 83 45/.10);
+  --radius:12px;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--page); color:var(--ink);
+  font-family:"Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
+  font-size:16px; line-height:1.6;
+  padding-left:max(16px, env(safe-area-inset-left,0px));
+  padding-right:max(16px, env(safe-area-inset-right,0px));
+  padding-block:0 64px;
+}
+h1,h2,h3{text-wrap:balance; margin:0}
+p{margin:0}
+:focus-visible{outline:2px solid #1D4ED8; outline-offset:2px; border-radius:3px}
+
+.top{
+  border-bottom:1px solid var(--line); background:var(--surface);
+  margin-inline:calc(-1 * max(16px, env(safe-area-inset-left,0px))) 0;
+  padding:28px max(20px, env(safe-area-inset-left,0px)) 24px;
+}
+.top h1{font-size:clamp(1.5rem,4.5vw,2rem); letter-spacing:-.02em; line-height:1.2}
+.eyebrow{font-size:.75rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--primary)}
+.lede{color:var(--muted); margin-top:8px; max-width:62ch}
+
+.layout{display:grid; gap:32px; margin-top:32px; align-items:start}
+@media (min-width:900px){
+  .layout{grid-template-columns:minmax(0,340px) minmax(0,1fr); gap:48px}
+  .phone-col{position:sticky; top:24px}
+}
+
+/* ---- phone ---- */
+.hint-bar{display:flex; align-items:center; gap:8px; font-size:.8125rem; color:var(--muted); margin-bottom:12px}
+.hint-bar svg{flex:0 0 auto}
+.phone{
+  width:100%; max-width:320px; margin-inline:auto;
+  border:9px solid #12271B; border-radius:36px; background:var(--surface);
+  box-shadow:0 18px 40px -18px rgb(18 39 27/.55), 0 2px 8px rgb(18 39 27/.15);
+  overflow:hidden;
+}
+.phone-view{height:620px; overflow-y:auto; overscroll-behavior:contain; display:flex; flex-direction:column}
+.screen{display:none; flex:1; flex-direction:column; min-height:100%}
+.screen.on{display:flex}
+
+.pg{padding:20px 18px; display:flex; flex-direction:column; gap:16px; flex:1}
+.pg-h{font-size:1.3125rem; font-weight:700; line-height:1.25; letter-spacing:-.01em}
+.pg-sub{font-size:.875rem; color:var(--muted); margin-top:4px}
+
+.hero{background:var(--primary); color:#fff; padding:34px 18px 28px; display:flex; flex-direction:column; gap:14px; align-items:center; text-align:center; position:relative; overflow:hidden}
+.hero::after{content:""; position:absolute; inset:0; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cg fill='none' stroke='%23FFFFFF' stroke-width='1'%3E%3Cpath d='M32 2 62 32 32 62 2 32z'/%3E%3Cpath d='M32 14 50 32 32 50 14 32z'/%3E%3C/g%3E%3C/svg%3E"); background-size:64px 64px; opacity:.09; pointer-events:none}
+.hero>*{position:relative; z-index:1}
+.mark{width:60px;height:60px;border-radius:16px;background:#fff;display:grid;place-items:center}
+.hero h2{font-size:1.375rem; line-height:1.25}
+.hero p{font-size:.875rem; color:#D1FAE5}
+
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:0 18px; border-radius:10px; border:1px solid transparent; font:inherit; font-weight:600; font-size:.9375rem; cursor:pointer; text-decoration:none; width:100%; background:none}
+.btn-primary{background:var(--primary); color:#fff}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-ghost{background:transparent; color:var(--muted); border-color:var(--control); min-height:44px}
+.btn-ghost:hover{background:var(--sunken)}
+
+.opt{display:flex; gap:12px; align-items:flex-start; text-align:left; width:100%; padding:14px; border-radius:12px; border:1px solid var(--control); background:var(--surface); font:inherit; color:inherit; cursor:pointer}
+.opt:hover{border-color:var(--primary); background:#F7FCF8}
+.opt .ic{width:38px;height:38px;border-radius:10px;background:var(--primary-soft);display:grid;place-items:center;flex:0 0 auto;color:var(--primary)}
+.opt b{display:block; font-size:.9375rem; font-weight:600; line-height:1.35}
+.opt span{display:block; font-size:.8125rem; color:var(--muted); line-height:1.45; margin-top:2px}
+.tag{align-self:flex-start; font-size:.6875rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--primary-ink); background:var(--primary-soft); border-radius:999px; padding:4px 10px; margin-left:auto; flex:0 0 auto}
+
+.note{font-size:.8125rem; color:var(--muted); background:var(--sunken); border-radius:10px; padding:10px 12px; line-height:1.5}
+
+/* kamera */
+.cam{background:#0B1512; color:#fff; flex:1; display:flex; flex-direction:column; padding:16px 18px 20px; gap:14px}
+.cam .tbar{display:flex; align-items:center; justify-content:space-between; font-size:.8125rem; color:#9FB4A8}
+.frame{position:relative; aspect-ratio:1.586/1; border-radius:12px; background:#16231C; border:1px solid #2C4436; overflow:hidden; margin-top:6px; max-width:100%}
+.frame .guide{position:absolute; inset:12px; border:2px dashed rgba(255,255,255,.55); border-radius:8px}
+.frame .corner{position:absolute; width:26px; height:26px; border:3px solid var(--accent)}
+.frame .c1{top:10px; left:10px; border-right:0; border-bottom:0; border-radius:8px 0 0 0}
+.frame .c2{top:10px; right:10px; border-left:0; border-bottom:0; border-radius:0 8px 0 0}
+.frame .c3{bottom:10px; left:10px; border-right:0; border-top:0; border-radius:0 0 0 8px}
+.frame .c4{bottom:10px; right:10px; border-left:0; border-top:0; border-radius:0 0 8px 0}
+.frame .ft{position:absolute; inset:auto 12px 12px; font-size:.75rem; color:#D6E3DA; text-align:center}
+.shutter{width:66px;height:66px;border-radius:50%;background:#fff;border:5px solid #2C4436; margin-inline:auto; cursor:pointer}
+.tips{font-size:.75rem; color:#9FB4A8; text-align:center}
+
+/* hasil ocr */
+.row{display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--line); font-size:.875rem}
+.row:last-child{border-bottom:0}
+.row .k{color:var(--muted); font-size:.75rem; display:block; line-height:1.3}
+.row .v{font-weight:600; font-size:.875rem; display:block; line-height:1.4; word-break:break-word}
+.row .grow{flex:1; min-width:0}
+.chip{font-size:.6875rem; font-weight:700; border-radius:999px; padding:4px 10px; white-space:nowrap; flex:0 0 auto}
+.chip.ok{background:var(--primary-soft); color:var(--primary-ink)}
+.chip.check{background:var(--accent-soft); color:var(--accent-ink)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-variant-numeric:tabular-nums; letter-spacing:.02em}
+.banner{display:flex; gap:10px; align-items:flex-start; background:var(--primary-soft); color:var(--primary-ink); border-radius:10px; padding:11px 12px; font-size:.8125rem; line-height:1.45}
+
+/* form */
+.progress{display:flex; flex-direction:column; gap:6px}
+.progress .t{display:flex; justify-content:space-between; font-size:.75rem; color:var(--muted); font-weight:600}
+.bar{height:6px; border-radius:999px; background:var(--sunken); overflow:hidden}
+.bar i{display:block; height:100%; background:var(--primary); border-radius:999px}
+.fld{display:flex; flex-direction:column; gap:6px}
+.fld label{font-size:.8125rem; font-weight:600}
+.fld .in{min-height:48px; border:1px solid var(--control); border-radius:10px; background:#fff; padding:10px 12px; font-size:1rem; font-family:inherit; color:var(--ink); display:flex; align-items:center; gap:6px}
+.fld .in.area{min-height:76px; align-items:flex-start; line-height:1.5}
+.fld .in.flag{border-color:var(--danger); background:var(--danger-soft)}
+.warn{font-size:.75rem; font-weight:600; color:var(--danger)}
+.chk{display:flex; gap:10px; align-items:flex-start; font-size:.8125rem; line-height:1.45; padding:11px 12px; border:1px solid var(--control); border-radius:10px}
+.box{width:18px;height:18px;border-radius:4px;border:2px solid var(--primary); background:var(--primary); flex:0 0 auto; margin-top:1px; display:grid; place-items:center}
+
+/* sticky cta */
+.cta-dock{position:sticky; bottom:0; background:linear-gradient(to top, var(--surface) 70%, rgba(255,255,255,0)); padding:14px 18px 18px; display:flex; gap:8px; border-top:1px solid var(--line)}
+.cta-dock .btn{flex:1}
+
+/* sukses */
+.ok-circle{width:76px;height:76px;border-radius:50%;background:var(--primary-soft);display:grid;place-items:center;margin:12px auto 0}
+
+/* ---- spec ---- */
+.spec{display:flex; flex-direction:column; gap:36px; min-width:0}
+.block h2{font-size:1.125rem; font-weight:700; letter-spacing:-.01em; display:flex; align-items:center; gap:10px}
+.block h2 .num{font-size:.75rem; font-weight:700; color:var(--primary); background:var(--primary-soft); border-radius:6px; padding:4px 10px; letter-spacing:.04em}
+.block > p{margin-top:10px; color:var(--muted); max-width:66ch}
+.steps{list-style:none; margin:16px 0 0; padding:0; display:flex; flex-direction:column; gap:6px}
+.steps li button{
+  width:100%; text-align:left; font:inherit; color:inherit; cursor:pointer;
+  display:flex; gap:12px; align-items:baseline; padding:11px 12px; border-radius:10px;
+  border:1px solid transparent; background:transparent;
+}
+.steps li button:hover{background:var(--sunken)}
+.steps li button.active{background:var(--surface); border-color:var(--line); box-shadow:var(--shadow)}
+.steps .n{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.75rem; color:var(--primary); font-weight:700; flex:0 0 auto; padding-top:3px}
+.steps b{font-size:.9375rem; display:block; line-height:1.4}
+.steps small{display:block; font-size:.8125rem; color:var(--muted); line-height:1.45; margin-top:1px}
+
+.rules{list-style:none; margin:14px 0 0; padding:0; display:grid; gap:10px}
+.rules li{display:flex; gap:10px; font-size:.9375rem; line-height:1.55; min-width:0}
+.rules li::before{content:""; width:6px; height:6px; border-radius:50%; background:var(--accent); flex:0 0 auto; margin-top:10px}
+.rules code, .inline-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.8125em; background:var(--sunken); border-radius:4px; padding:1px 5px; color:var(--ink); word-break:break-word}
+
+.gap{display:grid; gap:10px; margin-top:14px}
+.gap .g{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:12px 14px; font-size:.875rem; line-height:1.55; min-width:0}
+.gap .g b{display:block; font-size:.875rem; color:var(--danger)}
+
+.decision{background:var(--accent-soft); border:1px solid var(--accent); border-radius:10px; padding:14px 16px; margin-top:14px; font-size:.875rem; line-height:1.55; color:var(--accent-ink)}
+.decision b{display:block; margin-bottom:4px}
+
+.tablewrap{overflow-x:auto; margin-top:14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface)}
+table{border-collapse:collapse; width:100%; min-width:560px; font-size:.875rem; text-align:left}
+th{font-size:.6875rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); background:var(--sunken); padding:10px 12px; font-weight:700; white-space:nowrap}
+td{padding:10px 12px; border-top:1px solid var(--line); vertical-align:top; line-height:1.5}
+td.mono{white-space:nowrap; font-size:.8125rem; font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+</style>
+</head>
+<body>
+
+
+<header class="top">
+  <p class="eyebrow">Pendataan KTA IKADI</p>
+  <h1>Alur isi data untuk ponsel</h1>
+  <p class="lede">Formulir sekarang: 28 kolom, delapan kelompok, satu halaman panjang, kamera dipaksa buka. Di ponsel itu satu scroll sepanjang sembilan layar tanpa tanda kemajuan. Rancangan di bawah memecahnya jadi empat langkah, dan langkah pertama memilih cara mengisi.</p>
+</header>
+
+<div class="layout">
+  <div class="phone-col">
+    <div class="hint-bar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16"/></svg>
+      Klik langkah di kanan, atau tombol di dalam layar
+    </div>
+    <div class="phone">
+      <div class="phone-view" id="view">
+
+        <section class="screen on" id="s-landing" aria-label="Layar 1 — beranda">
+          <div class="hero">
+            <div class="mark">
+              <svg width="34" height="34" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#166534"/><path d="M24 7l3.6 6.4L35 15l-4.8 5.3.9 7.2L24 24.6l-7.1 2.9.9-7.2L13 15l7.4-1.6z" fill="#D4AF37"/></svg>
+            </div>
+            <div>
+              <p style="font-size:.75rem;letter-spacing:.08em;text-transform:uppercase">Ikatan Dai Indonesia</p>
+              <h2>Pendataan<br>Kartu Tanda Anggota</h2>
+            </div>
+            <p>Siapkan KTP. Isi selesai sekitar 5 menit.</p>
+          </div>
+          <div class="pg" style="justify-content:space-between">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div class="note" style="display:flex;gap:10px;align-items:flex-start">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2" aria-hidden="true" style="flex:0 0 auto;margin-top:2px"><path d="M12 3l7 4v5c0 4.2-2.9 7.7-7 9-4.1-1.3-7-4.8-7-9V7z"/></svg>
+                <span>NIK hanya dilihat admin. Tidak ditampilkan ke publik.</span>
+              </div>
+              <div class="note" style="display:flex;gap:10px;align-items:flex-start">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2" aria-hidden="true" style="flex:0 0 auto;margin-top:2px"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 9h8M8 13h5"/></svg>
+                <span>Satu NIK untuk satu pendaftaran.</span>
+              </div>
+            </div>
+            <button class="btn btn-primary" data-go="pilih">Mulai isi data</button>
+          </div>
+        </section>
+
+        <section class="screen" id="s-pilih" aria-label="Layar 2 — pilih cara mengisi">
+          <div class="pg">
+            <div>
+              <h2 class="pg-h">Mau diisi bagaimana?</h2>
+              <p class="pg-sub">Pilih yang paling gampang buat Anda.</p>
+            </div>
+
+            <button class="opt" data-go="kamera">
+              <span class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h3l1.5-2h7L17 8h3v10H4z"/><circle cx="12" cy="12.5" r="3"/></svg></span>
+              <span style="flex:1;min-width:0">
+                <b>Foto KTP sekarang</b>
+                <span>Kamera terbuka, data terisi otomatis. Paling cepat.</span>
+              </span>
+              <span class="tag">Tercepat</span>
+            </button>
+
+            <button class="opt" data-go="kamera">
+              <span class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m4 18 5-5 3 3 3-3 4 4"/></svg></span>
+              <span style="flex:1;min-width:0">
+                <b>Pilih foto KTP dari galeri</b>
+                <span>Kalau fotonya sudah ada di ponsel.</span>
+              </span>
+            </button>
+
+            <button class="opt" data-go="form">
+              <span class="ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8" stroke-linecap="round"/></svg></span>
+              <span style="flex:1;min-width:0">
+                <b>Isi sendiri dulu</b>
+                <span>Ketik manual, data tidak terisi otomatis. Foto KTP tetap diminta di akhir.</span>
+              </span>
+            </button>
+
+            <p class="note" style="margin-top:auto">Ketiga cara tetap wajib melampirkan foto KTP. Bedanya hanya di apakah data terisi otomatis.</p>
+          </div>
+        </section>
+
+        <section class="screen" id="s-kamera" aria-label="Layar 3 — kamera KTP">
+          <div class="cam">
+            <div class="tbar">
+              <span>Foto KTP</span>
+              <span>1 dari 4</span>
+            </div>
+            <div class="frame">
+              <div class="guide"></div>
+              <div class="corner c1"></div><div class="corner c2"></div>
+              <div class="corner c3"></div><div class="corner c4"></div>
+              <div class="ft">Posisikan KTP memenuhi bingkai</div>
+            </div>
+            <p class="tips">Cahaya cukup, jangan silau, KTP tidak terlipat.</p>
+            <button class="shutter" aria-label="Ambil foto KTP" data-go="cek"></button>
+            <button class="btn btn-ghost" style="background:transparent;color:#D6E3DA;border-color:#2C4436" data-go="pilih">Pilih dari galeri</button>
+          </div>
+        </section>
+
+        <section class="screen" id="s-cek" aria-label="Layar 4 — cek hasil baca KTP">
+          <div class="pg">
+            <div>
+              <h2 class="pg-h">Cek hasil baca KTP</h2>
+              <p class="pg-sub">Cocokkan dengan KTP. Yang ditandai kuning perlu Anda periksa.</p>
+            </div>
+
+            <div class="banner">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#14532D" stroke-width="2.5" aria-hidden="true" style="flex:0 0 auto;margin-top:2px"><path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>11 data terisi otomatis. Sisanya Anda lengkapi sendiri.</span>
+            </div>
+
+            <div>
+              <div class="row"><span class="grow"><span class="k">NIK</span><span class="v mono">3402 0512 8890 0013</span></span><span class="chip ok">terbaca</span></div>
+              <div class="row"><span class="grow"><span class="k">Nama</span><span class="v">Ahmad Fauzan, S.Pd.I.</span></span><span class="chip check">cek</span></div>
+              <div class="row"><span class="grow"><span class="k">Tempat, tanggal lahir</span><span class="v">Sleman, 12 Mei 1987</span></span><span class="chip ok">terbaca</span></div>
+              <div class="row"><span class="grow"><span class="k">Alamat</span><span class="v">Jl. Kaliurang KM 8, Ngaglik, Sleman</span></span><span class="chip check">cek</span></div>
+              <div class="row"><span class="grow"><span class="k">Golongan darah</span><span class="v">O</span></span><span class="chip ok">terbaca</span></div>
+            </div>
+          </div>
+          <div class="cta-dock">
+            <button class="btn btn-ghost" style="flex:0 0 auto;width:auto;padding-inline:14px" data-go="kamera">Ulangi</button>
+            <button class="btn btn-primary" data-go="form">Benar, lanjut</button>
+          </div>
+        </section>
+
+        <section class="screen" id="s-form" aria-label="Layar 5 — langkah formulir">
+          <div class="pg">
+            <div class="progress">
+              <div class="t"><span>Langkah 1 dari 4</span><span>Dokumen &amp; alamat</span></div>
+              <div class="bar"><i style="width:25%"></i></div>
+            </div>
+
+            <div class="fld">
+              <label for="m-ktp">Foto KTP</label>
+              <div class="in" id="m-ktp" style="justify-content:space-between">
+                <span style="font-size:.875rem">KTP sudah dilampirkan</span>
+                <span style="font-size:.8125rem;font-weight:600;color:var(--primary)">Ganti</span>
+              </div>
+              <span style="font-size:.75rem;color:var(--muted)">Wajib. Diambil dari langkah sebelumnya.</span>
+            </div>
+
+            <div class="fld">
+              <label for="m-alamat">Alamat sesuai KTP</label>
+              <div class="in area flag" id="m-alamat">Jl. Kaliurang KM 8, Ngaglik, Sleman</div>
+              <span class="warn">Bacaan 62% — periksa RT/RW dan kecamatan.</span>
+            </div>
+
+            <label class="chk">
+              <span class="box" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5"><path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              Alamat tinggal sekarang sama dengan alamat KTP
+            </label>
+
+            <div class="fld">
+              <label for="m-wa">No. WhatsApp</label>
+              <div class="in" id="m-wa"><span style="color:var(--muted)">+62</span> 859 8765 4321</div>
+              <span style="font-size:.75rem;color:var(--muted)">Dipakai admin untuk konfirmasi.</span>
+            </div>
+          </div>
+          <div class="cta-dock">
+            <button class="btn btn-ghost" style="flex:0 0 auto;width:auto;padding-inline:14px" data-go="cek">Kembali</button>
+            <button class="btn btn-primary" data-go="sukses">Lanjut</button>
+          </div>
+        </section>
+
+        <section class="screen" id="s-sukses" aria-label="Layar 6 — berhasil">
+          <div class="pg" style="justify-content:center;text-align:center">
+            <div class="ok-circle">
+              <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.8" aria-hidden="true"><path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <h2 class="pg-h">Data terkirim</h2>
+              <p class="pg-sub">Admin IKADI akan memeriksa data Anda lalu menghubungi lewat WhatsApp.</p>
+            </div>
+            <div class="note" style="text-align:left">Simpan halaman ini. Kalau ada data yang salah, hubungi pengurus PW/PD Anda.</div>
+          </div>
+          <div class="cta-dock">
+            <button class="btn btn-primary" data-go="landing">Selesai</button>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="spec">
+
+    <section class="block">
+      <h2><span class="num">ALUR</span> Empat langkah, satu keputusan di depan</h2>
+      <p>Keputusan cara mengisi ditaruh sebelum satu pun kolom muncul. Peserta yang KTP-nya sudah difoto tidak dipaksa membuka kamera; peserta yang tidak nyaman dengan kamera tidak dipaksa juga.</p>
+      <ol class="steps">
+        <li><button data-go="landing" class="active"><span class="n">01</span><span><b>Beranda</b><small>Satu tombol: "Mulai isi data". Tidak ada menu.</small></span></button></li>
+        <li><button data-go="pilih"><span class="n">02</span><span><b>Pilih cara isi</b><small>Foto sekarang · pilih dari galeri · isi sendiri.</small></span></button></li>
+        <li><button data-go="kamera"><span class="n">03</span><span><b>Ambil atau pilih foto KTP</b><small>Kamera layar penuh dengan bingkai KTP, atau pemilih file.</small></span></button></li>
+        <li><button data-go="cek"><span class="n">04</span><span><b>Cek hasil baca</b><small>Ringkas, bukan form. Hanya yang ragu ditandai.</small></span></button></li>
+        <li><button data-go="form"><span class="n">05</span><span><b>Formulir 4 langkah</b><small>Dokumen &amp; alamat → identitas → latar belakang → kirim. Langkah 1 selalu memuat foto KTP, walau jalurnya manual.</small></span></button></li>
+        <li><button data-go="sukses"><span class="n">06</span><span><b>Berhasil</b><small>Nada tenang, bukan pesta. Langkah berikutnya jelas.</small></span></button></li>
+      </ol>
+    </section>
+
+    <section class="block">
+      <h2><span class="num">MOBILE</span> Yang berubah dibanding sekarang</h2>
+      <ul class="rules">
+        <li><b>Tombol aksi menempel di bawah</b>, bukan di ujung scroll sembilan layar. Satu tombol utama per layar, tinggi 48px, di jangkauan jempol.</li>
+        <li><b>Satu kelompok per layar.</b> Delapan <code>fieldset</code> ditumpuk jadi 4 langkah × 5–7 kolom. Progres "Langkah 2 dari 4" tampil di atas, jadi peserta tahu sisa jaraknya.</li>
+        <li><b>Tidak ada "Kirim" sebelum semua langkah selesai.</b> Tiap langkah "Lanjut", langkah terakhir "Kirim data".</li>
+        <li><b>Kamera bukan satu-satunya jalan.</b> Sekarang <code>capture="environment"</code> memaksa kamera terbuka; tambah tombol "Pilih dari galeri" yang membuka pemilih file biasa.</li>
+        <li><b>Pilihan besar, bukan radio kecil.</b> PW/PD, jenis kelamin, status, golongan darah jadi kartu yang diketuk utuh (min 48px) — radio 4px di ponsel adalah sasaran salah tekan.</li>
+        <li><b>Input 16px</b> dan <code>inputmode</code> sesuai isi: <code>numeric</code> untuk NIK, <code>tel</code> untuk WA, <code>date</code> untuk tanggal lahir. iOS tidak auto-zoom kalau font 16px ke atas.</li>
+        <li><b>Simpan draf otomatis</b> ke <code>localStorage</code> tiap ganti langkah. Koneksi putus di tengah jalan tidak menghapus dua puluh kolom yang sudah diketik.</li>
+        <li><b>Foto dipratinjau</b> setelah diambil, dengan tombol "Ulangi". Tanpa pratinjau, kesalahan baru ketahuan setelah submit.</li>
+        <li><b>Hanya field ragu yang ditandai.</b> Hasil OCR ber-confidence rendah diberi border merah lembut plus kalimat, bukan seluruh form jadi merah.</li>
+        <li><b>Hasil baca tampil sebagai daftar nilai</b> (label kecil, nilai besar, chip status), bukan sebagai form yang harus dibaca ulang dari atas.</li>
+      </ul>
+    </section>
+
+    <section class="block">
+      <h2><span class="num">KEPUTUSAN</span> Foto KTP wajib di semua jalur</h2>
+      <div class="decision">
+        <b>Tetap wajib, termasuk jalur "isi sendiri".</b>
+        Skema di <span class="inline-code">lib/schema.ts:64</span> tidak berubah. Konsekuensi: layar 05 selalu punya langkah unggah foto KTP, juga saat peserta memilih ketik manual. Di jalur manual foto diunggah tanpa OCR, jadi tidak ada pembacaan otomatis dan tidak ada penanda confidence. Endpoint, admin, dan laporan tidak tersentuh.
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="num">GAP</span> Yang belum ada di kode sekarang</h2>
+      <div class="gap">
+        <div class="g"><b>Kamera terkunci</b> <span class="inline-code">components/ParticipantForm.tsx:479</span> — <span class="inline-code">capture="environment"</span> membuat tombol langsung membuka kamera; tidak ada jalan memilih file yang sudah ada.</div>
+        <div class="g"><b>Tidak ada layar pilihan</b> — form langsung tampil penuh; belum ada komponen pemilih cara isi.</div>
+        <div class="g"><b>Tanpa progres</b> — delapan <span class="inline-code">fieldset</span> dirender berurutan (<span class="inline-code">ParticipantForm.tsx:800</span>); tidak ada indikator langkah maupun tombol menempel.</div>
+        <div class="g"><b>Tanpa draf</b> — tidak ada penyimpanan sementara; refresh atau koneksi putus berarti isian hilang.</div>
+        <div class="g"><b>Tanda OCR per field, tanpa ringkasan</b> — peserta harus menggulir mencari field bertanda merah; belum ada satu layar "cek hasil".</div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="num">HANDOFF</span> Komponen dan perubahan file</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Baru / diubah</th><th>Isi</th><th>Sumber data</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">components/EntryChoice.tsx</td><td>Layar 02 — tiga kartu pilihan, meneruskan mode ke form</td><td>statis</td></tr>
+            <tr><td class="mono">components/KtpCapture.tsx</td><td>Layar 03 — kamera layar penuh plus input file galeri, pratinjau, "Ulangi"</td><td>getUserMedia atau input file</td></tr>
+            <tr><td class="mono">components/OcrReview.tsx</td><td>Layar 04 — daftar nilai hasil OCR plus chip status</td><td>POST /api/participants/ocr (sudah ada)</td></tr>
+            <tr><td class="mono">components/StepForm.tsx</td><td>Layar 05 — pembungkus 4 langkah, progres, CTA menempel</td><td>RHF control</td></tr>
+            <tr><td class="mono">components/ParticipantForm.tsx</td><td>Dipecah; isi per langkah dipindah, validasi per langkah ditambah</td><td>—</td></tr>
+            <tr><td class="mono">lib/schema.ts</td><td>participantSchema dipakai per langkah (pick); aturan KTP wajib ditinjau</td><td>—</td></tr>
+            <tr><td class="mono">app/daftar/page.tsx</td><td>Jadi kerangka: render EntryChoice lalu alur</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:14px;font-size:.875rem;color:var(--muted)">Endpoint <span class="inline-code">POST /api/participants</span> dan <span class="inline-code">/api/participants/ocr</span> tidak perlu berubah — alur baru hanya mengubah cara mengumpulkan nilai sebelum dikirim.</p>
+    </section>
+
+  </div>
+</div>
+
+<script>
+  var screens = Array.prototype.slice.call(document.querySelectorAll('.screen'));
+  var view = document.getElementById('view');
+  function go(id){
+    screens.forEach(function(s){ s.classList.toggle('on', s.id === 's-' + id); });
+    Array.prototype.forEach.call(document.querySelectorAll('.steps button'), function(b){
+      b.classList.toggle('active', b.dataset.go === id);
+    });
+    if (view) view.scrollTop = 0;
+  }
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('[data-go]');
+    if (!b) return;
+    e.preventDefault();
+    go(b.dataset.go);
+  });
+</script>
+
+</body>
+</html>

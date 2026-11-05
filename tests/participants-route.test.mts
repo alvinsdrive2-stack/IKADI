@@ -33,6 +33,7 @@ const base = {
   maritalStatus: "SUDAH_MENIKAH",
   bloodType: "O",
   photo: "data:image/png;base64," + Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a]).toString("base64"),
+  ktp: "data:image/jpeg;base64," + Buffer.from([0xff, 0xd8, 0xff, 0xe0]).toString("base64"),
   addressKtp: "Desa Sukamaju, Kec. Taman, Sidoarjo, Jawa Timur",
   addressSameAsKtp: true,
   province: "Jawa Timur",

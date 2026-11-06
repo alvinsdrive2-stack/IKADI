@@ -1,60 +1,41 @@
-"use client";
-
-import { useId } from "react";
-import type {
-  InputHTMLAttributes,
-  SelectHTMLAttributes,
-  TextareaHTMLAttributes,
-} from "react";
+import * as React from "react"
+import { useId } from "react"
+import { TriangleAlert } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { Input as UiInput } from "@/components/ui/input"
+import { Textarea as UiTextarea } from "@/components/ui/textarea"
+import { Select as UiSelect } from "@/components/ui/select"
+import { Checkbox as UiCheckbox } from "@/components/ui/checkbox"
+import { cn } from "@/lib/utils"
 
 type Common = {
-  label: string;
-  hint?: string;
-  error?: string;
-  required?: boolean;
-  /** Nilai confidence OCR bila di bawah threshold — menandai field merah statis. */
-  ocrLow?: number;
-};
-
-/** Kelas kontrol: border control-border 4.6:1, state error tetap merah + latar lembut. */
-export const controlClass =
-  "w-full rounded-md border bg-surface text-base text-ink transition-colors hover:border-ink-muted focus:border-primary focus:outline-none disabled:bg-bg";
-
-/** Penanda hasil OCR ber-confidence rendah — merah statis, tanpa animasi (WCAG 2.3.3). */
-export function OcrHint({
-  id,
-  confidence,
-}: {
-  id: string;
-  confidence: number;
-}) {
-  return (
-    <p id={id} className="text-sm font-medium text-danger">
-      ⚠ Hasil OCR {Math.round(confidence * 100)}% — periksa kembali data ini.
-    </p>
-  );
+  label: string
+  hint?: string
+  error?: string
+  required?: boolean
+  ocrLow?: number
 }
 
+export const controlClass = "w-full"
 export const controlState = (error?: string, ocrLow?: boolean) =>
-  error || ocrLow ? "border-danger bg-danger-soft/40" : "border-control-border";
+  error || ocrLow ? "border-danger bg-danger-soft/40" : undefined
+
+export function OcrHint({ id, confidence }: { id: string; confidence: number }) {
+  return (
+    <p id={id} className="flex items-start gap-1.5 text-sm font-medium text-danger">
+      <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0" strokeWidth={2} />
+      Hasil OCR {Math.round(confidence * 100)}% — periksa kembali data ini.
+    </p>
+  )
+}
 
 export function ErrorText({ id, children }: { id: string; children: React.ReactNode }) {
   return (
     <p id={id} className="flex items-start gap-1.5 text-sm font-medium text-danger">
-      <svg
-        aria-hidden
-        className="mt-0.5 size-4 shrink-0"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7.5v5.5M12 16.5v.01" strokeLinecap="round" />
-      </svg>
+      <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0" strokeWidth={2} />
       {children}
     </p>
-  );
+  )
 }
 
 export function Field({
@@ -68,14 +49,14 @@ export function Field({
 }: Common & { id: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-medium text-ink">
+      <Label htmlFor={id} className="block text-sm font-medium text-ink">
         {label}
         {required && (
           <span className="ml-0.5 text-primary" aria-hidden>
             *
           </span>
         )}
-      </label>
+      </Label>
       {hint && (
         <p id={`${id}-hint`} className="text-sm text-ink-muted">
           {hint}
@@ -85,17 +66,13 @@ export function Field({
       {error && <ErrorText id={`${id}-error`}>{error}</ErrorText>}
       {ocrLow !== undefined && <OcrHint id={`${id}-ocr`} confidence={ocrLow} />}
     </div>
-  );
+  )
 }
 
 const describedBy = (id: string, hint?: string, error?: string, ocrLow?: number) =>
-  [
-    hint ? `${id}-hint` : null,
-    error ? `${id}-error` : null,
-    ocrLow !== undefined ? `${id}-ocr` : null,
-  ]
+  [hint ? `${id}-hint` : null, error ? `${id}-error` : null, ocrLow !== undefined ? `${id}-ocr` : null]
     .filter(Boolean)
-    .join(" ") || undefined;
+    .join(" ") || undefined
 
 export function Input({
   label,
@@ -104,21 +81,21 @@ export function Input({
   required,
   ocrLow,
   ...props
-}: Common & InputHTMLAttributes<HTMLInputElement>) {
-  const autoId = useId();
-  const id = props.id ?? autoId;
+}: Common & React.InputHTMLAttributes<HTMLInputElement>) {
+  const autoId = useId()
+  const id = props.id ?? autoId
   return (
     <Field id={id} label={label} hint={hint} error={error} required={required} ocrLow={ocrLow}>
-      <input
+      <UiInput
         {...props}
         id={id}
         aria-required={required || undefined}
         aria-invalid={error || ocrLow !== undefined ? true : undefined}
         aria-describedby={describedBy(id, hint, error, ocrLow)}
-        className={`h-11 ${controlClass} px-3 ${controlState(error, ocrLow !== undefined)}`}
+        className={controlState(error, ocrLow !== undefined)}
       />
     </Field>
-  );
+  )
 }
 
 export function Textarea({
@@ -128,25 +105,22 @@ export function Textarea({
   required,
   ocrLow,
   ...props
-}: Common & TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  const autoId = useId();
-  const id = props.id ?? autoId;
+}: Common & React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const autoId = useId()
+  const id = props.id ?? autoId
   return (
     <Field id={id} label={label} hint={hint} error={error} required={required} ocrLow={ocrLow}>
-      <textarea
+      <UiTextarea
         {...props}
         id={id}
         aria-required={required || undefined}
         aria-invalid={error || ocrLow !== undefined ? true : undefined}
         aria-describedby={describedBy(id, hint, error, ocrLow)}
-        className={`min-h-28 resize-y px-3 py-2.5 ${controlClass} ${controlState(error, ocrLow !== undefined)}`}
+        className={controlState(error, ocrLow !== undefined)}
       />
     </Field>
-  );
+  )
 }
-
-const chevron =
-  "bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' stroke='%234B5563' stroke-width='2'%3E%3Cpath d='m5 8 5 5 5-5'/%3E%3C/svg%3E\")] bg-[position:right_0.75rem_center] bg-no-repeat pr-10";
 
 export function Select({
   label,
@@ -157,29 +131,29 @@ export function Select({
   options,
   ...props
 }: Common &
-  SelectHTMLAttributes<HTMLSelectElement> & {
-    options: { value: string; label: string; disabled?: boolean }[];
+  React.SelectHTMLAttributes<HTMLSelectElement> & {
+    options: { value: string; label: string; disabled?: boolean }[]
   }) {
-  const autoId = useId();
-  const id = props.id ?? autoId;
+  const autoId = useId()
+  const id = props.id ?? autoId
   return (
     <Field id={id} label={label} hint={hint} error={error} required={required} ocrLow={ocrLow}>
-      <select
+      <UiSelect
         {...props}
         id={id}
         aria-required={required || undefined}
         aria-invalid={error || ocrLow !== undefined ? true : undefined}
         aria-describedby={describedBy(id, hint, error, ocrLow)}
-        className={`h-11 appearance-none ${chevron} ${controlClass} pl-3 ${controlState(error, ocrLow !== undefined)}`}
+        className={controlState(error, ocrLow !== undefined)}
       >
         {options.map((o) => (
           <option key={o.value} value={o.value} disabled={o.disabled}>
             {o.label}
           </option>
         ))}
-      </select>
+      </UiSelect>
     </Field>
-  );
+  )
 }
 
 export function RadioGroup({
@@ -194,23 +168,21 @@ export function RadioGroup({
   columns,
   controlsId,
 }: {
-  label: string;
-  hint?: string;
-  error?: string;
-  required?: boolean;
-  /** Confidence OCR di bawah threshold — menandai grup merah statis. */
-  ocrLow?: number;
-  name: string;
-  options: { value: string; label: string }[];
-  value: string;
-  onChange: (v: string) => void;
-  /** 2 = sejajar (opsi pendek); 1 = vertikal (opsi panjang / 3+). */
-  columns: 1 | 2;
-  controlsId?: string;
+  label: string
+  hint?: string
+  error?: string
+  required?: boolean
+  ocrLow?: number
+  name: string
+  options: { value: string; label: string }[]
+  value: string
+  onChange: (v: string) => void
+  columns: 1 | 2
+  controlsId?: string
 }) {
-  const uid = useId();
-  const errorId = `${name}-${uid}-error`;
-  const ocrId = `${name}-${uid}-ocr`;
+  const uid = useId()
+  const errorId = `${name}-${uid}-error`
+  const ocrId = `${name}-${uid}-ocr`
   return (
     <fieldset
       aria-required={required || undefined}
@@ -227,26 +199,34 @@ export function RadioGroup({
           </span>
         )}
       </legend>
-      <div className={`grid gap-2 ${columns === 2 ? "sm:grid-cols-2" : ""}`}>
-        {options.map((o) => (
-          <label
-            key={o.value}
-            className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-md border bg-surface px-3 text-base text-ink has-[:checked]:border-primary has-[:checked]:bg-primary-soft has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus ${
-              ocrLow !== undefined ? "border-danger bg-danger-soft/40" : "border-control-border"
-            }`}
-          >
-            <input
-              type="radio"
-              name={name}
-              value={o.value}
-              checked={value === o.value}
-              onChange={() => onChange(o.value)}
-              required={required}
-              className="size-4 shrink-0 accent-primary"
-            />
-            {o.label}
-          </label>
-        ))}
+      <div className={cn("grid gap-2", columns === 2 && "sm:grid-cols-2")}>
+        {options.map((o) => {
+          const checked = value === o.value
+          return (
+            <label
+              key={o.value}
+              className={cn(
+                "flex min-h-11 cursor-pointer items-center gap-3 rounded-[4px] border bg-surface px-3 text-base text-ink has-[input:focus-visible]:outline has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-focus",
+                ocrLow !== undefined
+                  ? "border-danger bg-danger-soft/40"
+                  : checked
+                    ? "border-primary bg-primary-soft"
+                    : "border-control-border"
+              )}
+            >
+              <input
+                type="radio"
+                name={name}
+                value={o.value}
+                checked={checked}
+                onChange={() => onChange(o.value)}
+                required={required}
+                className="size-4 shrink-0 appearance-none rounded-[3px] border border-control-border bg-surface checked:border-primary checked:bg-primary"
+              />
+              <span>{o.label}</span>
+            </label>
+          )
+        })}
       </div>
       {error && (
         <div className="mt-1.5">
@@ -259,7 +239,7 @@ export function RadioGroup({
         </div>
       )}
     </fieldset>
-  );
+  )
 }
 
 export function Checkbox({
@@ -271,36 +251,36 @@ export function Checkbox({
   onBlur,
   name,
 }: {
-  id: string;
-  label: React.ReactNode;
-  error?: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  onBlur?: () => void;
-  name?: string;
+  id: string
+  label: React.ReactNode
+  error?: string
+  checked: boolean
+  onChange: (checked: boolean) => void
+  onBlur?: () => void
+  name?: string
 }) {
   return (
     <div className="space-y-1.5">
       <label
         htmlFor={id}
-        className={`flex min-h-11 cursor-pointer items-start gap-3 rounded-md border bg-surface p-4 text-sm text-ink ${
+        className={cn(
+          "flex min-h-11 cursor-pointer items-start gap-3 rounded-[4px] border bg-surface p-4 text-sm text-ink",
           error ? "border-danger" : "border-control-border"
-        }`}
+        )}
       >
-        <input
+        <UiCheckbox
           id={id}
           name={name}
-          type="checkbox"
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
           onBlur={onBlur}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${id}-error` : undefined}
-          className="mt-0.5 size-4 shrink-0 accent-primary"
+          className="mt-0.5"
         />
         <span>{label}</span>
       </label>
       {error && <ErrorText id={`${id}-error`}>{error}</ErrorText>}
     </div>
-  );
+  )
 }

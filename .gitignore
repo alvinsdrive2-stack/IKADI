@@ -65,3 +65,13 @@ next-env.d.ts
 .venv/
 __pycache__/
 .pytest_cache/
+
+# scratch/sampah lokal (jangan pernah di-commit)
+/.tmp-*
+/tmp-seed.mts
+/skip.log
+*.stackdump
+/agent-browser
+/.kta-saya.png
+/.preview-shot.png
+/contoh-kta.png

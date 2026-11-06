@@ -1,47 +1,45 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { FileCheck2, IdCard, ShieldCheck } from "lucide-react";
 import { ParticipantForm } from "@/components/ParticipantForm";
-import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
+import { AuthShell } from "@/components/layout/AuthShell";
 
 export const metadata: Metadata = {
-  title: "Isi Formulir — Pendataan KTA IKADI",
+  title: "Daftar Anggota — Pendataan KTA IKADI",
   description: "Formulir pendataan data peserta KTA IKADI.",
 };
 
 export default function DaftarPage() {
   return (
-    <>
-      <SiteHeader />
-      <main id="main" className="flex-1">
-        <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-          <Link
-            href="/"
-            className="mb-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-hover"
-          >
-            &larr; Kembali ke beranda
-          </Link>
-          <div className="relative mb-6 overflow-hidden rounded-xl border border-border bg-surface p-5 shadow-card sm:p-6">
-            <div aria-hidden className="ornament absolute inset-0" />
-            <div className="relative">
-              <h1 className="text-2xl font-bold text-ink">Formulir Pendataan KTA</h1>
-              <p className="mt-2 text-base text-ink-muted">
-                Data yang Anda isi digunakan IKADI untuk pendataan dan pengurusan
-                Kartu Tanda Anggota. NIK Anda hanya dapat dilihat oleh admin dan
-                tidak ditampilkan kepada publik.
-              </p>
-            </div>
+    <AuthShell wide image="/ornaments/1.svg">
+      <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-[1.75rem]">Formulir Pendaftaran KTA</h1>
+      <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">
+        Lengkapi bertahap. Data tersimpan sebagai draf di perangkat Anda sampai dikirim.
+      </p>
+
+      <div className="mt-6 flex items-start gap-2.5 border-l-2 border-primary pl-3 text-sm leading-relaxed text-ink-muted">
+        <ShieldCheck aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" />
+        <p>
+          NIK hanya dapat dilihat admin terautentikasi. Dengan mengirim formulir, Anda memahami data dipakai untuk pendataan
+          dan pengurusan KTA IKADI.
+        </p>
+      </div>
+
+      <div className="mt-8">
+        <ParticipantForm />
+      </div>
+
+      <div className="mt-8 grid gap-4 border-t border-border pt-6 sm:grid-cols-3">
+        {[
+          { icon: IdCard, t: "Satu NIK untuk satu akun anggota." },
+          { icon: FileCheck2, t: "Status pengajuan terlihat di dashboard." },
+          { icon: ShieldCheck, t: "Sandi disimpan sebagai hash Argon2id." },
+        ].map((x) => (
+          <div key={x.t} className="flex items-start gap-2">
+            <x.icon aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={2} />
+            <p className="text-xs leading-relaxed text-ink-muted">{x.t}</p>
           </div>
-
-          <ParticipantForm />
-
-          <p className="mt-6 text-center text-sm text-ink-muted">
-            <Link href="/" className="text-primary underline underline-offset-2">
-              Kembali ke beranda
-            </Link>
-          </p>
-        </div>
-      </main>
-      <SiteFooter />
-    </>
+        ))}
+      </div>
+    </AuthShell>
   );
 }

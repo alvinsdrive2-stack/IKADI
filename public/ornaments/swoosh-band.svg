@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="40" viewBox="0 0 240 40">
+  <!-- Swoosh band: kurva emas di bawah logo IKADI. Solid, bukan gradient. -->
+  <path d="M4 26 C 60 38, 180 38, 236 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"/>
+  <path d="M4 30 C 60 41, 180 41, 236 13" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="square" opacity="0.5"/>
+</svg>

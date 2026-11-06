@@ -45,6 +45,13 @@ export const BLOOD_LABELS: Record<string, string> = {
 export const MARITAL_OPTIONS = Object.entries(MARITAL_LABELS).map(([value, label]) => ({ value, label }));
 export const BLOOD_OPTIONS = Object.entries(BLOOD_LABELS).map(([value, label]) => ({ value, label }));
 
+/** Status keanggotaan (`MembershipStatus` di Prisma). Satu sumber, dipakai admin + publik. */
+export const MEMBERSHIP_STATUS_LABELS: Record<string, string> = {
+  AKTIF: "Aktif",
+  NONAKTIF: "Tidak aktif",
+  PURNABAKTI: "Purnabakti",
+};
+
 export const formatDate = (iso: string) => {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -68,3 +75,14 @@ export const formatDateTime = (iso: string) => {
     timeZone: "Asia/Jakarta",
   });
 };
+
+/** Nama dari KTP sering tersimpan kapital. Tampilkan sebagai Title Case. */
+export const formatPersonName = (value: string) =>
+  value
+    .trim()
+    .split(/\s+/)
+    .map((word) => {
+      if (word.includes(".") || word.length <= 2) return word.toUpperCase();
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(" ");

@@ -1,30 +1,111 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-@theme {
+:root {
+  --radius: 0.25rem;
+  --background: oklch(0.99 0.01 100);
+  --foreground: oklch(0.22 0.02 160);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.02 160);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.02 160);
+  --primary: oklch(0.62 0.18 155);
+  --primary-foreground: oklch(0.99 0.01 100);
+  --secondary: oklch(0.96 0.015 110);
+  --secondary-foreground: oklch(0.32 0.04 160);
+  --muted: oklch(0.96 0.015 110);
+  --muted-foreground: oklch(0.48 0.02 160);
+  --accent: oklch(0.82 0.16 90);
+  --accent-foreground: oklch(0.32 0.06 80);
+  --destructive: oklch(0.58 0.22 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.88 0.015 120);
+  --input: oklch(0.82 0.015 120);
+  --ring: oklch(0.62 0.18 155);
+  --chart-1: oklch(0.62 0.18 155);
+  --chart-2: oklch(0.82 0.16 90);
+  --chart-3: oklch(0.72 0.15 140);
+  --chart-4: oklch(0.55 0.15 165);
+  --chart-5: oklch(0.45 0.12 170);
+}
+
+@theme inline {
   --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 
-  --color-primary: #166534;
-  --color-primary-hover: #14532d;
-  --color-primary-soft: #dcfce7;
-  --color-primary-ink: #14532d;
-  --color-bg: #f0fdf4;
-  --color-surface: #ffffff;
-  --color-accent: #d4af37;
-  --color-accent-soft: #fbf5de;
-  --color-accent-ink: #7a5c0a;
-  --color-ink: #1f2937;
-  --color-ink-muted: #4b5563;
-  --color-border: #d1d5db;
-  --color-control-border: #6b7280;
-  --color-danger: #b91c1c;
-  --color-danger-soft: #fef2f2;
-  --color-danger-border: #fca5a5;
-  --color-focus: #1d4ed8;
+  /* IKADI brand — dari referensi KTA (kta ikadi muka/belakang.png + logo.png) */
+  --color-ikadi-emerald: #04A94B;
+  --color-ikadi-emerald-deep: #037A37;
+  --color-ikadi-lime: #A8D80A;
+  --color-ikadi-gold: #F5B800;
+  --color-ikadi-cream: #F7F9F0;
+  --color-primary: #04A94B;
+  --color-primary-hover: #037A37;
+  --color-primary-soft: #E6F5EC;
+  --color-primary-ink: #036B32;
+  --color-bg: #F7F9F0;
+  --color-surface: #FFFFFF;
+  --color-accent: #F5B800;
+  --color-accent-soft: #FFF4D6;
+  --color-accent-ink: #7A5C0A;
+  --color-ink: #1A2E22;
+  --color-ink-muted: #4B5A50;
+  --color-border: #D9E2D8;
+  --color-control-border: #8A9A8E;
+  --color-danger: #B42318;
+  --color-danger-soft: #FEF3F2;
+  --color-danger-border: #FECDCA;
+  --color-focus: #04A94B;
+  --color-cam: #07120C;
+  --color-cam-frame: #12241A;
+  --color-cam-edge: #2E5238;
+  --color-cam-ink: #9FB4A8;
+  --color-cam-ink-strong: #D6E3DA;
+  /* Kartu KTA (mockup landing): hijau tua, kontras tinggi untuk teks putih */
+  --color-kta-front: #024F21;
+  --color-kta-front-ink: #012F14;
+  --color-kta-back: #013817;
+  --color-kta-back-ink: #01250F;
+  --shadow-card: 0 1px 2px rgb(4 169 75 / 0.06);
+  --shadow-raised: 0 8px 24px -8px rgb(26 46 34 / 0.18);
+  /* Overlay banner halaman (PageBanner). Ubah satu tempat ini untuk semua banner. */
+  --banner-veil: linear-gradient(
+    to right,
+    rgb(255 255 255 / 0.50) 0%,
+    rgb(255 255 255 / 0.20) 40%,
+    rgb(255 255 255 / 0.1) 70%
+  );
+}
 
-  --shadow-card:
-    0 1px 2px rgb(20 83 45 / 0.04), 0 2px 8px -2px rgb(20 83 45 / 0.08);
-  --shadow-raised:
-    0 2px 4px rgb(20 83 45 / 0.04), 0 12px 28px -8px rgb(20 83 45 / 0.16);
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
 html {
@@ -32,6 +113,21 @@ html {
   background: var(--color-bg);
   -webkit-text-size-adjust: 100%;
   scrollbar-color: var(--color-control-border) transparent;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 ::selection {
@@ -50,23 +146,135 @@ body {
   border-radius: 2px;
 }
 
-/* Di atas latar hijau tua: outline putih (DESIGN.md 1.6) */
+.cta-dock {
+  background: linear-gradient(to top, var(--color-surface) 70%, rgb(255 255 255 / 0));
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Overlay banner halaman — satu sumber untuk semua PageBanner. */
+.banner-veil {
+  background-image: var(--banner-veil);
+}
+
 .on-dark :focus-visible {
   outline-color: #fff;
 }
 
-/* Ornamen geometris (DESIGN.md 2.1) */
+/* Ornamen lama (diamond) — deprecated, dipertahankan untuk kompatibilitas */
 .ornament {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cg fill='none' stroke='%23166534' stroke-width='1'%3E%3Cpath d='M32 2 62 32 32 62 2 32z'/%3E%3Cpath d='M32 14 50 32 32 50 14 32z'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 64px 64px;
+  background-image: url("/ornaments/khatam-tile.svg");
+  background-size: 60px 60px;
   opacity: 0.06;
   pointer-events: none;
 }
-
 .ornament-light {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cg fill='none' stroke='%23FFFFFF' stroke-width='1'%3E%3Cpath d='M32 2 62 32 32 62 2 32z'/%3E%3Cpath d='M32 14 50 32 32 50 14 32z'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 64px 64px;
-  opacity: 0.08;
+  background-image: url("/ornaments/khatam-tile.svg");
+  background-size: 60px 60px;
+  opacity: 0.09;
+  pointer-events: none;
+}
+
+/* Ornamen baru dari KTA IKADI */
+.ornament-khatam {
+  background-color: var(--color-primary);
+  -webkit-mask-image: url("/ornaments/khatam-tile.svg");
+  mask-image: url("/ornaments/khatam-tile.svg");
+  -webkit-mask-size: 72px 72px;
+  mask-size: 72px 72px;
+  opacity: 0.07;
+  pointer-events: none;
+}
+.ornament-khatam-light {
+  background-color: #fff;
+  -webkit-mask-image: url("/ornaments/khatam-tile.svg");
+  mask-image: url("/ornaments/khatam-tile.svg");
+  -webkit-mask-size: 72px 72px;
+  mask-size: 72px 72px;
+  opacity: 0.10;
+  pointer-events: none;
+}
+.ornament-chevron {
+  background-color: var(--color-ikadi-lime);
+  -webkit-mask-image: url("/ornaments/chevron-wall.svg");
+  mask-image: url("/ornaments/chevron-wall.svg");
+  -webkit-mask-size: 120px 120px;
+  mask-size: 120px 120px;
+  opacity: 0.22;
+  pointer-events: none;
+}
+.ornament-medallion {
+  background-color: var(--color-accent);
+  -webkit-mask-image: url("/ornaments/medallion-khatam.svg");
+  mask-image: url("/ornaments/medallion-khatam.svg");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  opacity: 0.16;
+  pointer-events: none;
+}
+.ornament-band {
+  background-color: var(--color-accent);
+  -webkit-mask-image: url("/ornaments/swoosh-band.svg");
+  mask-image: url("/ornaments/swoosh-band.svg");
+  -webkit-mask-size: 240px 40px;
+  mask-size: 240px 40px;
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+  opacity: 0.5;
+  pointer-events: none;
+}
+.ornament-arch {
+  background-color: var(--color-primary);
+  -webkit-mask-image: url("/ornaments/arch-lattice.svg");
+  mask-image: url("/ornaments/arch-lattice.svg");
+  -webkit-mask-size: 96px 96px;
+  mask-size: 96px 96px;
+  opacity: 0.05;
+  pointer-events: none;
+}
+.ornament-arch-light {
+  background-color: #fff;
+  -webkit-mask-image: url("/ornaments/arch-lattice.svg");
+  mask-image: url("/ornaments/arch-lattice.svg");
+  -webkit-mask-size: 96px 96px;
+  mask-size: 96px 96px;
+  opacity: 0.07;
+  pointer-events: none;
+}
+.ornament-starburst {
+  background-color: var(--color-accent);
+  -webkit-mask-image: url("/ornaments/star-burst.svg");
+  mask-image: url("/ornaments/star-burst.svg");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* Alias kompatibel: kode lama pakai .ornament-girih */
+.ornament-girih {
+  background-color: var(--color-primary);
+  -webkit-mask-image: url("/ornaments/khatam-tile.svg");
+  mask-image: url("/ornaments/khatam-tile.svg");
+  -webkit-mask-size: 72px 72px;
+  mask-size: 72px 72px;
+  opacity: 0.07;
+  pointer-events: none;
+}
+.ornament-girih-light {
+  background-color: #fff;
+  -webkit-mask-image: url("/ornaments/khatam-tile.svg");
+  mask-image: url("/ornaments/khatam-tile.svg");
+  -webkit-mask-size: 72px 72px;
+  mask-size: 72px 72px;
+  opacity: 0.10;
   pointer-events: none;
 }
 
@@ -83,4 +291,92 @@ body {
 .skip-link:focus {
   left: 8px;
   top: 8px;
+}
+
+.kta-card {
+  /* Rasio mengikuti artwork (1050 × 600 px). Tinggi ditulis eksplisit (bukan
+     aspect-ratio) supaya renderer print tidak menghitungnya beda.
+     font-size = lebar kartu, sehingga semua slot bisa memakai satuan em. */
+  width: 85.6mm;
+  height: 48.914mm; /* 85.6 × 600 / 1050 */
+  font-size: 85.6mm;
+  line-height: 1.2;
+  position: relative;
+  overflow: hidden;
+  /* Artwork asli adalah latar kartu; warna ini cuma cadangan kalau gambar gagal. */
+  background: var(--color-kta-front);
+  color: #fff;
+  border-radius: 2mm;
+  box-shadow: var(--shadow-raised);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Ukuran halaman cetak = ukuran kartu (landscape 85,6 × 48,914 mm).
+   Ditulis di top-level (bukan hanya di dalam @media print) supaya tidak
+   kalah oleh deklarasi bawaan renderer. */
+@page {
+  size: 85.6mm 48.914mm;
+  margin: 0;
+}
+
+@media print {
+  html, body {
+    width: 85.6mm;
+    height: 48.914mm;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff;
+    overflow: visible !important;
+  }
+
+  /* Isolasi: buang kotak semua wadah di atas kartu, sehingga kartu mulai di
+     0,0 pada halaman. `display: contents` menghapus box-nya tanpa memutus
+     rantai DOM/container — lebih aman untuk page-break daripada absolute. */
+  .min-h-screen,
+  .lg\:pl-64,
+  main,
+  .kta-print-reset {
+    display: contents !important;
+  }
+  aside, header, nav, .skip-link, .kta-screen-only {
+    display: none !important;
+  }
+  body * {
+    visibility: hidden !important;
+  }
+  .kta-print-stage,
+  .kta-print-stage * {
+    visibility: visible !important;
+  }
+  .kta-print-stage {
+    display: block !important;
+    width: 85.6mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  .kta-card {
+    box-shadow: none;
+    border: 0;
+    border-radius: 0;
+    margin: 0 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    break-after: page;
+    page-break-after: always;
+  }
+  /* Jangan biarkan printer menghemat warna: artwork, QR, dan teks putih harus
+     tercetak persis seperti preview. */
+  .kta-card,
+  .kta-card * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  /* Halaman terakhir tidak perlu break kosong. */
+  .kta-card:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
 }

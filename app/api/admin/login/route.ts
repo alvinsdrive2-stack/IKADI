@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/schema";
-import { getAdminSession, hashPassword, verifyPassword } from "@/lib/auth";
+import { getAdminSession } from "@/lib/auth";
+import { hashPassword, verifyPassword } from "@/lib/password";
 import { rateLimit } from "@/lib/rate-limit";
 import { clientIp, jsonError } from "@/lib/http";
 import { logRouteError } from "@/lib/route-log";

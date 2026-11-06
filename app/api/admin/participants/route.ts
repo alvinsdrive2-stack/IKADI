@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 
   const page = Math.max(1, Math.floor(Number(sp.get("page")) || 1));
   const perPageRaw = Math.floor(Number(sp.get("perPage")) || 20);
-  const perPage = [10, 20, 50, 100].includes(perPageRaw) ? perPageRaw : 20;
+  const perPage = [5, 10, 20, 50, 100].includes(perPageRaw) ? perPageRaw : 20;
 
   const result = await listParticipants({
     q: str("q", 100),

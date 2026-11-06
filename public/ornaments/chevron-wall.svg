@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+  <!-- Chevron wall: pola kanan KTA depan. Nested 8-point star chevrons, lime.
+       Stroke miter sharp, opacity layering for depth without gradient. -->
+  <g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="miter" stroke-miterlimit="10">
+    <path d="M60 10 L110 60 L60 110 L10 60 Z"/>
+    <path d="M60 22 L98 60 L60 98 L22 60 Z"/>
+    <path d="M60 34 L86 60 L60 86 L34 60 Z"/>
+    <path d="M60 46 L74 60 L60 74 L46 60 Z"/>
+    <path d="M60 54 L66 60 L60 66 L54 60 Z"/>
+  </g>
+</svg>

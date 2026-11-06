@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
+import { createRequire } from "node:module";
+
+// Loader Tailwind di-resolve ke path absolut supaya Turbopack tidak perlu
+// mencari nama modul di proses worker (gagal saat NODE_ENV=production di shell).
+const require = createRequire(import.meta.url);
+const tailwindLoader = require.resolve("@tailwindcss/turbopack");
 
 const nextConfig: NextConfig = {
-  /* config options here */
   experimental: {
     agentFeedback: true,
   },
@@ -10,7 +15,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     rules: {
       "*.css": {
-        loaders: ["@tailwindcss/turbopack"],
+        loaders: [tailwindLoader],
         as: "*.css",
       },
     },

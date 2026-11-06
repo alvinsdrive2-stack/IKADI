@@ -1,26 +1,45 @@
-import argon2 from "argon2";
 import { cookies } from "next/headers";
 import { getIronSession, unsealData, type SessionOptions } from "iron-session";
 
 export type AdminSession = { adminId?: string; username?: string };
+export type AnggotaSession = { participantId?: string };
 
 export const SESSION_COOKIE = "ikadi_admin";
+export const ANGGOTA_COOKIE = "ikadi_anggota";
 
-const SESSION_TTL_SECONDS = 60 * 60 * 8;
+const ADMIN_TTL_SECONDS = 60 * 60 * 8; // 8 jam
+const ANGGOTA_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 hari
 
 export type SessionData = AdminSession;
+export type AnggotaSessionData = AnggotaSession;
 
-const sessionOptions: SessionOptions = {
-  cookieName: SESSION_COOKIE,
-  password: process.env.SESSION_SECRET ?? "",
-  cookieOptions: {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: SESSION_TTL_SECONDS,
-  },
-};
+function adminOptions(): SessionOptions {
+  return {
+    cookieName: SESSION_COOKIE,
+    password: process.env.SESSION_SECRET ?? "",
+    cookieOptions: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: ADMIN_TTL_SECONDS,
+    },
+  };
+}
+
+function anggotaOptions(): SessionOptions {
+  return {
+    cookieName: ANGGOTA_COOKIE,
+    password: process.env.SESSION_SECRET ?? "",
+    cookieOptions: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: ANGGOTA_TTL_SECONDS,
+    },
+  };
+}
 
 export class ConfigError extends Error {}
 
@@ -32,17 +51,11 @@ function assertSecret() {
   }
 }
 
-export function hashPassword(password: string) {
-  return argon2.hash(password, { type: argon2.argon2id });
-}
-
-export function verifyPassword(hash: string, password: string) {
-  return argon2.verify(hash, password).catch(() => false);
-}
+// ---- Admin session (perilaku lama, jangan diubah) ----
 
 export async function getAdminSession() {
   assertSecret();
-  return getIronSession<AdminSession>(await cookies(), sessionOptions);
+  return getIronSession<AdminSession>(await cookies(), adminOptions());
 }
 
 /** Returns session if logged in, else null. Catches config/decrypt errors as "not logged in". */
@@ -70,7 +83,7 @@ export async function hasValidAdminSession(
   try {
     const data = await unsealData<SessionData>(cookie, {
       password: secret,
-      ttl: SESSION_TTL_SECONDS,
+      ttl: ADMIN_TTL_SECONDS,
     });
     return Boolean(data?.adminId);
   } catch {
@@ -88,6 +101,58 @@ export async function requireAdmin(): Promise<
       ok: false,
       response: Response.json(
         { ok: false, code: "UNAUTHORIZED", message: "Silakan login sebagai admin." },
+        { status: 401 },
+      ),
+    };
+  }
+  return { ok: true, session };
+}
+
+// ---- Anggota session (payload beda: participantId, bukan adminId) ----
+
+export async function getAnggotaSession() {
+  assertSecret();
+  return getIronSession<AnggotaSession>(await cookies(), anggotaOptions());
+}
+
+export async function readAnggotaSession(): Promise<AnggotaSession | null> {
+  try {
+    const session = await getAnggotaSession();
+    return session.participantId ? session : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Edge-runtime check for the anggota cookie. Rejects admin cookies (no participantId). */
+export async function hasValidAnggotaSession(
+  store: { get(name: string): { value: string } | undefined },
+): Promise<boolean> {
+  const cookie = store.get(ANGGOTA_COOKIE)?.value;
+  if (!cookie) return false;
+  const secret = process.env.SESSION_SECRET;
+  if (!secret || secret.length < 32) return false;
+  try {
+    const data = await unsealData<AnggotaSessionData>(cookie, {
+      password: secret,
+      ttl: ANGGOTA_TTL_SECONDS,
+    });
+    return Boolean(data?.participantId);
+  } catch {
+    return false;
+  }
+}
+
+/** For route handlers: returns 401 Response when anggota unauthenticated. */
+export async function requireAnggota(): Promise<
+  { ok: true; session: AnggotaSession } | { ok: false; response: Response }
+> {
+  const session = await readAnggotaSession();
+  if (!session) {
+    return {
+      ok: false,
+      response: Response.json(
+        { ok: false, code: "UNAUTHORIZED", message: "Silakan login sebagai anggota." },
         { status: 401 },
       ),
     };

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+  <!-- Medali oktagram: dua persegi bertumpuk (Rub el Hizb) + oktagon dalam.
+       Dipakai sebagai cap/watermark tunggal, bukan tile.
+       currentColor supaya bisa ditint dari CSS. -->
+  <g fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round">
+    <path d="M60 2L118 60L60 118L2 60Z"/>
+    <path d="M101.01 18.99L101.01 101.01L18.99 101.01L18.99 18.99Z"/>
+    <path d="M73.78 26.74L93.26 46.22L93.26 73.78L73.78 93.26L46.22 93.26L26.74 73.78L26.74 46.22L46.22 26.74Z"/>
+    <path d="M60 24L96 60L60 96L24 60Z"/>
+  </g>
+  <g fill="none" stroke="currentColor" stroke-width="0.8" stroke-linejoin="round" opacity="0.55">
+    <path d="M85.46 34.54L85.46 85.46L34.54 85.46L34.54 34.54Z"/>
+    <path d="M65.36 47.07L72.93 54.64L72.93 65.36L65.36 72.93L54.64 72.93L47.07 65.36L47.07 54.64L54.64 47.07Z"/>
+  </g>
+</svg>

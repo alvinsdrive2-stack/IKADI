@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Ornamen IKADI — preview</title>
+<style>
+  :root {
+    --color-primary: #166534;
+    --color-accent: #d4af37;
+    --color-bg: #f0fdf4;
+  }
+  body {
+    margin: 0;
+    padding: 24px;
+    background: var(--color-bg);
+    font: 15px/1.5 system-ui, sans-serif;
+    color: #1f2937;
+  }
+  h2 { font-size: 16px; margin: 0 0 6px; color: #4b5563; font-weight: 600; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+  .box {
+    position: relative;
+    width: 240px;
+    height: 140px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgb(0 0 0 / .06), 0 2px 8px -2px rgb(0 0 0 / .10);
+    overflow: hidden;
+  }
+  .box.dark { background: var(--color-primary); }
+  .lbl {
+    position: absolute;
+    left: 12px; bottom: 12px;
+    font-size: 12px; font-weight: 600;
+    color: #14532d;
+  }
+  .box.dark .lbl { color: #fff; }
+
+  .ornament-girih, .ornament-girih-light, .ornament-medallion, .ornament-band {
+    pointer-events: none;
+    -webkit-mask-repeat: repeat;
+    mask-repeat: repeat;
+  }
+  .ornament-girih {
+    background-color: var(--color-primary);
+    -webkit-mask-image: url("girih-tile.svg");
+    mask-image: url("girih-tile.svg");
+    -webkit-mask-size: 60px 60px;
+    mask-size: 60px 60px;
+    opacity: .07;
+  }
+  .ornament-girih-light {
+    background-color: #fff;
+    -webkit-mask-image: url("girih-tile.svg");
+    mask-image: url("girih-tile.svg");
+    -webkit-mask-size: 60px 60px;
+    mask-size: 60px 60px;
+    opacity: .14;
+  }
+  .ornament-medallion {
+    background-color: var(--color-accent);
+    -webkit-mask-image: url("medallion.svg");
+    mask-image: url("medallion.svg");
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    opacity: .16;
+  }
+  .ornament-band {
+    background-color: var(--color-accent);
+    -webkit-mask-image: url("band.svg");
+    mask-image: url("band.svg");
+    -webkit-mask-size: 80px 32px;
+    mask-size: 80px 32px;
+    opacity: .45;
+  }
+
+  /* raw svg check */
+  .raw { display: flex; gap: 16px; align-items: center; }
+  .raw > div {
+    background: #fff; border: 1px solid #d1d5db; border-radius: 6px;
+    padding: 12px; color: var(--color-primary);
+  }
+</style>
+</head>
+<body>
+  <h2>Raw SVG — currentColor diturunkan dari parent</h2>
+  <div class="raw" style="margin-bottom:24px">
+    <div><img src="girih-tile.svg" width="120" height="120" alt=""></div>
+    <div><img src="medallion.svg" width="120" height="120" alt=""></div>
+    <div><img src="band.svg" width="240" height="96" alt=""></div>
+  </div>
+
+  <h2>Mask tint — girih 60x60 / medallion contain / band 80x32</h2>
+  <div class="row">
+    <div class="box">
+      <div class="ornament-girih" style="position:absolute;inset:0"></div>
+      <span class="lbl">girih (primary 7%)</span>
+    </div>
+    <div class="box dark">
+      <div class="ornament-girih-light" style="position:absolute;inset:0"></div>
+      <span class="lbl">girih-light (putih 14%)</span>
+    </div>
+    <div class="box">
+      <div class="ornament-medallion" style="position:absolute;right:8px;bottom:0;height:110px;width:110px"></div>
+      <span class="lbl">medallion (emas 16%)</span>
+    </div>
+    <div class="box">
+      <div class="ornament-band" style="position:absolute;left:0;right:0;top:40px;height:32px"></div>
+      <span class="lbl">band (emas 45%)</span>
+    </div>
+  </div>
+
+  <h2>Seamless check — opacity 1, garis tepi harus nyambung antar tile</h2>
+  <div class="row">
+    <div class="box" style="width:360px;height:240px">
+      <div class="ornament-girih" style="position:absolute;inset:0;opacity:1"></div>
+    </div>
+    <div class="box" style="width:320px;height:120px">
+      <div class="ornament-band" style="position:absolute;inset:0;opacity:1;background-color:#166534"></div>
+    </div>
+  </div>
+</body>
+</html>

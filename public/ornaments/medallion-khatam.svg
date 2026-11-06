@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
+  <!-- Medallion khatam: satu star besar di tengah, untuk hero / kartu KTA belakang. -->
+  <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="miter" stroke-miterlimit="10">
+    <rect x="40" y="40" width="80" height="80"/>
+    <rect x="40" y="40" width="80" height="80" transform="rotate(45 80 80)"/>
+    <rect x="56" y="56" width="48" height="48"/>
+    <rect x="56" y="56" width="48" height="48" transform="rotate(45 80 80)"/>
+    <rect x="68" y="68" width="24" height="24"/>
+    <rect x="68" y="68" width="24" height="24" transform="rotate(45 80 80)"/>
+  </g>
+</svg>

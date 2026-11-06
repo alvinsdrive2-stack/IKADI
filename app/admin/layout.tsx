@@ -1,39 +1,33 @@
 import { Suspense } from "react";
-import { Badge } from "@/components/Badge";
-import { AdminGuard, AdminUsername } from "@/app/admin/guard";
-import { LogoutButton } from "@/components/AdminNav";
-import { Logo } from "@/components/Logo";
+import { AdminGuard } from "@/app/admin/guard";
+import { AdminShell } from "@/components/AdminShell";
+import { readAdminSession } from "@/lib/auth";
 
 export const metadata = {
   title: "Admin — Pendataan KTA IKADI",
 };
 
-// Sesi dibaca per request (app/admin/guard.tsx), tidak ada static shell.
 export const instant = false;
 
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (
-    <>
-      <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Logo />
-            <Badge variant="pw">Admin</Badge>
-          </div>
-          <div className="flex items-center gap-2">
-            <Suspense fallback={null}>
-              <AdminUsername />
-            </Suspense>
-            <LogoutButton />
-          </div>
-        </div>
-      </header>
-      <main
-        id="main"
-        className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8"
-      >
-        <AdminGuard>{children}</AdminGuard>
-      </main>
-    </>
+    <AdminGuard>
+      <Suspense fallback={null}>
+        <AdminShellWithUser>{children}</AdminShellWithUser>
+      </Suspense>
+    </AdminGuard>
   );
+}
+
+async function AdminShellWithUser({ children }: { children: React.ReactNode }) {
+  const username = await AdminUsernameValue();
+  return <AdminShell username={username}>{children}</AdminShell>;
+}
+
+/** Sama seperti AdminGuard: baca cookie di private cache scope agar tidak
+ *  memicu blocking-prerender (iron-session memakai Date.now saat unseal). */
+async function AdminUsernameValue(): Promise<string | undefined> {
+  "use cache: private";
+  const session = await readAdminSession();
+  return session?.username;
 }

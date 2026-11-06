@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <linearGradient id="ikadiGrad4" x1="0%" y1="65%" x2="100%" y2="25%">
+      <stop offset="0%" stop-color="#04a73b" />
+      <stop offset="52%" stop-color="#5cb531" />
+      <stop offset="100%" stop-color="#abcd05" />
+    </linearGradient>
+    <g id="rubElHizb4">
+      <rect x="-500" y="-500" width="1000" height="1000" />
+      <rect x="-500" y="-500" width="1000" height="1000" transform="rotate(45)" />
+    </g>
+    <mask id="starRings4">
+      <rect x="-2000" y="-2000" width="6000" height="6000" fill="black" />
+      <use href="#rubElHizb4" transform="scale(0.972)" fill="white" />
+      <use href="#rubElHizb4" transform="scale(0.888)" fill="black" />
+      <use href="#rubElHizb4" transform="scale(0.824)" fill="white" />
+      <use href="#rubElHizb4" transform="scale(0.740)" fill="black" />
+      <use href="#rubElHizb4" transform="scale(0.676)" fill="white" />
+      <use href="#rubElHizb4" transform="scale(0.592)" fill="black" />
+      <use href="#rubElHizb4" transform="scale(0.528)" fill="white" />
+      <use href="#rubElHizb4" transform="scale(0.444)" fill="black" />
+      <use href="#rubElHizb4" transform="scale(0.380)" fill="white" />
+      <use href="#rubElHizb4" transform="scale(0.296)" fill="black" />
+    </mask>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#ikadiGrad4)" />
+  <g transform="translate(0, 540) scale(0.82)">
+    <rect x="-1500" y="-1500" width="3000" height="3000" fill="#c8e619" fill-opacity="0.32" mask="url(#starRings4)" />
+  </g>
+  <g transform="translate(1920, 540) scale(0.82)">
+    <rect x="-1500" y="-1500" width="3000" height="3000" fill="#d4ed15" fill-opacity="0.32" mask="url(#starRings4)" />
+  </g>
+</svg>

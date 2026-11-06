@@ -23,21 +23,21 @@ const globals = read("app/globals.css");
 
 test("DESIGN 1.1: token warna di app/globals.css sama persis dengan DESIGN.md", () => {
   const expected: Record<string, string> = {
-    "--color-primary": "#166534",
-    "--color-primary-hover": "#14532d",
-    "--color-primary-soft": "#dcfce7",
-    "--color-primary-ink": "#14532d",
-    "--color-bg": "#f0fdf4",
+    "--color-primary": "#04a94b",
+    "--color-primary-hover": "#037a37",
+    "--color-primary-soft": "#e6f5ec",
+    "--color-primary-ink": "#036b32",
+    "--color-bg": "#f7f9f0",
     "--color-surface": "#ffffff",
-    "--color-accent": "#d4af37",
-    "--color-accent-soft": "#fbf5de",
+    "--color-accent": "#f5b800",
+    "--color-accent-soft": "#fff4d6",
     "--color-accent-ink": "#7a5c0a",
-    "--color-ink": "#1f2937",
-    "--color-ink-muted": "#4b5563",
-    "--color-border": "#d1d5db",
-    "--color-control-border": "#6b7280",
-    "--color-danger": "#b91c1c",
-    "--color-focus": "#1d4ed8",
+    "--color-ink": "#1a2e22",
+    "--color-ink-muted": "#4b5a50",
+    "--color-border": "#d9e2d8",
+    "--color-control-border": "#8a9a8e",
+    "--color-danger": "#b42318",
+    "--color-focus": "#04a94b",
   };
   for (const [token, hex] of Object.entries(expected)) {
     const actual = globals.match(new RegExp(`${token}:\\s*(#[0-9a-fA-F]{6})`))?.[1].toLowerCase();
@@ -46,6 +46,7 @@ test("DESIGN 1.1: token warna di app/globals.css sama persis dengan DESIGN.md", 
 });
 
 test("DESIGN 1.1: dark mode dihapus, font Plus Jakarta Sans dipakai", () => {
+  assert.ok(!globals.includes(".dark"), "tidak boleh ada blok dark mode");
   assert.ok(!globals.includes("prefers-color-scheme"), "tidak boleh ada blok dark mode");
   assert.match(globals, /--font-sans:\s*var\(--font-plus-jakarta\)/);
   assert.match(read("app/layout.tsx"), /Plus_Jakarta_Sans/);
@@ -92,13 +93,13 @@ test("DESIGN 1.1: border dekoratif tidak dipakai sebagai batas kontrol input", (
 });
 
 test("DESIGN 1.2: input 16px (text-base) di komponen kontrol", () => {
-  const field = read("components/Field.tsx");
-  assert.match(field, /controlClass[\s\S]*?text-base/);
-  // text-sm yang menempel di kelas kontrol = input <16px = zoom iOS. text-sm di label/hint sah.
-  // Text input/select/textarea only (DESIGN 1.2). Checkbox consent p-4 text-sm is allowed (3.6).
-  const controlLines = field.split(/\n/).filter((l) => /\bw-full rounded-md border\b/.test(l));
-  assert.ok(controlLines.length > 0, "kelas kontrol harus ketemu");
-  for (const l of controlLines) assert.ok(!/text-sm/.test(l), `kontrol <16px: ${l.trim()}`);
+  // Kontrol sekarang tinggal di primitif components/ui/*; Field hanya membungkus.
+  for (const f of ["components/ui/input.tsx", "components/ui/textarea.tsx", "components/ui/select.tsx"]) {
+    const src = read(f);
+    assert.match(src, /text-base/, `${f} harus text-base (hindari zoom iOS)`);
+    assert.ok(!/text-sm/.test(src), `${f} tidak boleh text-sm di kontrol`);
+  }
+  // Checkbox consent p-4 text-sm sah (DESIGN 3.6).
 });
 
 test("AC-01: form peserta punya layout responsif (grid 1 kolom di mobile)", () => {
@@ -116,11 +117,23 @@ test("AC-01: form peserta punya layout responsif (grid 1 kolom di mobile)", () =
 });
 
 test("AC-01: halaman admin/form pakai padding responsif, bukan max-w tetap", () => {
-  for (const page of ["app/daftar/page.tsx", "app/admin/layout.tsx", "app/page.tsx"]) {
+  // Halaman publik & form membungkus konten lewat shell (SiteChrome/AppFrame/AuthShell).
+  const shell = read("components/layout/AuthShell.tsx");
+  assert.match(shell, /max-w-/, "AuthShell butuh batas lebar konten");
+  assert.match(shell, /px-4/, "AuthShell butuh padding mobile");
+
+  for (const page of ["app/daftar/page.tsx"]) {
     const src = read(page);
-    assert.match(src, /max-w-(2xl|3xl|4xl|5xl|6xl|7xl)/, `${page} butuh batas lebar konten`);
-    assert.match(src, /(px-4|p-4|sm:p-6)/, `${page} butuh padding mobile`);
+    assert.match(src, /<AuthShell/, `${page} harus pakai AuthShell`);
   }
+
+  const frame = read("components/AppFrame.tsx");
+  assert.match(frame, /max-w-/, "AppFrame butuh batas lebar konten");
+  assert.match(frame, /px-4/, "AppFrame butuh padding mobile");
+
+  const landing = read("app/page.tsx");
+  assert.match(landing, /max-w-/, "landing butuh batas lebar konten");
+  assert.match(landing, /px-4/, "landing butuh padding mobile");
 });
 
 test("AC-12: empty state dashboard menampilkan pesan + tombol Reset filter", () => {
@@ -128,7 +141,7 @@ test("AC-12: empty state dashboard menampilkan pesan + tombol Reset filter", () 
   assert.match(src, /<EmptyState/);
   assert.match(src, /Reset filter/);
   assert.match(src, /list\.data\.length === 0/, "empty state hanya saat data kosong");
-  assert.match(src, /const resetAll = \(\) => router\.(push|replace)\("\/admin"\)/, "reset harus menghapus semua query filter");
+  assert.match(src, /const resetAll = \(\) => router\.(push|replace)\("\/admin\/peserta"\)/, "reset harus menghapus semua query filter");
   const empty = read("components/EmptyState.tsx");
   assert.match(empty, /<h3/);
   assert.match(empty, /aria-hidden/, "ikon dekoratif harus aria-hidden");

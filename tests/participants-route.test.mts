@@ -36,8 +36,11 @@ const base = {
   ktp: "data:image/jpeg;base64," + Buffer.from([0xff, 0xd8, 0xff, 0xe0]).toString("base64"),
   addressKtp: "Desa Sukamaju, Kec. Taman, Sidoarjo, Jawa Timur",
   addressSameAsKtp: true,
-  province: "Jawa Timur",
-  city: "Sidoarjo",
+  province: "Sumatera Selatan",
+  city: "Ogan Komering Ulu",
+  provinceCode: "16",
+  regencyCode: "01",
+  password: "sandi-anggota-kuat",
   address: "Desa Sukamaju, Kec. Taman, Sidoarjo, Jawa Timur",
   whatsapp: "085987654321",
   occupation: "Guru",
@@ -114,8 +117,10 @@ test("AC-05b: duplikat lewat NIK berkutip tetap 409", async () => {
 // these two would return 201/201 or 500 and the assert fails.
 test("AC-06: dua request bersamaan NIK sama -> tepat satu tersimpan", async () => {
   const [a, b] = await Promise.all([post(base), post(base)]);
-  assert.equal(a.status, 201);
-  assert.equal(b.status, 409);
+  // Urutan pemenang tidak dijamin: hashPassword (argon2) async sebelum pre-check,
+  // jadi request mana yang duluan sampai ke create tidak deterministik. Yang
+  // dijamin kontrak cuma: tepat satu 201, satu 409, satu baris.
+  assert.deepEqual([a.status, b.status].sort(), [201, 409]);
   assert.equal(state.rows.length, 1);
 });
 

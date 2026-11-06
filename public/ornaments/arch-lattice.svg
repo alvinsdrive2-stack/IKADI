@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+  <!-- Lattice arch Islami: lengkung runcing bertumpuk, stroke tipis.
+       Dipakai sebagai pattern halus di section terang. -->
+  <g fill="none" stroke="currentColor" stroke-width="0.9" stroke-linejoin="miter" stroke-linecap="square">
+    <path d="M12 88V44c0-13 10-24 24-24h24c14 0 24 11 24 24v44"/>
+    <path d="M24 88V46c0-8 6-14 14-14h20c8 0 14 6 14 14v42"/>
+    <path d="M36 88V50c0-4 3-7 7-7h10c4 0 7 3 7 7v38"/>
+    <path d="M12 44 48 8l36 36"/>
+  </g>
+</svg>

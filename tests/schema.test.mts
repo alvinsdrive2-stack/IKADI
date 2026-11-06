@@ -86,7 +86,7 @@ test("AC-08: WA tetap string, awalan 0 / +62 utuh", () => {
 });
 
 test("AC-03: setiap field wajib menolak string kosong / spasi / hilang", () => {
-  const required = ["originType", "originName", "fullName", "nik", "gender", "birthPlace", "birthDate", "maritalStatus", "bloodType", "ktp", "addressKtp", "province", "city", "whatsapp", "occupation", "sermonExperience", "quranReading", "trainingReason", "trainingExpectation"];
+  const required = ["originType", "originName", "fullName", "nik", "gender", "birthPlace", "birthDate", "maritalStatus", "bloodType", "addressKtp", "province", "city", "whatsapp", "occupation", "sermonExperience", "quranReading", "trainingReason", "trainingExpectation"];
   for (const field of required) {
     for (const blank of ["", "   "]) {
       const r = parse({ [field]: blank });
@@ -111,16 +111,16 @@ test("alamat: addressSameAsKtp mengisi addressCurrent & address legacy", () => {
   assert.equal(beda.data.address, "Jl. Baru");
 });
 
-test("ktp wajib: kosong/hilang ditolak, format & ukuran 10 MB divalidasi", () => {
+test("ktp opsional di schema: kosong/hilang lolos, terisi divalidasi format & ukuran 10 MB", () => {
+  // Jalur manual (tanpa upload) sah tanpa KTP. Kewajiban upload ditegakkan di form + route.
   for (const blank of ["", "   "]) {
-    const r = parse({ ktp: blank });
-    assert.equal(r.success, false, `ktp ${JSON.stringify(blank)} harus ditolak`);
-    if (!r.success) assert.ok(r.error.issues.some((i) => i.path[0] === "ktp"), "error harus menunjuk ktp");
+    assert.equal(parse({ ktp: blank }).success, true, `ktp ${JSON.stringify(blank)} harus lolos di schema`);
   }
   const missing: Record<string, unknown> = { ...base };
   delete missing.ktp;
-  assert.equal(participantSchema.safeParse(missing).success, false, "ktp hilang harus ditolak");
+  assert.equal(participantSchema.safeParse(missing).success, true, "ktp hilang harus lolos di schema");
 
+  // Kalau terisi, tetap harus data URL gambar valid dengan batas ukuran.
   assert.equal(parse({ ktp: "data:image/gif;base64,R0lGOD" }).success, false, "GIF ditolak");
   // 10 MB biner ~= 13.98M karakter base64.
   const besar = parse({ ktp: "data:image/png;base64," + "A".repeat(15 * 1024 * 1024) });

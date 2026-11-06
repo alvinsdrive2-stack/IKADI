@@ -1,10 +1,11 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isUniqueViolation, logRouteError } from "@/lib/route-log";
-import { participantSchema } from "@/lib/schema";
+import { registerSchema } from "@/lib/schema";
 import { saveParticipantPhoto, saveParticipantKtp } from "@/lib/photo";
 import { rateLimit } from "@/lib/rate-limit";
 import { clientIp, jsonError } from "@/lib/http";
+import { hashPassword } from "@/lib/password";
 
 const NIK_DUPLICATE = {
   ok: false,
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
     return jsonError(400, "VALIDATION", "Body harus JSON valid");
   }
 
-  const parsed = participantSchema.safeParse(body);
+  const parsed = registerSchema.safeParse(body);
   if (!parsed.success) {
     const errors: Record<string, string> = {};
     for (const issue of parsed.error.issues) {
@@ -43,11 +44,40 @@ export async function POST(request: Request) {
   }
 
   const d = parsed.data;
+
+  // Validasi kode wilayah di master (boundary). Pasangan (provinsi, kab/kota) harus ada.
+  const [prov, reg] = await Promise.all([
+    prisma.province.findUnique({ where: { code: d.provinceCode }, select: { code: true } }),
+    prisma.regency.findUnique({
+      where: { provinceCode_code: { provinceCode: d.provinceCode, code: d.regencyCode } },
+      select: { code: true },
+    }),
+  ]);
+  if (!prov || !reg) {
+    return Response.json(
+      {
+        ok: false,
+        code: "VALIDATION",
+        message: "Periksa kembali isian Anda.",
+        errors: {
+          provinceCode: prov ? undefined : "Provinsi tidak dikenali",
+          regencyCode: reg ? undefined : "Kabupaten/Kota tidak dikenali",
+        },
+      },
+      { status: 400 },
+    );
+  }
+
   // consent cuma validasi UI — bukan kolom di tabel participants.
-  const { photo, ktp, gender, consent: _consent, ...rest } = d;
+  // photo/ktp diproses terpisah; password jadi passwordHash.
+  const { photo, ktp, gender, consent: _consent, password, provinceCode, regencyCode, ...rest } = d;
+  const passwordHash = await hashPassword(password);
   const data: Prisma.ParticipantCreateInput = {
     ...rest,
     gender,
+    provinceCode,
+    regencyCode,
+    passwordHash,
     birthDate: new Date(`${rest.birthDate}T00:00:00Z`),
   };
 

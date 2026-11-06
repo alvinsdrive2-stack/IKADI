@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60">
+  <!-- Girih 8-fold: bintang delapan di pusat + empat bintang sudut (wrapping).
+       Semua elemen menyentuh tepi di titik yang sama saat diulang, jadi seamless.
+       Warna pakai currentColor supaya bisa di-tint lewat CSS. -->
+  <g fill="none" stroke="currentColor" stroke-width="0.75" stroke-linejoin="round">
+    <path d="M30 0L38.79 8.79L51.21 8.79L51.21 21.21L60 30L51.21 38.79L51.21 51.21L38.79 51.21L30 60L21.21 51.21L8.79 51.21L8.79 38.79L0 30L8.79 21.21L8.79 8.79L21.21 8.79Z"/>
+    <path d="M0 -30L8.79 -21.21L21.21 -21.21L21.21 -8.79L30 0L21.21 8.79L21.21 21.21L8.79 21.21L0 30L-8.79 21.21L-21.21 21.21L-21.21 8.79L-30 0L-21.21 -8.79L-21.21 -21.21L-8.79 -21.21Z"/>
+    <path d="M60 -30L68.79 -21.21L81.21 -21.21L81.21 -8.79L90 0L81.21 8.79L81.21 21.21L68.79 21.21L60 30L51.21 21.21L38.79 21.21L38.79 8.79L30 0L38.79 -8.79L38.79 -21.21L51.21 -21.21Z"/>
+    <path d="M0 30L8.79 38.79L21.21 38.79L21.21 51.21L30 60L21.21 68.79L21.21 81.21L8.79 81.21L0 90L-8.79 81.21L-21.21 81.21L-21.21 68.79L-30 60L-21.21 51.21L-21.21 38.79L-8.79 38.79Z"/>
+    <path d="M60 30L68.79 38.79L81.21 38.79L81.21 51.21L90 60L81.21 68.79L81.21 81.21L68.79 81.21L60 90L51.21 81.21L38.79 81.21L38.79 68.79L30 60L38.79 51.21L38.79 38.79L51.21 38.79Z"/>
+    <!-- belah ketupat pengisi celah -->
+    <path d="M15 8L22 15L15 22L8 15Z"/>
+    <path d="M45 8L52 15L45 22L38 15Z"/>
+    <path d="M15 38L22 45L15 52L8 45Z"/>
+    <path d="M45 38L52 45L45 52L38 45Z"/>
+  </g>
+</svg>

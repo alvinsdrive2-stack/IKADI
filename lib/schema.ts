@@ -45,7 +45,7 @@ const optionalText = (max: number, label: string) =>
 /** Pas foto: base64 dari <input type=file>, opsional, maks 1 MB. Ekstensi divalidasi dari magic bytes server. */
 export const PHOTO_MAX_BYTES = 1024 * 1024;
 
-/** Foto KTP: base64, WAJIB (foto langsung dari kamera di form), maks 10 MB. Disimpan ke storage/ktp (private, bukan public). */
+/** Foto KTP: base64, WAJIB hanya untuk jalur upload (OCR). Jalur manual opsional — tapi kalau diisi tetap divalidasi. Maks 10 MB. */
 export const KTP_MAX_BYTES = 10 * 1024 * 1024;
 
 const dataUrlImage = (label: string, maxBytes: number, maxLabel: string) =>
@@ -59,15 +59,9 @@ const dataUrlImage = (label: string, maxBytes: number, maxLabel: string) =>
   );
 
 const photoSchema = dataUrlImage("Pas foto", PHOTO_MAX_BYTES, "pas foto");
-// ponytail: KTP wajib — pakai optionalText-style agar string kosong jadi
-// error "wajib", bukan lolos sebagai undefined.
-const ktpSchema = z.preprocess(
-  (v) => (typeof v === "string" && v.trim() !== "" ? v : undefined),
-  z
-    .string({ error: "Foto KTP wajib diisi" })
-    .refine((s) => /^data:image\/(jpeg|png|webp);base64,/.test(s), "Foto KTP harus JPEG, PNG, atau WebP")
-    .refine((s) => s.length * 0.75 <= KTP_MAX_BYTES, `Ukuran foto KTP maksimal ${KTP_MAX_BYTES / (1024 * 1024)} MB`),
-);
+// KTP opsional di schema. Form jalur upload mewajibkannya sendiri (rootChoice upload);
+// route menerima kosong = peserta tanpa foto KTP. Terisi = harus data URL gambar valid.
+const ktpSchema = dataUrlImage("Foto KTP", KTP_MAX_BYTES, "foto KTP");
 
 const todayIso = () => {
   const d = new Date();
@@ -157,6 +151,27 @@ export const participantSchema = z
 
 export type ParticipantInput = z.input<typeof participantSchema>;
 export type ParticipantData = z.output<typeof participantSchema>;
+
+/**
+ * Body POST /api/participants — participantSchema + pilihan wilayah (kode Kemendagri) + sandi anggota.
+ * Form kirim ini di luar resolver RHF (yang masih pakai participantSchema), jadi skema ini
+ * dipakai khusus di route server sebagai validasi boundary.
+ */
+export const registerSchema = participantSchema.and(
+  z.object({
+    provinceCode: z
+      .string({ error: "Provinsi wajib dipilih" })
+      .regex(/^\d{2}$/, "Kode provinsi tidak valid"),
+    regencyCode: z
+      .string({ error: "Kabupaten/Kota wajib dipilih" })
+      .regex(/^\d{2}$/, "Kode kabupaten/kota tidak valid"),
+    password: z
+      .string({ error: "Sandi wajib diisi" })
+      .min(8, "Sandi minimal 8 karakter")
+      .max(200, "Sandi maksimal 200 karakter"),
+  }),
+);
+export type RegisterData = z.output<typeof registerSchema>;
 
 export const loginSchema = z.object({
   username: z.string().trim().min(1, "Username wajib diisi").max(100),

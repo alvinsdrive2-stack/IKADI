@@ -1,41 +1,21 @@
-type Variant = "neutral" | "pw" | "pd" | "success";
-
-const variants: Record<Variant, string> = {
-  neutral: "bg-bg text-ink-muted",
-  pw: "bg-primary-soft text-primary-ink",
-  pd: "bg-accent-soft text-accent-ink",
-  success: "bg-primary-soft text-primary-ink",
-};
+import { Badge as UiBadge } from "@/components/ui/badge"
 
 export function Badge({
   variant = "neutral",
   children,
 }: {
-  variant?: Variant;
-  children: React.ReactNode;
+  variant?: "neutral" | "pw" | "pd" | "success"
+  children: React.ReactNode
 }) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${variants[variant]}`}
-    >
-      {variant === "success" && (
-        <svg
-          aria-hidden
-          className="size-3"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-        >
-          <path d="m5 13 4 4L19 7" />
-        </svg>
-      )}
-      {children}
-    </span>
-  );
+  const map = {
+    neutral: "secondary" as const,
+    pw: "pw" as const,
+    pd: "pd" as const,
+    success: "success" as const,
+  }
+  return <UiBadge variant={map[variant]}>{children}</UiBadge>
 }
 
-/** Badge asal IKADI: PW hijau, PD emas, selalu bertulisan (tanpa warna tetap terbaca). */
 export function OriginBadge({ type }: { type: string }) {
-  return <Badge variant={type === "PD" ? "pd" : "pw"}>{type}</Badge>;
+  return <Badge variant={type === "PD" ? "pd" : "pw"}>{type}</Badge>
 }

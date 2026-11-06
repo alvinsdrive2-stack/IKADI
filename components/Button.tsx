@@ -1,14 +1,17 @@
-import type { ButtonHTMLAttributes } from "react";
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { LoaderCircle } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { buttonVariants, type ButtonProps as UiButtonProps } from "@/components/ui/button"
 
-type Variant = "primary" | "secondary" | "ghost" | "onDark";
+type Variant = "primary" | "secondary" | "ghost" | "onDark"
 
-const variants: Record<Variant, string> = {
-  primary: "bg-primary text-white hover:bg-primary-hover",
-  secondary: "border border-primary bg-surface text-primary hover:bg-bg",
-  ghost: "text-ink-muted hover:bg-bg hover:text-primary",
-  // Putih di atas hero hijau: 6.5:1 (DESIGN.md 4.1)
-  onDark: "bg-surface text-primary-hover hover:bg-primary-soft",
-};
+const variantMap: Record<Variant, UiButtonProps["variant"]> = {
+  primary: "default",
+  secondary: "secondary",
+  ghost: "ghost",
+  onDark: "onDark",
+}
 
 export function Button({
   variant = "primary",
@@ -17,38 +20,26 @@ export function Button({
   className = "",
   type = "button",
   children,
+  asChild,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: Variant;
-  size?: "md" | "sm";
-  loading?: boolean;
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: Variant
+  size?: "md" | "sm"
+  loading?: boolean
+  asChild?: boolean
 }) {
-  const sizing =
-    size === "sm"
-      ? "px-3 text-sm min-h-11 md:h-9 md:min-h-0"
-      : "h-11 px-5 text-base";
-
+  const uiSize = size === "sm" ? "sm" : "default"
+  const Comp = asChild ? Slot : "button"
   return (
-    <button
-      type={type}
+    <Comp
+      type={asChild ? undefined : type}
       aria-busy={loading || undefined}
-      className={`inline-flex items-center justify-center gap-2 rounded-md border border-transparent font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]} ${sizing} ${className}`}
+      disabled={asChild ? undefined : loading || props.disabled}
+      className={cn(buttonVariants({ variant: variantMap[variant], size: uiSize }), className)}
       {...props}
     >
-      {loading && (
-        <svg
-          aria-hidden
-          viewBox="0 0 24 24"
-          className="size-4 animate-spin"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-        >
-          <circle cx="12" cy="12" r="9" opacity=".25" />
-          <path d="M21 12a9 9 0 0 0-9-9" />
-        </svg>
-      )}
+      {loading && <LoaderCircle aria-hidden className="animate-spin" />}
       {children}
-    </button>
-  );
+    </Comp>
+  )
 }

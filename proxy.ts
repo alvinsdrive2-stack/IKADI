@@ -1,21 +1,49 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { SESSION_COOKIE, hasValidAdminSession } from "@/lib/auth";
+import { SESSION_COOKIE, ANGGOTA_COOKIE, hasValidAdminSession, hasValidAnggotaSession } from "@/lib/auth";
 
-// Cookie presence alone proves nothing: verify the sealed session here so a forged
-// `ikadi_admin` value never reaches an admin page. Pages still re-check server-side.
+// Verifikasi cookie sesi di edge; halaman tetap memeriksa ulang di server.
 export async function proxy(request: NextRequest) {
-  if (await hasValidAdminSession(request.cookies)) return NextResponse.next();
-  const loginUrl = new URL("/admin/login", request.url);
-  if (request.cookies.has(SESSION_COOKIE)) {
-    // Stale or forged cookie: clear it so the login page is not fighting a dead value.
-    const res = NextResponse.redirect(loginUrl);
-    res.cookies.delete(SESSION_COOKIE);
+  const path = request.nextUrl.pathname;
+
+  const isAdmin = await hasValidAdminSession(request.cookies);
+  const isAnggota = await hasValidAnggotaSession(request.cookies);
+
+  // Satu halaman masuk untuk dua peran.
+  if (path === "/masuk") {
+    if (isAdmin) return NextResponse.redirect(new URL("/admin", request.url));
+    if (isAnggota) return NextResponse.redirect(new URL("/anggota", request.url));
+    return NextResponse.next();
+  }
+
+  // Alamat lama diarahkan ke halaman masuk tunggal.
+  if (path === "/admin/login" || path === "/anggota/masuk") {
+    return NextResponse.redirect(new URL("/masuk", request.url));
+  }
+
+  // Landing: kalau sudah login, langsung ke dashboard peran.
+  if (path === "/") {
+    if (isAdmin) return NextResponse.redirect(new URL("/admin", request.url));
+    if (isAnggota) return NextResponse.redirect(new URL("/anggota", request.url));
+    return NextResponse.next();
+  }
+
+  if (path.startsWith("/admin")) {
+    if (isAdmin) return NextResponse.next();
+    const res = NextResponse.redirect(new URL("/masuk", request.url));
+    if (request.cookies.has(SESSION_COOKIE)) res.cookies.delete(SESSION_COOKIE);
     return res;
   }
-  loginUrl.searchParams.set("next", request.nextUrl.pathname);
-  return NextResponse.redirect(loginUrl);
+
+  if (path.startsWith("/anggota")) {
+    if (isAnggota) return NextResponse.next();
+    const res = NextResponse.redirect(new URL("/masuk", request.url));
+    if (request.cookies.has(ANGGOTA_COOKIE)) res.cookies.delete(ANGGOTA_COOKIE);
+    return res;
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin", "/admin/peserta/:path*"],
+  matcher: ["/", "/masuk", "/admin", "/admin/:path*", "/anggota", "/anggota/:path*"],
 };

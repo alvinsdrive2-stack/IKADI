@@ -9,6 +9,10 @@ import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { Checkbox, Field, Input, RadioGroup, Select, Textarea, controlClass, controlState } from "@/components/Field";
 import { EDUCATION_OPTIONS, MARITAL_OPTIONS, BLOOD_OPTIONS } from "@/components/constants";
+import { PROVINCE_OPTIONS, regencyOptions } from "@/components/WilayahOptions";
+import { CustomCamera } from "@/components/CustomCamera";
+import { SearchSelect } from "@/components/ui/search-select";
+import { IdCard, Images, Camera, PencilLine, Check } from "lucide-react";
 
 const ORIGIN_OPTIONS = [
   { value: "PW", label: "PW (Provinsi)" },
@@ -142,9 +146,12 @@ const OCR_FIELD_ORDER: FieldKey[] = [
 
 type OcrFields = Record<string, { value: string | null; confidence: number }>;
 
-/** Cara mengisi. KTP wajib di ketiganya — bedanya hanya apakah data terisi otomatis. */
-type Mode = "foto" | "galeri" | "manual";
-type View = "choice" | "review" | "form";
+/** Pilihan awal: upload KTP (ada OCR) atau tidak upload (isi manual). */
+type RootChoice = "upload" | "manual";
+/** Sumber KTP untuk upload: kamera langsung (custom) atau galeri. */
+type Mode = "foto" | "galeri";
+/** `choice` = upload / tidak, `source` = kamera / galeri, `camera` = layar bidik, `review` = cek OCR, `form` = isi form. */
+type View = "choice" | "source" | "camera" | "review" | "form";
 
 type Step = {
   key: string;
@@ -184,6 +191,7 @@ export function ParticipantForm() {
     [],
   );
   const [view, setView] = useState<View>("choice");
+  const [rootChoice, setRootChoice] = useState<RootChoice>("upload");
   const [mode, setMode] = useState<Mode>("foto");
   const [step, setStep] = useState(0);
   const [globalError, setGlobalError] = useState<string | null>(null);
@@ -192,6 +200,15 @@ export function ParticipantForm() {
   const [ocrError, setOcrError] = useState<string | null>(null);
   const [ocrConfidence, setOcrConfidence] = useState<Partial<Record<FieldKey, number>>>({});
   const [ocrThreshold, setOcrThreshold] = useState<number | null>(null);
+  // Kode wilayah dipilih dari dropdown berantai; nama tetap diturunkan ke RHF (province/city)
+  // agar kompatibel dengan skema lama. Kode dikirim bersamaan supaya backend menyimpan kode.
+  const [provinceCode, setProvinceCode] = useState("");
+  const [regencyCode, setRegencyCode] = useState("");
+  const [regionError, setRegionError] = useState<{ province?: string; city?: string }>({});
+  // Sandi keanggotaan: tidak lewat RHF supaya tidak ikut tervalidasi Zod lama.
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string>();
 
   const {
     register,
@@ -344,8 +361,8 @@ export function ParticipantForm() {
         setError("ktp", { type: "manual", message: "Foto KTP gagal dibaca. Coba pilih file lain." });
       reader.readAsDataURL(file);
 
-      // Jalur manual: foto tetap wajib, tapi tidak ada pembacaan otomatis.
-      if (mode === "manual") return;
+      // Jalur tidak-upload: tidak ada OCR, foto opsional di langkah pertama.
+      if (rootChoice === "manual") return;
 
       // OCR terpisah dari pembacaan base64 — kegagalan OCR tidak membatalkan isi form.
       setOcrLoading(true);
@@ -375,7 +392,7 @@ export function ParticipantForm() {
         }
       })();
     },
-    [applyOcr, downscaleForOcr, mode, setError, setValue],
+    [applyOcr, downscaleForOcr, rootChoice, setError, setValue],
   );
 
   useEffect(() => {
@@ -428,6 +445,27 @@ export function ParticipantForm() {
 
   const nextStep = useCallback(async () => {
     persistDraft();
+    // Wilayah: dropdown berantai divalidasi manual (tidak lewat skema Zod lama).
+    if (step === 0) {
+      const prov = !!provinceCode;
+      const city = !!regencyCode;
+      setRegionError({
+        province: prov ? undefined : "Provinsi wajib dipilih",
+        city: city ? undefined : "Kabupaten/Kota wajib dipilih",
+      });
+      if (!prov || !city) {
+        requestAnimationFrame(() =>
+          document.getElementById(prov ? "city" : "province")?.focus(),
+        );
+        return;
+      }
+      // Jalur upload: KTP wajib — schema sekarang opsional, cek manual di sini.
+      if (rootChoice === "upload" && !getValues("ktp")) {
+        setError("ktp", { type: "manual", message: "Foto KTP wajib diisi untuk jalur upload" });
+        requestAnimationFrame(() => document.getElementById("ktp")?.focus());
+        return;
+      }
+    }
     const ok = await trigger([...current.fields]);
     if (!ok) {
       // getFieldState membaca state terbaru setelah trigger; `errors` dari closure masih lama.
@@ -436,7 +474,7 @@ export function ParticipantForm() {
       return;
     }
     goStep(step + 1);
-  }, [current.fields, getFieldState, goStep, persistDraft, step, trigger]);
+  }, [current.fields, getFieldState, getValues, goStep, persistDraft, provinceCode, regencyCode, rootChoice, setError, step, trigger]);
 
   const prevStep = useCallback(() => {
     persistDraft();
@@ -460,11 +498,43 @@ export function ParticipantForm() {
   const onSubmit = handleSubmit(async (values) => {
     setSummary([]);
     setGlobalError(null);
+    // Wilayah wajib dipilih dari dropdown berantai (bukan lewat Zod lama).
+    if (!provinceCode || !regencyCode) {
+      setRegionError({
+        province: provinceCode ? undefined : "Provinsi wajib dipilih",
+        city: regencyCode ? undefined : "Kabupaten/Kota wajib dipilih",
+      });
+      goStep(0);
+      return;
+    }
+    // Jalur upload: KTP wajib (schema opsional, cek di submit juga)
+    if (rootChoice === "upload" && !values.ktp) {
+      setError("ktp", { type: "manual", message: "Foto KTP wajib diisi untuk jalur upload" });
+      goStep(0);
+      return;
+    }
+    // Sandi keanggotaan: wajib, min 8, dua isian sama.
+    const pwErr =
+      password.length < 8
+        ? "Sandi minimal 8 karakter."
+        : password !== confirmPassword
+          ? "Konfirmasi sandi tidak sama."
+          : undefined;
+    setPasswordError(pwErr);
+    if (pwErr) {
+      requestAnimationFrame(() => document.getElementById("password")?.focus());
+      return;
+    }
     try {
       const res = await fetch("/api/participants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          ...values,
+          provinceCode,
+          regencyCode,
+          password,
+        }),
       });
 
       if (res.status === 201) {
@@ -481,6 +551,11 @@ export function ParticipantForm() {
 
       if (res.status === 400 && body?.errors) {
         for (const [field, msg] of Object.entries(body.errors)) {
+          if (field === "password") {
+            setPasswordError(String(msg));
+            requestAnimationFrame(() => document.getElementById("password")?.focus());
+            continue;
+          }
           setError(field as FieldKey, { type: "server", message: String(msg) });
         }
         setGlobalError("Periksa kembali isian yang ditandai merah.");
@@ -507,70 +582,108 @@ export function ParticipantForm() {
 
   const opt = (k: FieldKey) => (errors[k]?.message ? String(errors[k]?.message) : undefined);
 
+  /** Berapa field OCR yang benar-benar terisi — dipakai banner ringkasan di layar cek. */
+  const ocrCount = OCR_FIELD_ORDER.filter(
+    (k) => ocrConfidence[k] !== undefined && String(getValues(k as never) ?? "").trim() !== "",
+  ).length;
+
+  const chooseRoot = (c: RootChoice) => {
+    setRootChoice(c);
+    setOcrError(null);
+    setOcrConfidence({});
+    setStep(0);
+    setView(c === "manual" ? "form" : "source");
+  };
+
   const chooseMode = (m: Mode) => {
     setMode(m);
-    setView("form");
+    setOcrError(null);
+    setView("camera");
     setStep(0);
   };
 
   if (view === "choice") {
     return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-lg font-semibold text-ink">Mau diisi bagaimana?</h2>
+      <div className="flex min-h-[60dvh] flex-col gap-4 md:block md:min-h-0 md:space-y-6">
+
+        <div className="md:block">
+          <h2 className="text-lg font-semibold text-ink">Upload foto KTP?</h2>
           <p className="mt-1 text-base text-ink-muted">
-            Pilih yang paling gampang buat Anda.
+            Kalau upload, data terisi otomatis dari KTP. Kalau tidak, isi manual semua.
           </p>
         </div>
 
         <div className="space-y-3">
           <ModeOption
-            onSelect={() => chooseMode("foto")}
-            title="Foto KTP sekarang"
-            body="Kamera terbuka, data terisi otomatis. Paling cepat."
+            onSelect={() => chooseRoot("upload")}
+            title="Upload foto KTP"
+            body="Foto KTP dibaca OCR, NIK & nama terisi otomatis. Paling cepat."
             badge="Tercepat"
-            icon={
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5" aria-hidden>
-                <path d="M4 8h3l1.5-2h7L17 8h3v10H4z" />
-                <circle cx="12" cy="12.5" r="3" />
-              </svg>
-            }
+            icon={<IdCard aria-hidden className="size-5" strokeWidth={2} />}
           />
           <ModeOption
-            onSelect={() => chooseMode("galeri")}
-            title="Pilih foto KTP dari galeri"
-            body="Kalau fotonya sudah ada di ponsel."
-            icon={
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5" aria-hidden>
-                <rect x="3" y="5" width="18" height="14" rx="2" />
-                <circle cx="9" cy="10" r="1.6" />
-                <path d="m4 18 5-5 3 3 3-3 4 4" />
-              </svg>
-            }
-          />
-          <ModeOption
-            onSelect={() => chooseMode("manual")}
-            title="Isi sendiri dulu"
-            body="Ketik manual, data tidak terisi otomatis. Foto KTP tetap diminta di langkah pertama."
-            icon={
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-5" aria-hidden>
-                <rect x="2" y="6" width="20" height="12" rx="2" />
-                <path d="M8 14h8M6 10h.01M10 10h.01" strokeLinecap="round" />
-              </svg>
-            }
+            onSelect={() => chooseRoot("manual")}
+            title="Tidak upload KTP"
+            body="Ketik manual semua data. Foto KTP tidak wajib di langkah pertama."
+            icon={<PencilLine aria-hidden className="size-5" strokeWidth={2} />}
           />
         </div>
 
-        <p className="rounded-md bg-bg p-3 text-sm text-ink-muted">
-          Ketiga cara tetap wajib melampirkan foto KTP. Bedanya hanya di apakah data terisi otomatis.
+        <p className="mt-auto rounded-xl bg-primary-soft/40 p-3 text-sm text-ink-muted md:mt-6">
+          Upload = OCR otomatis. Tidak upload = isi manual. Keduanya tetap membuat akun anggota pakai NIK + sandi.
         </p>
+      </div>
+    );
+  }
+
+  if (view === "source") {
+    return (
+      <div className="flex min-h-[60dvh] flex-col gap-4 md:block md:min-h-0 md:space-y-6">
+        <div className="md:block">
+          <button type="button" onClick={() => setView("choice")} className="mb-3 inline-flex min-h-11 items-center gap-1.5 rounded-[4px] px-2 text-sm font-medium text-primary hover:bg-surface">
+            ← Kembali
+          </button>
+          <h2 className="text-lg font-semibold text-ink">Sumber foto KTP</h2>
+          <p className="mt-1 text-base text-ink-muted">Pilih kamera langsung atau foto yang sudah ada di galeri.</p>
+        </div>
+
+        <div className="space-y-3">
+          <ModeOption
+            onSelect={() => chooseMode("foto")}
+            title="Foto langsung dari HP"
+            body="Kamera custom dengan bingkai KTP. Geser jadi pas, ketuk tombol bulat buat foto."
+            badge="Tercepat"
+            icon={<Camera aria-hidden className="size-5" strokeWidth={2} />}
+          />
+          <ModeOption
+            onSelect={() => chooseMode("galeri")}
+            title="Pilih dari galeri"
+            body="Kalau foto KTP sudah ada di ponsel Anda."
+            icon={<Images aria-hidden className="size-5" strokeWidth={2} />}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (view === "camera") {
+    return (
+      <div className="flex min-h-[60dvh] flex-col md:min-h-0 md:space-y-6">
+        <CustomCamera
+          mode={mode}
+          onPick={onKtpChange}
+          onBack={() => {
+            setView("source");
+            setOcrError(null);
+          }}
+        />
       </div>
     );
   }
 
   if (view === "review") {
     return (
-      <div className="space-y-6">
+      <div className="flex min-h-[60dvh] flex-col gap-4 md:block md:min-h-0 md:space-y-6">
         <div>
           <h2 className="text-lg font-semibold text-ink">Cek hasil baca KTP</h2>
           <p className="mt-1 text-base text-ink-muted">
@@ -586,8 +699,14 @@ export function ParticipantForm() {
 
         {ocrError && <Alert tone="error">{ocrError}</Alert>}
 
+        {!ocrLoading && !ocrError && ocrCount > 0 && (
+          <Alert tone="success">
+            {ocrCount} data terisi otomatis. Sisanya Anda lengkapi sendiri.
+          </Alert>
+        )}
+
         {!ocrLoading && (
-          <ul className="divide-y divide-border rounded-md border border-border bg-surface">
+          <ul className="divide-y divide-border rounded-xl border border-border bg-surface">
             {OCR_FIELD_ORDER.map((k) => {
               const c = ocrConfidence[k];
               const value = String(getValues(k as never) ?? "").trim();
@@ -597,7 +716,13 @@ export function ParticipantForm() {
                 <li key={k} className="flex items-center gap-3 px-4 py-3">
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm text-ink-muted">{FIELD_LABELS[k]}</span>
-                    <span className="block break-words text-base font-semibold text-ink">
+                    <span
+                      className={
+                        k === "nik"
+                          ? "block break-words font-mono text-base font-semibold tabular-nums tracking-wide text-ink"
+                          : "block break-words text-base font-semibold text-ink"
+                      }
+                    >
                       {value || "—"}
                     </span>
                   </span>
@@ -616,12 +741,12 @@ export function ParticipantForm() {
           </ul>
         )}
 
-        <div className="sticky bottom-0 -mx-1 flex gap-3 rounded-t-xl border-t border-border bg-surface p-3">
+        <div className="cta-dock sticky bottom-0 -mx-1 mt-auto flex gap-3 border-t border-border p-3 md:mt-0 md:rounded-t-xl md:bg-surface md:shadow-raised">
           <Button
             variant="secondary"
             className="flex-none"
             onClick={() => {
-              setView("choice");
+              setView("camera");
               setOcrError(null);
             }}
           >
@@ -636,7 +761,12 @@ export function ParticipantForm() {
   }
 
   return (
-    <form noValidate onSubmit={onSubmit} className="space-y-6" aria-busy={isSubmitting}>
+    <form
+      noValidate
+      onSubmit={onSubmit}
+      className="flex min-h-[60dvh] flex-col space-y-6 md:block md:min-h-0"
+      aria-busy={isSubmitting}
+    >
       {summary.length > 0 && (
         <div
           ref={focusOnMount}
@@ -680,10 +810,12 @@ export function ParticipantForm() {
       {step === 0 && (
         <StepPanel n={1} title="Dokumen & kontak">
           <KtpField
-            mode={mode}
+            rootChoice={rootChoice}
             hasKtp={Boolean(ktpValue)}
+            ktpSrc={ktpValue ? String(ktpValue) : undefined}
             error={opt("ktp")}
             onChange={onKtpChange}
+            onGanti={rootChoice === "manual" ? undefined : () => setView("camera")}
           />
           <Textarea
             id="addressKtp"
@@ -715,22 +847,45 @@ export function ParticipantForm() {
             {...reg("addressCurrent")}
           />
           <div className="grid gap-6 md:grid-cols-2">
-            <Input
-              id="province"
-              label="Provinsi"
-              required
-              error={opt("province")}
-              ocrLow={low("province")}
-              {...reg("province")}
-            />
-            <Input
-              id="city"
-              label="Kabupaten/Kota"
-              required
-              error={opt("city")}
-              ocrLow={low("city")}
-              {...reg("city")}
-            />
+            <Field id="province" label="Provinsi" required error={regionError.province ?? opt("province")}>
+              <SearchSelect
+                id="province"
+                options={PROVINCE_OPTIONS}
+                value={provinceCode}
+                placeholder="Pilih provinsi"
+                invalid={Boolean(regionError.province || opt("province"))}
+                describedBy={regionError.province || opt("province") ? "province-error" : undefined}
+                onValueChange={(code) => {
+                  setProvinceCode(code);
+                  // Provinsi ganti -> kabupaten di-reset, nama lama tak valid lagi.
+                  setRegencyCode("");
+                  setValue("city", "", { shouldValidate: false });
+                  const name = code ? PROVINCE_OPTIONS.find((o) => o.value === code)?.label ?? "" : "";
+                  setValue("province", name, { shouldValidate: false });
+                  setRegionError((prev) => ({ ...prev, province: undefined, city: undefined }));
+                  clearOcr("province");
+                  clearOcr("city");
+                }}
+              />
+            </Field>
+            <Field id="city" label="Kabupaten/Kota" required error={regionError.city ?? opt("city")}>
+              <SearchSelect
+                id="city"
+                options={regencyOptions(provinceCode)}
+                value={regencyCode}
+                disabled={!provinceCode}
+                placeholder={provinceCode ? "Pilih kabupaten/kota" : "Pilih provinsi dulu"}
+                invalid={Boolean(regionError.city || opt("city"))}
+                describedBy={regionError.city || opt("city") ? "city-error" : undefined}
+                onValueChange={(code) => {
+                  setRegencyCode(code);
+                  const name = code ? regencyOptions(provinceCode).find((o) => o.value === code)?.label ?? "" : "";
+                  setValue("city", name, { shouldValidate: false });
+                  setRegionError((prev) => ({ ...prev, city: undefined }));
+                  clearOcr("city");
+                }}
+              />
+            </Field>
           </div>
           <Input
             id="whatsapp"
@@ -986,6 +1141,56 @@ export function ParticipantForm() {
             error={opt("trainingExpectation")}
             {...register("trainingExpectation")}
           />
+          <div className="space-y-6 rounded-2xl border border-border bg-primary-soft/40 p-4">
+            <h3 className="text-base font-semibold text-ink">Sandi keanggotaan</h3>
+            <Field
+              id="password"
+              label="Sandi"
+              required
+              hint="Minimal 8 karakter. Dipakai untuk masuk ke halaman anggota lewat NIK."
+              error={passwordError}
+            >
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setPasswordError(undefined);
+                }}
+                aria-required="true"
+                aria-invalid={passwordError ? true : undefined}
+                aria-describedby={passwordError ? "password-error" : "password-hint"}
+                className={`h-11 ${controlClass} px-3 ${controlState(passwordError)}`}
+              />
+            </Field>
+            <Field
+              id="confirmPassword"
+              label="Ulangi sandi"
+              required
+              error={passwordError}
+            >
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setPasswordError(undefined);
+                }}
+                aria-required="true"
+                aria-invalid={passwordError ? true : undefined}
+                aria-describedby={passwordError ? "confirmPassword-error" : undefined}
+                className={`h-11 ${controlClass} px-3 ${controlState(passwordError)}`}
+              />
+            </Field>
+          </div>
           <div id="consent">
             <Checkbox
               id="consent"
@@ -1013,12 +1218,15 @@ export function ParticipantForm() {
         </div>
       )}
 
-      <div className="sticky bottom-0 -mx-1 flex gap-3 rounded-t-xl border-t border-border bg-surface p-3 shadow-raised">
-        {step > 0 && (
-          <Button variant="secondary" className="flex-none" onClick={prevStep} disabled={isSubmitting}>
-            Kembali
-          </Button>
-        )}
+      <div className="cta-dock sticky bottom-0 -mx-1 mt-auto flex gap-3 border-t border-border p-3 md:mt-0 md:rounded-t-xl md:bg-surface md:shadow-raised">
+        <Button
+          variant="secondary"
+          className="flex-none"
+          onClick={step > 0 ? prevStep : () => setView(rootChoice === "manual" ? "choice" : "camera")}
+          disabled={isSubmitting}
+        >
+          Kembali
+        </Button>
         {isLast ? (
           <Button type="submit" disabled={isSubmitting} loading={isSubmitting} className="flex-1">
             {isSubmitting ? "Mengirim..." : "Kirim Data"}
@@ -1059,7 +1267,7 @@ function ModeOption({
     <button
       type="button"
       onClick={onSelect}
-      className="flex w-full items-start gap-3 rounded-xl border border-control-border bg-surface p-4 text-left transition-colors hover:border-primary hover:bg-bg"
+      className="flex w-full items-start gap-3 rounded-xl border border-control-border bg-surface p-4 text-left transition-colors hover:border-primary hover:bg-primary-soft/40"
     >
       <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">
         {icon}
@@ -1069,7 +1277,7 @@ function ModeOption({
         <span className="block text-sm text-ink-muted">{body}</span>
       </span>
       {badge && (
-        <span className="shrink-0 rounded-full bg-primary-soft px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-primary-ink">
+        <span className="shrink-0 rounded-[3px] bg-primary-soft px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-primary-ink">
           {badge}
         </span>
       )}
@@ -1078,47 +1286,93 @@ function ModeOption({
 }
 
 /**
- * Foto KTP wajib di semua jalur. Mode menentukan sumber gambar:
- * `foto` = kamera, `galeri` = pemilih file, `manual` = pemilih file tanpa OCR.
+ * KTP opsional kalau jalur tidak-upload, wajib kalau upload.
+ * rootChoice menentukan perilaku:
+ * - upload: required + OCR otomatis, ganti foto via kamera custom
+ * - manual: opsional, file picker biasa, tanpa OCR
  */
 function KtpField({
-  mode,
+  rootChoice,
   hasKtp,
+  ktpSrc,
   error,
   onChange,
+  onGanti,
 }: {
-  mode: Mode;
+  rootChoice: RootChoice;
   hasKtp: boolean;
+  ktpSrc?: string;
   error?: string;
   onChange: (file: File | undefined) => void;
+  onGanti?: () => void;
 }) {
-  const hint =
-    mode === "manual"
-      ? "Wajib. Pilih foto KTP dari perangkat — data tidak akan terbaca otomatis."
-      : "Wajib. Foto dari sini membuat data terisi otomatis.";
+  const required = rootChoice === "upload";
+
+  if (hasKtp) {
+    return (
+      <Field id="ktp" label="Foto KTP" required={required} error={error}>
+        <div className="space-y-2">
+          {ktpSrc && (
+            // eslint-disable-next-line @next/next/no-img-element -- data URL base64 dari FileReader, bukan aset Next.
+            <img
+              src={ktpSrc}
+              alt="Pratinjau foto KTP"
+              className="max-h-40 w-full rounded-xl border border-border object-cover"
+            />
+          )}
+          <p className="flex items-center gap-1.5 text-sm font-medium text-primary">
+            <Check aria-hidden className="size-4 shrink-0" strokeWidth={2.5} />
+            Foto KTP sudah dilampirkan.
+          </p>
+          {onGanti && (
+            <button
+              type="button"
+              onClick={onGanti}
+              className="min-h-11 rounded-[4px] px-1 text-sm font-semibold text-primary underline underline-offset-2"
+            >
+              Ganti foto
+            </button>
+          )}
+          {!onGanti && (
+            <button
+              type="button"
+              onClick={() => onChange(undefined)}
+              className="min-h-11 rounded-[4px] px-1 text-sm font-medium text-danger underline underline-offset-2"
+            >
+              Hapus foto
+            </button>
+          )}
+        </div>
+      </Field>
+    );
+  }
+
+  const hint = required
+    ? "Wajib. Foto dari sini membuat data terisi otomatis via OCR."
+    : "Opsional. Kalau ada foto KTP, lampirkan — tapi data tetap Anda isi manual.";
 
   return (
-    <Field id="ktp" label="Foto KTP" required hint={hint} error={error}>
-      <div className="space-y-2">
+    <Field id="ktp" label="Foto KTP" required={required} hint={hint} error={error}>
+      {required ? (
+        <button
+          type="button"
+          onClick={onGanti}
+          className={`inline-flex h-11 w-full items-center justify-center gap-2 rounded-[4px] border border-control-border bg-surface text-base font-medium text-ink hover:bg-bg ${controlState(error)}`}
+        >
+          <Camera aria-hidden className="size-5" strokeWidth={2} />
+          Ambil / pilih foto KTP
+        </button>
+      ) : (
         <input
           id="ktp"
           type="file"
           accept="image/jpeg,image/png,image/webp"
-          capture={mode === "foto" ? "environment" : undefined}
           aria-invalid={error ? true : undefined}
           aria-describedby="ktp-hint ktp-error"
           onChange={(e) => onChange(e.target.files?.[0])}
           className={`h-11 ${controlClass} file:mr-3 file:h-full file:border-0 file:bg-surface file:px-3 file:text-base file:text-ink ${controlState(error)}`}
         />
-        {hasKtp && (
-          <p className="flex items-center gap-1.5 text-sm font-medium text-primary">
-            <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="size-4 shrink-0">
-              <path d="m5 13 4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Foto KTP sudah dilampirkan.
-          </p>
-        )}
-      </div>
+      )}
     </Field>
   );
 }
@@ -1133,9 +1387,9 @@ function StepPanel({
   children: React.ReactNode;
 }) {
   return (
-    <fieldset className="rounded-xl border border-border bg-surface p-5 shadow-card sm:p-6 lg:p-8">
+    <fieldset className="rounded-2xl border border-border bg-surface p-5 shadow-card sm:p-6 lg:p-8">
       <legend className="px-1 text-lg font-semibold text-ink">
-        <span aria-hidden="true" className="mr-2 inline-block size-2 rounded-full bg-accent align-middle" />
+        <span aria-hidden="true" className="mr-2 inline-block size-2 rounded-[1px] bg-accent align-middle" />
         {n}. {title}
       </legend>
       <div className="mt-4 space-y-6">{children}</div>

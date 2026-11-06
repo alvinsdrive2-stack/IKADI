@@ -45,6 +45,14 @@ enum BloodType {
   TIDAK_TAHU
 }
 
+/// Status keanggotaan terpisah dari kode level: level 7 (purnabakti) tetap
+/// butuh penanda status yang bisa berubah tanpa mengubah nomor anggota.
+enum MembershipStatus {
+  AKTIF
+  NONAKTIF
+  PURNABAKTI
+}
+
 model Participant {
   id                      BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
   originType              OriginType       @map("origin_type")
@@ -78,9 +86,23 @@ model Participant {
   createdAt               DateTime         @default(now()) @map("created_at")
   updatedAt               DateTime         @default(now()) @updatedAt @map("updated_at")
 
+  /// Hash argon2id sandi login anggota. NULL = belum set (peserta lama).
+  passwordHash            String?          @map("password_hash") @db.VarChar(255)
+  /// Kode level kepengurusan 1..7. 6 = Anggota (default pendaftar).
+  levelCode               Int              @default(6) @map("level_code") @db.TinyInt
+  /// Kode wilayah (provinsi) 2 digit, merujuk Province.code.
+  provinceCode            String?          @map("province_code") @db.Char(2)
+  /// Kode daerah (kabupaten/kota) 2 digit, unik per provinsi.
+  regencyCode             String?          @map("regency_code") @db.Char(2)
+  /// Nomor anggota 15 digit bertitik: L.WW.DD.YY.NNNN. Terbit saat KTA dicetak.
+  memberNumber            String?          @unique(map: "uq_participants_member_number") @map("member_number") @db.VarChar(20)
+  memberNumberIssuedAt    DateTime?        @map("member_number_issued_at")
+  membershipStatus        MembershipStatus @default(AKTIF) @map("membership_status")
+
   @@index([createdAt], map: "idx_participants_created_at")
   @@index([originType, originName], map: "idx_participants_origin")
   @@index([fullName], map: "idx_participants_full_name")
+  @@index([provinceCode, regencyCode], map: "idx_participants_region")
   @@map("participants")
 }
 
@@ -91,4 +113,65 @@ model Admin {
   createdAt    DateTime @default(now()) @map("created_at")
 
   @@map("admins")
+}
+
+/// Master provinsi. `code` = kode Kemendagri 2 digit, sekaligus segmen WW.
+model Province {
+  code      String    @id @db.Char(2)
+  name      String    @db.VarChar(100)
+  regencies Regency[]
+
+  @@map("provinces")
+}
+
+/// Master kabupaten/kota. `code` 2 digit unik per provinsi (segmen DD).
+model Regency {
+  provinceCode String   @map("province_code") @db.Char(2)
+  code         String   @db.Char(2)
+  name         String   @db.VarChar(120)
+  province     Province @relation(fields: [provinceCode], references: [code], onDelete: Cascade)
+
+  @@id([provinceCode, code])
+  @@index([provinceCode], map: "idx_regencies_province")
+  @@map("regencies")
+}
+
+/// Penghitung seri nomor anggota. Unik per (level, wilayah, daerah, tahun),
+/// supaya NNNN berurutan tanpa bentrok saat dua admin mencetak bersamaan.
+model MemberNumberSequence {
+  id           BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  levelCode    Int    @map("level_code") @db.TinyInt
+  provinceCode String @map("province_code") @db.Char(2)
+  regencyCode  String @map("regency_code") @db.Char(2)
+  year         Int    @db.SmallInt
+  lastSerial   Int    @default(0) @map("last_serial") @db.UnsignedSmallInt
+
+  @@unique([levelCode, provinceCode, regencyCode, year], map: "uq_member_number_sequence")
+  @@map("member_number_sequences")
+}
+
+/// Riwayat cetak KTA. Sekaligus sumber kuota cetak global (trial: 10).
+model KtaPrint {
+  id               BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  participantId    BigInt   @map("participant_id") @db.UnsignedBigInt
+  memberNumber     String   @map("member_number") @db.VarChar(20)
+  printedByAdminId BigInt   @map("printed_by_admin_id") @db.UnsignedBigInt
+  printedAt        DateTime @default(now()) @map("printed_at")
+
+  @@index([printedAt], map: "idx_kta_prints_printed_at")
+  @@index([participantId], map: "idx_kta_prints_participant")
+  @@map("kta_prints")
+}
+
+/// Nama pejabat penanda tangan KTA. Diedit admin lewat /admin/kta/pejabat.
+/// `key` = kunci tetap ("ketuaUmum" / "sekjen") supaya kartu & halaman
+/// verifikasi membaca baris yang sama.
+model KtaOfficial {
+  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  key       String   @unique @db.VarChar(20)
+  nama      String   @db.VarChar(200)
+  jabatan   String   @db.VarChar(120)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("kta_officials")
 }

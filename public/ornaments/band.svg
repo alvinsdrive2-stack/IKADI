@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="32" viewBox="0 0 80 32">
+  <!-- Pita horizontal: rantai oktagon + belah ketupat. Tile 80x32, seamless.
+       Untuk strip header/footer/divider. -->
+  <g fill="none" stroke="currentColor" stroke-width="0.9" stroke-linejoin="round">
+    <path d="M5.74 2.14L13.86 10.26L13.86 21.74L5.74 29.86L-5.74 29.86L-13.86 21.74L-13.86 10.26L-5.74 2.14Z"/>
+    <path d="M45.74 2.14L53.86 10.26L53.86 21.74L45.74 29.86L34.26 29.86L26.14 21.74L26.14 10.26L34.26 2.14Z"/>
+    <path d="M85.74 2.14L93.86 10.26L93.86 21.74L85.74 29.86L74.26 29.86L66.14 21.74L66.14 10.26L74.26 2.14Z"/>
+    <path d="M20 8L28 16L20 24L12 16Z"/>
+    <path d="M60 8L68 16L60 24L52 16Z"/>
+    <path d="M2.30 10.46L5.54 13.70L5.54 18.30L2.30 21.54L-2.30 21.54L-5.54 18.30L-5.54 13.70L-2.30 10.46Z"/>
+    <path d="M42.30 10.46L45.54 13.70L45.54 18.30L42.30 21.54L37.70 21.54L34.46 18.30L34.46 13.70L37.70 10.46Z"/>
+    <path d="M82.30 10.46L85.54 13.70L85.54 18.30L82.30 21.54L77.70 21.54L74.46 18.30L74.46 13.70L77.70 10.46Z"/>
+  </g>
+</svg>

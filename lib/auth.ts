@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
 import { getIronSession, unsealData, type SessionOptions } from "iron-session";
+import { prisma } from "@/lib/prisma";
+import { isPengurusLevel, type Actor } from "@/lib/pengurus";
 
 export type AdminSession = { adminId?: string; username?: string };
 export type AnggotaSession = { participantId?: string };
@@ -158,4 +160,63 @@ export async function requireAnggota(): Promise<
     };
   }
   return { ok: true, session };
+}
+
+// ---- Pengurus (peran di dalam area anggota, bukan admin) ----
+
+/**
+ * Sesi anggota + verifikasi peran ke DB.
+ *
+ * `isPengurus` sengaja TIDAK disimpan di cookie: umur cookie 30 hari, jadi
+ * pencabutan peran tidak akan langsung berlaku. DB selalu jadi sumber kebenaran.
+ */
+export async function readPengurus(): Promise<Actor | null> {
+  const session = await readAnggotaSession();
+  if (!session?.participantId) return null;
+  if (!/^\d{1,20}$/.test(session.participantId)) return null;
+  try {
+    const p = await prisma.participant.findUnique({
+      where: { id: BigInt(session.participantId) },
+      select: { id: true, isPengurus: true, levelCode: true, provinceCode: true, regencyCode: true },
+    });
+    if (!p?.isPengurus || !isPengurusLevel(p.levelCode)) return null;
+    return {
+      participantId: String(p.id),
+      levelCode: p.levelCode,
+      provinceCode: p.provinceCode,
+      regencyCode: p.regencyCode,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Guard route pengurus.
+ * 401 = belum login sebagai anggota, 403 = login tapi bukan pengurus.
+ */
+export async function requirePengurus(): Promise<
+  { ok: true; actor: Actor } | { ok: false; response: Response }
+> {
+  const session = await readAnggotaSession();
+  if (!session) {
+    return {
+      ok: false,
+      response: Response.json(
+        { ok: false, code: "UNAUTHORIZED", message: "Silakan login sebagai anggota." },
+        { status: 401 },
+      ),
+    };
+  }
+  const actor = await readPengurus();
+  if (!actor) {
+    return {
+      ok: false,
+      response: Response.json(
+        { ok: false, code: "FORBIDDEN", message: "Akun ini bukan pengurus." },
+        { status: 403 },
+      ),
+    };
+  }
+  return { ok: true, actor };
 }

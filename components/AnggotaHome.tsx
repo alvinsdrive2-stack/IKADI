@@ -8,15 +8,19 @@ import { ArrowRight, Check, CircleDashed, Clock, IdCard, Printer, ShieldCheck, U
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/Alert";
-import { OriginBadge } from "@/components/Badge";
 import { MEMBERSHIP_STATUS_LABELS, formatDate, formatPersonName } from "@/components/constants";
+import { KtaCardView } from "@/components/KtaCardView";
 import { cn } from "@/lib/utils";
+import { displayMemberNumber } from "@/lib/member-number";
+
+const FALLBACK_PEJABAT = {
+  ketuaUmum: { nama: "Ketua Umum IKADI", jabatan: "Ketua Umum" },
+  sekjen: { nama: "Sekretaris Jenderal", jabatan: "Sekretaris Jenderal" },
+};
 
 type Profile = {
   fullName: string;
   nik: string;
-  originType: "PW" | "PD";
-  originName: string;
   levelCode: number;
   levelLabel: string;
   membershipStatus: "AKTIF" | "NONAKTIF" | "PUNABAKTI";
@@ -106,15 +110,6 @@ export function AnggotaHome({ variant = "dashboard" }: { variant?: "dashboard" |
 
   const rows: { label: string; value: React.ReactNode }[] = [
     { label: "Nama lengkap", value: displayName },
-    {
-      label: "Asal IKADI",
-      value: (
-        <span className="inline-flex flex-wrap items-center gap-1.5">
-          <OriginBadge type={d.originType} />
-          {d.originName}
-        </span>
-      ),
-    },
     { label: "Jenjang", value: d.levelLabel },
     { label: "Provinsi", value: d.province ?? "—" },
     { label: "Kabupaten/Kota", value: d.city ?? "—" },
@@ -122,7 +117,7 @@ export function AnggotaHome({ variant = "dashboard" }: { variant?: "dashboard" |
     {
       label: "Nomor anggota",
       value: d.memberNumber ? (
-        <span className="font-mono tabular-nums tracking-wide">{d.memberNumber}</span>
+        <span className="font-mono tabular-nums tracking-wide">{displayMemberNumber(d.memberNumber!)}</span>
       ) : (
         <span className="text-ink-muted">Belum terbit</span>
       ),
@@ -229,51 +224,47 @@ export function AnggotaHome({ variant = "dashboard" }: { variant?: "dashboard" |
             sizes="(max-width: 1024px) 100vw, 55vw"
             className="object-cover"
           />
-          <div className="relative p-4 sm:p-5">
-            <div className="rounded-lg border border-border bg-white p-5 shadow-card">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 id="kta-h" className="text-xs font-semibold text-ink-muted">
-                    Kartu Tanda Anggota
-                  </h2>
-                  <p className="mt-2 break-all font-mono text-2xl font-bold tabular-nums tracking-wide text-ink sm:text-3xl">
-                    {d.memberNumber ?? "Belum terbit"}
-                  </p>
-                </div>
-                <Badge variant={hasKta ? "success" : "secondary"}>{hasKta ? "Terbit" : "Menunggu"}</Badge>
+          <div className="relative space-y-3 p-4 sm:p-5">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h2 id="kta-h" className="text-xl font-extrabold tracking-tight text-white">
+                  Kartu Tanda Anggota
+                </h2>
+                <p className="mt-0.5 mb-2 text-sm font-medium text-white">
+                  {hasKta
+                    ? "Pratinjau kartu Anda. Tap kartu untuk melihat sisi belakang."
+                    : "Pratinjau sebelum nomor terbit. Tap kartu untuk melihat sisi belakang."}
+                </p>
               </div>
+              <Badge variant={hasKta ? "success" : "secondary"}>{hasKta ? "Terbit" : "Menunggu"}</Badge>
+            </div>
 
-              <dl className="mt-5 grid gap-x-6 gap-y-3 border-t border-border pt-4 sm:grid-cols-2">
-                <div className="min-w-0">
-                  <dt className="text-xs text-ink-muted">Nama</dt>
-                  <dd className="mt-0.5 truncate text-sm font-medium text-ink">{displayName}</dd>
-                </div>
-                <div className="min-w-0">
-                  <dt className="text-xs text-ink-muted">Asal IKADI</dt>
-                  <dd className="mt-0.5 truncate text-sm font-medium text-ink">
-                    {d.originType} · {d.originName}
-                  </dd>
-                </div>
-                <div className="min-w-0">
-                  <dt className="text-xs text-ink-muted">Jenjang</dt>
-                  <dd className="mt-0.5 truncate text-sm font-medium text-ink">{d.levelLabel}</dd>
-                </div>
-                <div className="min-w-0">
-                  <dt className="text-xs text-ink-muted">Wilayah</dt>
-                  <dd className="mt-0.5 truncate text-sm font-medium text-ink">{wilayah}</dd>
-                </div>
-              </dl>
+            {/* Markup & koordinat sama persis dengan /anggota/kartu. */}
+            <div className="kta-print-reset kta-preview-shadow">
+              <KtaCardView compact data={{
+                  memberNumber: d.memberNumber ?? "—",
+                  fullName: displayName,
+                  levelLabel: d.levelLabel,
+                  provinceName: d.province,
+                  regencyName: d.city,
+                  photoPath: d.photoPath ?? null,
+                  issuedAt: d.memberNumberIssuedAt ?? d.memberSince,
+                  verifyUrl: d.kta?.verifyUrl ?? "",
+                  qrPng: d.kta?.qrPng ?? "",
+                  pejabat: FALLBACK_PEJABAT,
+                }}
+              />
+            </div>
 
-              <div className="mt-5 flex flex-wrap gap-2">
-                <Button asChild size="sm">
-                  <Link href="/anggota/kartu">
-                    <IdCard aria-hidden /> {hasKta ? "Lihat kartu" : "Pratinjau kartu"}
-                  </Link>
-                </Button>
-                <Button asChild size="sm" variant="secondary">
-                  <Link href="/anggota/profil">Profil</Link>
-                </Button>
-              </div>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild size="sm">
+                <Link href="/anggota/kartu">
+                  <IdCard aria-hidden /> {hasKta ? "Buka kartu" : "Lengkapi kartu"}
+                </Link>
+              </Button>
+              <Button asChild size="sm" variant="secondary">
+                <Link href="/anggota/profil">Profil</Link>
+              </Button>
             </div>
           </div>
         </section>
@@ -322,15 +313,6 @@ export function AnggotaHome({ variant = "dashboard" }: { variant?: "dashboard" |
             </h2>
           </div>
           <dl className="divide-y divide-border">
-            <InfoRow
-              label="Asal IKADI"
-              value={
-                <span className="inline-flex items-center gap-1.5">
-                  <OriginBadge type={d.originType} />
-                  {d.originName}
-                </span>
-              }
-            />
             <InfoRow label="Wilayah" value={wilayah} />
             <InfoRow label="Status" value={statusLabel} />
             <InfoRow label="Nomor anggota" value={d.memberNumber ?? "Belum terbit"} mono={!!d.memberNumber} />

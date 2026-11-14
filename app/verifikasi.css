@@ -1,0 +1,664 @@
+/* ============================================================
+   Halaman verifikasi KTA (/verifikasi/[nomor]) + animasi pembuka.
+   Bahasa visual mengikuti artwork kartu: hijau tua -> hijau -> lime,
+   ornamen bintang Rub el Hizb, teks putih.
+   ============================================================ */
+
+.vpage {
+  position: relative;
+  min-height: 100dvh;
+  padding: 2.5rem 1rem 3rem;
+  background: linear-gradient(112deg, #078237 0%, #0f9238 28%, #32b02d 54%, #88d120 78%, #d5ec2a 100%);
+  overflow: hidden;
+}
+
+/* Facet geometris tipis di latar, supaya latar tidak terlihat seperti gradien polos. */
+.vpage-facets {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, transparent 42%, rgb(255 255 255 / 0.06) 42.2%, transparent 58%),
+    linear-gradient(65deg, transparent 55%, rgb(6 90 34 / 0.35) 55.2%, transparent 78%),
+    radial-gradient(60% 45% at 92% 12%, rgb(233 250 75 / 0.55) 0%, transparent 70%);
+}
+
+.vpage-inner {
+  position: relative;
+  width: 100%;
+  max-width: 34rem;
+  margin: 0 auto;
+}
+
+.vpage-head {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  margin-bottom: 1.5rem;
+  color: #fff;
+}
+
+.vpage-mark {
+  flex: none;
+  width: clamp(5rem, 28vw, 10rem) !important;
+  height: auto !important;
+  /* Putih + bayangan dalam satu filter: aturan ini menang atas utility
+     Tailwind, jadi `brightness(0) invert(1)` harus ikut ditulis ulang. */
+  filter: brightness(0) invert(1) drop-shadow(0 2px 8px rgb(2 42 14 / 0.45));
+}
+
+.vpage-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgb(234 255 107 / 0.9);
+}
+
+.vpage-title {
+  margin-top: 0.15rem;
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: #fff;
+  text-shadow: 0 2px 10px rgb(2 42 14 / 0.4);
+}
+
+/* ---- Kartu data ---- */
+.vcard {
+  position: relative;
+  overflow: hidden;
+  padding: 1.5rem 1.25rem;
+  border-radius: 1.25rem;
+  border: 2px solid rgb(235 255 140 / 0.75);
+  background: linear-gradient(150deg, rgb(4 61 23 / 0.92) 0%, rgb(7 104 40 / 0.86) 55%, rgb(23 128 45 / 0.82) 100%);
+  box-shadow:
+    0 24px 60px -12px rgb(4 62 22 / 0.65),
+    inset 0 1px 3px rgb(255 255 255 / 0.18),
+    0 0 60px rgb(210 248 65 / 0.22);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #fff;
+}
+
+.vcard-inactive {
+  border-color: rgb(255 226 130 / 0.7);
+}
+
+.vcard-shimmer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 30%, rgb(255 255 255 / 0.16) 48%, transparent 66%);
+  transform: translateX(-40%);
+  animation: vcardSweep 5.5s ease-in-out infinite;
+}
+
+@keyframes vcardSweep {
+  0%, 55% {
+    transform: translateX(-45%);
+  }
+  85%, 100% {
+    transform: translateX(45%);
+  }
+}
+
+.vcard-status {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  background: rgb(0 0 0 / 0.22);
+  border: 1px solid rgb(234 255 107 / 0.32);
+}
+
+.vcard-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  flex: none;
+}
+
+.vcard-dot-ok {
+  background: #d4f235;
+  box-shadow: 0 0 10px #d4f235;
+}
+
+.vcard-dot-warn {
+  background: #f5b800;
+  box-shadow: 0 0 10px #f5b800;
+}
+
+.vcard-status-text {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #eaffb5;
+}
+
+.vcard-name-block {
+  position: relative;
+  margin-top: 1.25rem;
+  padding-bottom: 1.125rem;
+  border-bottom: 1px solid rgb(234 255 107 / 0.22);
+}
+
+.vcard-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(214 240 180 / 0.75);
+}
+
+.vcard-name {
+  margin-top: 0.3rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: #fff;
+  text-shadow: 0 2px 12px rgb(2 42 14 / 0.5);
+  overflow-wrap: anywhere;
+}
+
+.vcard-level {
+  margin-top: 0.35rem;
+  display: inline-block;
+  padding: 0.1875rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgb(234 255 107 / 0.16);
+  color: #eaff6b;
+}
+
+.vcard-number-block {
+  position: relative;
+  margin-top: 1.125rem;
+}
+
+.vcard-number {
+  margin-top: 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: #eaff6b;
+  overflow-wrap: anywhere;
+}
+
+.vcard-grid {
+  position: relative;
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.375rem;
+  padding-top: 1.125rem;
+  border-top: 1px solid rgb(234 255 107 / 0.22);
+}
+
+@media (min-width: 480px) {
+  .vcard-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .vcard-grid > div:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+.vcard-value {
+  margin-top: 0.2rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #f2ffe0;
+  overflow-wrap: anywhere;
+}
+
+.vcard-note {
+  position: relative;
+  margin-top: 1.375rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgb(234 255 107 / 0.22);
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: rgb(226 245 205 / 0.8);
+}
+
+.vpage-foot {
+  margin-top: 1.75rem;
+  text-align: center;
+}
+
+.vpage-link {
+  display: inline-block;
+  padding: 0.4rem 0.9rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #043d17;
+  background: rgb(234 255 107 / 0.9);
+  transition: background-color 150ms;
+}
+
+.vpage-link:hover {
+  background: #eaff6b;
+}
+
+/* Isi halaman disembunyikan selama animasi. `visibility` (bukan display)
+   supaya tata letak sudah final saat muncul dan tidak ada lompatan. */
+.vintro-hidden {
+  visibility: hidden;
+}
+
+/* Muncul setelah animasi pembuka: fade-in sambil membesar dari 86% ke ukuran
+   asli. Transform di wadah, bukan anak-anaknya, supaya tidak memicu reflow. */
+.vpage-enter {
+  animation: vpageEnter 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes vpageEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ============================ Animasi pembuka ============================ */
+
+.vintro {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: linear-gradient(112deg, #078237 0%, #0f9238 28%, #32b02d 54%, #88d120 78%, #d5ec2a 100%);
+  transition: opacity 500ms ease;
+}
+
+.vintro[data-leaving="true"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --- Bintang membelah --- */
+.vintro-star {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(76vw, 540px);
+  height: min(76vw, 540px);
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  transition: transform 850ms cubic-bezier(0.22, 1, 0.36, 1), opacity 700ms ease, filter 700ms ease;
+}
+
+.vintro-half {
+  position: absolute;
+  inset: 0;
+  transition: transform 1.1s cubic-bezier(0.19, 1, 0.22, 1), filter 850ms ease;
+}
+
+.vintro[data-phase="star-open"] .vintro-half-left {
+  transform: translateX(-44%) scale(0.94) rotate(-6deg);
+}
+
+.vintro[data-phase="star-open"] .vintro-half-right {
+  transform: translateX(44%) scale(0.94) rotate(6deg);
+}
+
+.vintro[data-phase="map"] .vintro-star,
+.vintro[data-phase="dissolve"] .vintro-star {
+  transform: translate(-50%, -50%) scale(2.15) rotate(22deg);
+  opacity: 0;
+  filter: blur(16px);
+}
+
+.vintro-seam {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 62%;
+  transform: translate(-50%, -50%) scaleY(0.9);
+  background: linear-gradient(to bottom, transparent, #ffffff, #eaff6b, #ffffff, transparent);
+  box-shadow: 0 0 25px 6px rgb(235 255 112 / 0.85);
+  opacity: 0;
+  transition: opacity 400ms ease;
+}
+
+.vintro[data-phase="star-intro"] .vintro-seam,
+.vintro[data-phase="star-close"] .vintro-seam {
+  opacity: 1;
+}
+
+.vintro-spin {
+  transform-origin: 0 0;
+  animation: vintroSpin 24s linear infinite;
+}
+
+@keyframes vintroSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Kartu logo --- */
+.vintro-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 15;
+  transform: translate(-50%, -50%) scale(0.32);
+  opacity: 0;
+  filter: blur(12px);
+  transition:
+    transform 950ms cubic-bezier(0.175, 0.885, 0.32, 1.18),
+    opacity 650ms ease,
+    filter 750ms ease,
+    z-index 0s;
+}
+
+.vintro[data-phase="star-open"] .vintro-logo {
+  z-index: 35;
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  filter: blur(0);
+}
+
+.vintro-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 460px;
+  height: 460px;
+  max-width: 140vw;
+  max-height: 140vw;
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgb(242 255 130 / 0.55) 0%, rgb(168 238 43 / 0.28) 40%, rgb(11 138 62 / 0) 72%);
+  filter: blur(8px);
+  opacity: 0;
+  transition: transform 900ms cubic-bezier(0.16, 1, 0.3, 1), opacity 800ms ease;
+}
+
+.vintro[data-phase="star-open"] .vintro-glow {
+  transform: translate(-50%, -50%) scale(1.1);
+  opacity: 1;
+}
+
+.vintro-logo-mark {
+  /* Sama seperti .vpage-mark: putihkan logo lalu beri bayangan.
+     LogoMark menulis width/height inline, jadi batas responsif butuh
+     !important supaya tidak meluber di ponsel. */
+  width: min(180px, 58vw) !important;
+  height: auto !important;
+  filter: brightness(0) invert(1) drop-shadow(0 6px 16px rgb(2 42 14 / 0.55));
+}
+
+.vintro-logo-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.5rem 2rem;
+  border-radius: 1.5rem;
+  border: 2px solid rgb(235 255 140 / 0.75);
+  background: linear-gradient(135deg, rgb(8 118 48 / 0.9) 0%, rgb(28 158 52 / 0.78) 60%, rgb(164 224 34 / 0.6) 100%);
+  box-shadow:
+    0 24px 60px -12px rgb(4 62 22 / 0.65),
+    inset 0 1px 3px rgb(255 255 255 / 0.55),
+    0 0 60px rgb(210 248 65 / 0.35);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  text-align: center;
+}
+
+.vintro-shimmer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -120%;
+  width: 75%;
+  transform: skewX(-20deg);
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 20%, rgb(255 255 255 / 0.45) 50%, transparent 80%);
+  animation: vintroSweep 1.6s cubic-bezier(0.22, 1, 0.36, 1) 0.9s forwards;
+}
+
+@keyframes vintroSweep {
+  from {
+    left: -120%;
+  }
+  to {
+    left: 160%;
+  }
+}
+
+.vintro-logo-small {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  color: rgb(226 245 205 / 0.85);
+}
+
+
+
+.vintro-tag {
+  padding: 0.2rem 0.7rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(234 255 107 / 0.32);
+  background: rgb(0 0 0 / 0.2);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #eaffb5;
+}
+
+/* --- Peta --- */
+.vintro-map {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 30;
+  width: min(92vw, 1140px);
+  aspect-ratio: 1200 / 560;
+  transform: translate(-50%, -50%) scale(0.78);
+  opacity: 0;
+  filter: blur(12px);
+  transition:
+    transform 1.1s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 950ms ease,
+    filter 1.1s ease;
+}
+
+.vintro[data-phase="map"] .vintro-map {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  filter: blur(0);
+}
+
+.vintro[data-phase="dissolve"] .vintro-map {
+  opacity: 0;
+  transform: translate(-50%, -52%) scale(1.16);
+  filter: blur(18px);
+  transition:
+    transform 1.65s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 1.55s ease,
+    filter 1.65s ease;
+}
+
+.vintro-islands path {
+  fill: rgb(255 255 255 / 0.18);
+  stroke: #f4ff9e;
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-dasharray: 1600;
+  stroke-dashoffset: 1600;
+  transition: stroke-dashoffset 1.8s cubic-bezier(0.25, 1, 0.5, 1), fill 1.2s ease 0.4s;
+}
+
+.vintro[data-phase="map"] .vintro-islands path,
+.vintro[data-phase="dissolve"] .vintro-islands path {
+  stroke-dashoffset: 0;
+  fill: url(#vintroIslandFill);
+}
+
+.vintro-arcs path {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 1.8;
+  stroke-dasharray: 8 6;
+  opacity: 0;
+  transition: opacity 800ms ease 700ms;
+  animation: vintroDash 18s linear infinite;
+}
+
+.vintro[data-phase="map"] .vintro-arcs path,
+.vintro[data-phase="dissolve"] .vintro-arcs path {
+  opacity: 0.6;
+}
+
+@keyframes vintroDash {
+  to {
+    stroke-dashoffset: -240;
+  }
+}
+
+.vintro-pins > g {
+  opacity: 0;
+}
+
+.vintro[data-phase="map"] .vintro-pins > g,
+.vintro[data-phase="dissolve"] .vintro-pins > g {
+  opacity: 1;
+}
+
+.vintro-pin-body {
+  transform-origin: 0 0;
+  transform: translateY(-58px) scale(0.25);
+}
+
+.vintro[data-phase="map"] .vintro-pin-body,
+.vintro[data-phase="dissolve"] .vintro-pin-body {
+  transform: translateY(0) scale(1);
+  transition: transform 750ms cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--i, 0) * 210ms + 420ms);
+}
+
+.vintro-ripple {
+  transform-origin: 0 0;
+  animation: vintroPulse 2.1s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes vintroPulse {
+  0% {
+    transform: scale(0.35);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+.vintro-map-caption {
+  position: absolute;
+  bottom: -2.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(190 242 100 / 0.5);
+  background: rgb(6 89 34 / 0.85);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #fff;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.vintro-skip {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 40;
+  padding: 0.5rem 0.9rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(255 255 255 / 0.25);
+  background: rgb(0 0 0 / 0.25);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgb(255 255 255 / 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background-color 150ms;
+}
+
+.vintro-skip:hover {
+  background: rgb(0 0 0 / 0.45);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vintro,
+  .vintro *,
+  .vcard-shimmer,
+  .vpage-enter {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .vpage-enter {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- Warna SVG animasi (hex dipusatkan di CSS, bukan di komponen) ---- */
+.vintro-stop-facet-1 { stop-color: #0b8a3e; }
+.vintro-stop-facet-2 { stop-color: #2eb638; }
+.vintro-stop-facet-3 { stop-color: #c8e628; }
+.vintro-stop-rim-1 { stop-color: #ffffff; }
+.vintro-stop-rim-2 { stop-color: #e5ff66; }
+.vintro-stop-rim-3 { stop-color: #87d518; }
+.vintro-stop-island-1 { stop-color: #066628; stop-opacity: 0.94; }
+.vintro-stop-island-2 { stop-color: #19983a; stop-opacity: 0.9; }
+.vintro-stop-island-3 { stop-color: #8ed81e; stop-opacity: 0.88; }
+
+.vintro-star-face {
+  fill: url(#vintroStarFacet);
+  stroke: url(#vintroStarRim);
+  stroke-width: 8;
+}
+.vintro-star-band-a { stroke: #d9f542; opacity: 0.85; }
+.vintro-star-core { fill: #097330; fill-opacity: 0.65; stroke: #ffffff; opacity: 0.9; }
+.vintro-star-band-b { stroke: #c8e628; }
+.vintro-star-jewel-a { fill: #d9f542; opacity: 0.9; }
+.vintro-star-jewel-b { fill: #ffffff; opacity: 0.9; }
+.vintro-star-pupil { fill: #0b8a3e; stroke: #ffffff; }
+.vintro-star-ring { stroke: #eaff70; opacity: 0.45; }
+
+
+.vintro-grid { stroke: #ffffff; stroke-opacity: 0.14; stroke-width: 1; stroke-dasharray: 4 6; }
+
+.vintro-pin-anchor { fill: #eaff61; opacity: 0.85; }
+.vintro-pin-ripple-inner { stroke: #eaff61; }
+.vintro-pin-dot { fill: #ffffff; }
+.vintro-pin-body-shape { fill: #ffffff; stroke: #055420; }
+.vintro-pin-star { fill: #087830; }
+.vintro-pin-star-core { fill: #eaff61; }

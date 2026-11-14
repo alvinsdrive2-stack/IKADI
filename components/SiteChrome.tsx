@@ -105,15 +105,8 @@ export function SiteFooter({ className = "" }: { className?: string }) {
         <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr]">
           <div>
             <div className="flex items-center gap-2.5">
-              <LogoMark size={32} />
-              <div className="leading-tight">
-                <p className="text-sm font-bold tracking-tight text-ink">IKADI</p>
-                <p className="text-xs text-ink-muted">Ikatan Da&apos;i Indonesia</p>
-              </div>
+              <LogoMark size={120} />
             </div>
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-ink-muted">
-              Portal resmi pendataan dan penerbitan Kartu Tanda Anggota IKADI untuk anggota dan pengurus di seluruh wilayah.
-            </p>
           </div>
 
           <nav aria-label="Tautan layanan">

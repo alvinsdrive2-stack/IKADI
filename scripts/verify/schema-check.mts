@@ -5,8 +5,6 @@ import { maskNik, maskWhatsapp } from "../../lib/mask.ts";
 import { rateLimit, resetRateLimit } from "../../lib/rate-limit.ts";
 
 const base = {
-  originType: "PW",
-  originName: "  Jawa Timur ",
   fullName: "H. Ahmad Fauzi, S.Pd.",
   nik: "3576014241026002",
   birthPlace: "Surabaya",
@@ -21,10 +19,6 @@ const base = {
   address: "Jl. Raya No. 1",
   whatsapp: "085987654321",
   occupation: "Guru",
-  sermonExperience: "SERING",
-  quranReading: "TAJWID_BAIK",
-  trainingReason: "Ingin memperdalam",
-  trainingExpectation: "Bisa khutbah",
   consent: true,
   ktp: "data:image/jpeg;base64,/9j/4AAQSkZJRg==",
 };
@@ -40,7 +34,6 @@ assert.equal(
   false,
   "ktp gif harus ditolak",
 );
-assert.equal(ok.data.originName, "Jawa Timur", "trim originName");
 assert.equal(ok.data.lastEducation, undefined, "field opsional kosong jadi undefined");
 assert.equal(ok.data.addressCurrent, base.addressKtp, "alamat tinggal ikut KTP saat dicentang");
 assert.equal(ok.data.address, base.addressKtp, "kolom legacy address fallback ke addressKtp");
@@ -75,13 +68,6 @@ for (const bad of ["357601424102600", "35760142410260021", "35760142410260x2", "
 }
 assert.equal(participantSchema.safeParse({ ...base, birthDate: "2999-01-01" }).success, false, "tanggal masa depan");
 assert.equal(participantSchema.safeParse({ ...base, consent: false }).success, false, "consent wajib true");
-assert.equal(participantSchema.safeParse({ ...base, sermonExperience: "LAINNYA" }).success, false, "LAINNYA butuh teks");
-const lain = participantSchema.safeParse({ ...base, sermonExperience: "LAINNYA", sermonExperienceOther: " Ustadz " });
-assert.ok(lain.success);
-assert.equal(lain.data.sermonExperienceOther, "Ustadz".length ? "Ustadz" : "", "trim other");
-const bukanLain = participantSchema.safeParse({ ...base, sermonExperienceOther: "harus dibuang" });
-assert.ok(bukanLain.success);
-assert.equal(bukanLain.data.sermonExperienceOther, undefined, "selain LAINNYA di-strip");
 
 assert.equal(normalizeNik("'087"), "087");
 assert.equal(participantSchema.parse({ ...base, nik: "'3576014241026002" }).nik, "3576014241026002");

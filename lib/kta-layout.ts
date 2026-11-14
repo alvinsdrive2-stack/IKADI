@@ -32,11 +32,7 @@ export type KtaSlotKey =
   | "memberNumber"
   | "fullName"
   | "levelLabel"
-  | "noteAuth"
-  | "qrSekjen"
-  | "sekjen"
-  | "qrKetum"
-  | "ketum";
+  | "qrVerifikasi";
 
 export type KtaLayout = Record<KtaSlotKey, KtaBox>;
 
@@ -47,19 +43,12 @@ export const KTA_FACE_SRC: Record<KtaFace, string> = {
 
 export const KTA_FACE_LABEL: Record<KtaFace, string> = { depan: "Depan", belakang: "Belakang" };
 
-/** Teks bebas di blok bawah kartu. Bisa diganti per kartu lewat `KtaCardData.note`. */
-export const KTA_NOTE_DEFAULT = "Terbit dan berlaku selama terdaftar sebagai anggota IKADI.";
-
 export const KTA_SLOT_ORDER: KtaSlotKey[] = [
   "photo",
   "memberNumber",
   "fullName",
   "levelLabel",
-  "noteAuth",
-  "qrSekjen",
-  "sekjen",
-  "qrKetum",
-  "ketum",
+  "qrVerifikasi",
 ];
 
 export const KTA_SLOT_LABEL: Record<KtaSlotKey, string> = {
@@ -67,24 +56,19 @@ export const KTA_SLOT_LABEL: Record<KtaSlotKey, string> = {
   memberNumber: "Nomor KTA",
   fullName: "Nama",
   levelLabel: "Level | wilayah | daerah",
-  noteAuth: "Teks bawah QR",
-  qrSekjen: "QR Sekjen",
-  sekjen: "TTD Sekjen",
-  qrKetum: "QR Ketum",
-  ketum: "TTD Ketum",
+  qrVerifikasi: "QR verifikasi",
 };
 
-/** Angka final hasil lab koordinat. Jangan diubah tanpa menuning ulang lab. */
+/**
+ * Angka final. Sumber: pemilik proyek (2026-11-15). QR verifikasi memakai
+ * posisi yang dulu dipakai QR Ketum.
+ */
 export const KTA_LAYOUT: KtaLayout = {
-  photo: { x: 10.19, y: 26.78, w: 20, size: 0, align: "left" },
-  memberNumber: { x: 34.63, y: 51.99, w: 50, size: 5, align: "left", weight: "black" },
-  fullName: { x: 34.78, y: 29.65, w: 60, size: 4.2, align: "left" },
-  levelLabel: { x: 34.73, y: 41.05, w: 55, size: 2.7, align: "left" },
-  noteAuth: { x: 21.04, y: 75.99, w: 30, size: 1.35, align: "center" },
-  qrSekjen: { x: 42.55, y: 71.27, w: 10, size: 0, align: "left" },
-  sekjen: { x: 47.95, y: 90.53, w: 26, size: 1.6, align: "center" },
-  qrKetum: { x: 73.48, y: 70.77, w: 10, size: 0, align: "left" },
-  ketum: { x: 78.57, y: 90.53, w: 26, size: 1.6, align: "center" },
+  photo: { x: 9.86, y: 26.94, w: 17.8, size: 0, align: "left" },
+  memberNumber: { x: 6.36, y: 71.4, w: 50, size: 4, align: "left" },
+  fullName: { x: 6.44, y: 77.4, w: 72.2, size: 4, align: "left" },
+  levelLabel: { x: 6.45, y: 85.58, w: 55, size: 2.25, align: "left" },
+  qrVerifikasi: { x: 79.92, y: 66.59, w: 13.9, size: 0, align: "left" },
 };
 
 /**

@@ -1,13 +1,11 @@
 /**
  * Isi provinceCode/regencyCode peserta lama dari teks yang sudah ada
- * (originName, lalu province/city). Default DRY RUN — tidak menulis apa pun.
+ * (province + city). Default DRY RUN — tidak menulis apa pun.
  *
  *   npx tsx scripts/assign-wilayah.ts            # laporan saja
  *   npx tsx scripts/assign-wilayah.ts --apply    # tulis ke DB
  *
- * Sumber teks dicoba berurutan:
- *   1. originName  ("PD IKADI Kab. Banyuwangi", "PD Sukoharjo", "PW IKADI DIY")
- *   2. province + city (data form lama)
+ * Sumber teks: province + city (data form lama).
  *
  * Aturan: hanya menulis kalau pasangan (provinsi, kab/kota) ketemu TEPAT SATU
  * di master. Ambigu / tidak ketemu dibiarkan null dan dilaporkan.
@@ -134,11 +132,10 @@ async function main() {
   }
 
   function resolve(p: {
-    originName: string;
     province: string | null;
     city: string | null;
   }): { hit: Hit | null; reason: string } {
-    const candidates = [p.originName, [p.province, p.city].filter(Boolean).join(" ")]
+    const candidates = [[p.province, p.city].filter(Boolean).join(" ")]
       .map((s) => s.trim())
       .filter(Boolean);
 
@@ -187,17 +184,17 @@ async function main() {
 
   const rows = await prisma.participant.findMany({
     where: { OR: [{ provinceCode: null }, { regencyCode: null }] },
-    select: { id: true, fullName: true, originName: true, province: true, city: true },
+    select: { id: true, fullName: true, province: true, city: true },
     orderBy: { id: "asc" },
   });
 
   const planned: Array<{ id: bigint; hit: Hit }> = [];
-  const unresolved: Array<{ id: bigint; originName: string; reason: string }> = [];
+  const unresolved: Array<{ id: bigint; label: string; reason: string }> = [];
 
   for (const r of rows) {
     const { hit, reason } = resolve(r);
     if (hit) planned.push({ id: r.id, hit });
-    else unresolved.push({ id: r.id, originName: r.originName, reason });
+    else unresolved.push({ id: r.id, label: [r.province, r.city].filter(Boolean).join(" ") || "-", reason });
   }
 
   const regencyName = new Map(regencies.map((r) => [`${r.provinceCode}${r.code}`, r.name]));
@@ -221,7 +218,7 @@ async function main() {
   if (unresolved.length > 0) {
     console.log("\nTidak bisa dipetakan (contoh 30):");
     for (const u of unresolved.slice(0, 30)) {
-      console.log(`  #${u.id} ${u.originName} — ${u.reason}`);
+      console.log(`  #${u.id} ${u.label} — ${u.reason}`);
     }
   }
 

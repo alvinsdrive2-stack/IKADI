@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Check, Copy, Printer, ShieldCheck } from "lucide-react";
-import { OriginBadge } from "@/components/Badge";
 import { SessionExpired } from "@/components/AdminNav";
 import { Alert } from "@/components/Alert";
 import { MembershipAdmin } from "@/components/MembershipAdmin";
@@ -14,18 +13,15 @@ import {
   BLOOD_LABELS,
   GENDER_LABELS,
   MARITAL_LABELS,
-  QURAN_LABELS,
-  SERMON_LABELS,
   formatDate,
   formatDateTime,
 } from "@/components/constants";
 import { cn } from "@/lib/utils";
+import { displayMemberNumber } from "@/lib/member-number";
 
 type Detail = {
   id: string;
   createdAt: string;
-  originType: string;
-  originName: string;
   fullName: string;
   nik: string;
   birthPlace: string;
@@ -45,24 +41,34 @@ type Detail = {
   studyField: string | null;
   occupation: string;
   expertise: string | null;
-  sermonExperience: string;
-  sermonExperienceOther: string | null;
-  organizationExperience: string | null;
-  quranReading: string;
-  trainingReason: string;
-  trainingExpectation: string;
   memberNumber?: string | null;
+  /** Level peserta. Dipakai untuk menyembunyikan tombol cetak yang pasti ditolak. */
+  levelCode?: number;
 };
 
 type State = { kind: "loading" } | { kind: "ok"; data: Detail } | { kind: "notfound" } | { kind: "unauthorized" } | { kind: "error" };
 
-export function ParticipantDetail({ id }: { id: string }) {
+export function ParticipantDetail({
+  id,
+  apiBase = "/api/admin/participants",
+  basePath = "/admin/peserta",
+  allowedLevels,
+  actorLevel,
+}: {
+  id: string;
+  apiBase?: string;
+  /** Halaman daftar & detail. Pengurus: /anggota/pengurus/anggota. */
+  basePath?: string;
+  allowedLevels?: number[];
+  /** Level aktor. Kosong = admin (tanpa batas level bawah). */
+  actorLevel?: number;
+}) {
   const [state, setState] = useState<State>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const ctrl = new AbortController();
-    fetch(`/api/admin/participants/${encodeURIComponent(id)}`, {
+    fetch(`${apiBase}/${encodeURIComponent(id)}`, {
       signal: ctrl.signal,
       cache: "no-store",
       credentials: "same-origin",
@@ -85,7 +91,7 @@ export function ParticipantDetail({ id }: { id: string }) {
 
   const back = (
     <Link
-      href="/admin/peserta"
+      href={basePath}
       className="inline-flex min-h-10 items-center gap-1 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
     >
       <ArrowLeft aria-hidden className="size-4" /> Kembali ke peserta
@@ -133,6 +139,8 @@ export function ParticipantDetail({ id }: { id: string }) {
 
   const d = state.data;
   const hasKta = !!d.memberNumber;
+  // Pengurus hanya menerbitkan KTA untuk peserta di bawah levelnya.
+  const bisaCetak = actorLevel === undefined || d.levelCode === undefined || d.levelCode > actorLevel;
 
   return (
     <div className="space-y-5">
@@ -141,39 +149,31 @@ export function ParticipantDetail({ id }: { id: string }) {
         title={d.fullName}
         description={`Dikirim ${formatDateTime(d.createdAt)}`}
         image="/ornaments/1.svg"
-        back={{ href: "/admin/peserta", label: "Kembali ke peserta" }}
-        badge={
-          <>
-            <OriginBadge type={d.originType} />
-            <Badge variant={hasKta ? "success" : "pd"}>{hasKta ? "KTA terbit" : "Menunggu KTA"}</Badge>
-          </>
-        }
+        back={{ href: basePath, label: "Kembali ke peserta" }}
+        badge={<Badge variant={hasKta ? "success" : "pd"}>{hasKta ? "KTA terbit" : "Menunggu KTA"}</Badge>}
         action={
-          <Button asChild>
-            <Link href={`/admin/peserta/${id}/kta`}>
-              <Printer aria-hidden /> Cetak KTA
-            </Link>
-          </Button>
+          bisaCetak ? (
+            <Button asChild>
+              <Link href={`${basePath}/${id}/kta`}>
+                <Printer aria-hidden /> Cetak KTA
+              </Link>
+            </Button>
+          ) : undefined
         }
       />
 
-      <MembershipAdmin id={id} />
+      <MembershipAdmin id={id} apiBase={apiBase} allowedLevels={allowedLevels} detailPath={(pid) => `${basePath}/${pid}/kta`} />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_240px] lg:items-start">
         <div className="rounded-xl border border-border bg-white px-5 sm:px-6">
           <Group title="Identitas">
-            <Item label="Asal IKADI">
-              <span className="inline-flex flex-wrap items-center gap-2">
-                <OriginBadge type={d.originType} /> {d.originName}
-              </span>
-            </Item>
             <Item label="Nama lengkap & gelar">{d.fullName}</Item>
             <Item label="NIK KTP" span={2} copyValue={d.nik} mono>
               {d.nik}
             </Item>
             {hasKta && (
               <Item label="Nomor anggota" copyValue={d.memberNumber ?? undefined} mono>
-                {d.memberNumber}
+                {displayMemberNumber(d.memberNumber ?? "")}
               </Item>
             )}
           </Group>
@@ -202,33 +202,15 @@ export function ParticipantDetail({ id }: { id: string }) {
             </Item>
           </Group>
 
-          <Group title="Latar belakang & pengalaman">
+          <Group title="Latar belakang">
             <Item label="Pendidikan terakhir">{d.lastEducation ?? "-"}</Item>
             <Item label="Bidang studi">{d.studyField ?? "-"}</Item>
             <Item label="Pekerjaan">{d.occupation}</Item>
             <Item label="Bidang keahlian" span={2}>
               {d.expertise ?? "-"}
             </Item>
-            <Item label="Pengalaman khutbah">{SERMON_LABELS[d.sermonExperience] ?? d.sermonExperience}</Item>
-            <Item label="Kemampuan membaca Al-Qur'an">{QURAN_LABELS[d.quranReading] ?? d.quranReading}</Item>
-            {d.sermonExperienceOther && (
-              <Item label="Keterangan pengalaman khutbah" span={2}>
-                {d.sermonExperienceOther}
-              </Item>
-            )}
-            <Item label="Pengalaman organisasi — jabatan" span={2}>
-              {d.organizationExperience ?? "-"}
-            </Item>
           </Group>
 
-          <Group title="Motivasi">
-            <Item label="Alasan mengikuti pelatihan" span={2}>
-              {d.trainingReason}
-            </Item>
-            <Item label="Harapan setelah pelatihan" span={2}>
-              {d.trainingExpectation}
-            </Item>
-          </Group>
         </div>
 
         <aside className="space-y-4">
@@ -266,7 +248,7 @@ export function ParticipantDetail({ id }: { id: string }) {
                 <p className="text-xs text-ink-muted">Foto KTP</p>
                 {d.ktpPath ? (
                   <a
-                    href={`/api/admin/participants/${encodeURIComponent(d.id)}/ktp`}
+                    href={`${apiBase}/${encodeURIComponent(d.id)}/ktp`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-1 inline-flex min-h-10 items-center text-sm font-medium text-primary underline-offset-2 hover:underline"

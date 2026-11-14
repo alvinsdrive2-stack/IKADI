@@ -15,7 +15,3 @@ export function Badge({
   }
   return <UiBadge variant={map[variant]}>{children}</UiBadge>
 }
-
-export function OriginBadge({ type }: { type: string }) {
-  return <Badge variant={type === "PD" ? "pd" : "pw"}>{type}</Badge>
-}

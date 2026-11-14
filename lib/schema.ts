@@ -48,7 +48,8 @@ export const PHOTO_MAX_BYTES = 1024 * 1024;
 /** Foto KTP: base64, WAJIB hanya untuk jalur upload (OCR). Jalur manual opsional — tapi kalau diisi tetap divalidasi. Maks 10 MB. */
 export const KTP_MAX_BYTES = 10 * 1024 * 1024;
 
-const dataUrlImage = (label: string, maxBytes: number, maxLabel: string) =>
+/** Validator data URL gambar — dipakai form pendaftaran dan endpoint ganti pas foto. */
+export const dataUrlImage = (label: string, maxBytes: number, maxLabel: string) =>
   z.preprocess(
     (v) => (typeof v === "string" && v.trim() !== "" ? v : undefined),
     z
@@ -78,13 +79,21 @@ const birthDateSchema = z
   }, "Tanggal lahir tidak valid")
   .refine((s) => s <= todayIso(), "Tanggal lahir tidak boleh di masa depan");
 
+/** Teks bebas yang disimpan apa adanya: trim + kapital seluruhnya. */
+const requiredUpper = (label: string, max: number) =>
+  z.preprocess(
+    (v) => (typeof v === "string" ? v.trim().toLocaleUpperCase("id-ID") : v),
+    z
+      .string({ error: `${label} wajib diisi` })
+      .min(1, `${label} wajib diisi`)
+      .max(max, `${label} maksimal ${max} karakter`),
+  );
+
 export const participantSchema = z
   .object({
-    originType: z.enum(["PW", "PD"], { error: "Asal IKADI wajib dipilih" }),
-    originName: requiredText("Nama PW/PD IKADI", 150),
-    fullName: requiredText("Nama lengkap", 200),
+    fullName: requiredUpper("Nama lengkap", 200),
     nik: nikSchema,
-    birthPlace: requiredText("Tempat lahir", 120),
+    birthPlace: requiredUpper("Tempat lahir", 120),
     birthDate: birthDateSchema,
     gender: z.enum(["LAKI_LAKI", "PEREMPUAN"], { error: "Jenis kelamin wajib dipilih" }),
     maritalStatus: z.enum(["BELUM_MENIKAH", "SUDAH_MENIKAH", "CERAI_HIDUP", "CERAI_MATI"], {
@@ -110,27 +119,9 @@ export const participantSchema = z
     studyField: optionalText(150, "Bidang studi"),
     occupation: requiredText("Pekerjaan", 150),
     expertise: optionalText(5000, "Bidang keahlian"),
-    sermonExperience: z.enum(
-      ["SERING", "KADANG_KADANG", "BELUM_PERNAH", "LAINNYA"],
-      { error: "Pengalaman khutbah wajib dipilih" },
-    ),
-    sermonExperienceOther: optionalText(200, "Keterangan pengalaman khutbah"),
-    organizationExperience: optionalText(5000, "Pengalaman organisasi"),
-    quranReading: z.enum(["TAJWID_BAIK", "BIASA", "TIDAK_LANCAR"], {
-      error: "Kemampuan membaca Al Qur'an wajib dipilih",
-    }),
-    trainingReason: requiredText("Alasan mengikuti pelatihan", 5000),
-    trainingExpectation: requiredText("Harapan setelah pelatihan", 5000),
     consent: z.literal(true, { error: "Persetujuan wajib dicentang" }),
   })
   .superRefine((v, ctx) => {
-    if (v.sermonExperience === "LAINNYA" && !v.sermonExperienceOther) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["sermonExperienceOther"],
-        message: "Keterangan wajib diisi jika memilih Lainnya",
-      });
-    }
     if (!v.addressSameAsKtp && !v.addressCurrent) {
       ctx.addIssue({
         code: "custom",
@@ -141,8 +132,6 @@ export const participantSchema = z
   })
   .transform((v) => ({
     ...v,
-    sermonExperienceOther:
-      v.sermonExperience === "LAINNYA" ? v.sermonExperienceOther : undefined,
     // Dicentang "sesuai KTP" -> alamat tinggal selalu sama dengan alamat KTP.
     addressCurrent: v.addressSameAsKtp ? v.addressKtp : v.addressCurrent,
     // Kolom lama diberi nilai fallback agar admin & laporan tidak pecah.

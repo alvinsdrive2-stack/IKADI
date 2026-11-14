@@ -38,12 +38,19 @@ export function AdminItems(): NavItem[] {
   ];
 }
 
-export function AnggotaItems(): NavItem[] {
-  return [
+export function AnggotaItems(opts?: { pengurus?: boolean }): NavItem[] {
+  const dasar: NavItem[] = [
     { href: "/anggota", label: "Ringkasan", icon: LayoutDashboard, exact: true },
     { href: "/anggota/kartu", label: "Kartu anggota", icon: IdCard },
     { href: "/anggota/status", label: "Status pengajuan", icon: FileCheck2 },
     { href: "/anggota/profil", label: "Profil", icon: UserRound },
+  ];
+  if (!opts?.pengurus) return dasar;
+  return [
+    ...dasar,
+    { href: "/anggota/pengurus", label: "Ringkasan pengurus", icon: ShieldCheck, exact: true },
+    { href: "/anggota/pengurus/anggota", label: "Anggota wilayah", icon: Users },
+    { href: "/anggota/pengurus/pengurus", label: "Pengurus", icon: UserRound },
   ];
 }
 
@@ -65,6 +72,7 @@ export function AppFrame({
   role,
   items,
   userLabel,
+  roleLabel,
   onLogout,
   logoutBusy,
   children,
@@ -72,6 +80,8 @@ export function AppFrame({
   role: "admin" | "anggota";
   items: NavItem[];
   userLabel?: string;
+  /** Label peran di header. Kosong = teks bawaan per role. */
+  roleLabel?: string;
   onLogout: () => void;
   logoutBusy?: boolean;
   children: React.ReactNode;
@@ -81,8 +91,8 @@ export function AppFrame({
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
+  const frameRoleLabel = roleLabel ?? (role === "admin" ? "Akses admin" : "Akun anggota");
   const displayName = userLabel ? formatPersonName(userLabel) : role === "admin" ? "Administrator" : "Anggota IKADI";
-  const roleLabel = role === "admin" ? "Admin KTA" : "Keanggotaan";
   const current = items.find((it) => isActivePath(pathname, it));
 
   useEffect(() => {
@@ -203,7 +213,7 @@ export function AppFrame({
               </span>
               <span className="hidden min-w-0 text-left sm:block">
                 <span className="block max-w-[12rem] truncate text-sm font-medium leading-tight text-ink">{displayName}</span>
-                <span className="block text-[11px] leading-tight text-ink-muted">{role === "admin" ? "Pengurus" : "Anggota"}</span>
+                <span className="block text-[11px] leading-tight text-ink-muted">{frameRoleLabel}</span>
               </span>
               <ChevronDown
                 aria-hidden
@@ -221,7 +231,7 @@ export function AppFrame({
                   <p className="truncate text-sm font-semibold text-ink">{displayName}</p>
                   <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-muted">
                     <ShieldCheck aria-hidden className="size-3.5 text-primary" />
-                    {role === "admin" ? "Akses admin" : "Akun anggota"}
+                    {frameRoleLabel}
                   </p>
                 </div>
                 <div className="p-1.5">
@@ -246,6 +256,8 @@ export function AppFrame({
           className={cn(
             "mx-auto w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8",
             role === "admin" ? "max-w-[88rem]" : "max-w-[80rem]",
+            // Halaman kartu butuh seluruh lebar supaya pratinjau bisa besar.
+            pathname === "/anggota/kartu" && "max-w-none",
           )}
         >
           {children}

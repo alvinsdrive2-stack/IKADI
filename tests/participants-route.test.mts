@@ -23,8 +23,6 @@ const post = (body: unknown, headers: Record<string, string> = {}) =>
   );
 
 const base = {
-  originType: "PW",
-  originName: "Jawa Timur",
   fullName: "H. Ahmad Fauzi, S.Pd.",
   nik: "3576014241026002",
   birthPlace: "Surabaya",
@@ -44,10 +42,6 @@ const base = {
   address: "Desa Sukamaju, Kec. Taman, Sidoarjo, Jawa Timur",
   whatsapp: "085987654321",
   occupation: "Guru",
-  sermonExperience: "SERING",
-  quranReading: "TAJWID_BAIK",
-  trainingReason: "Ingin memperdalam",
-  trainingExpectation: "Bisa khutbah",
   consent: true,
 };
 
@@ -66,7 +60,7 @@ test("AC-02: payload valid -> 201, tepat satu baris", async () => {
 });
 
 test("AC-03: semua field wajib kosong -> 400 + error per field, tidak menyimpan", async () => {
-  const required = ["originType", "originName", "fullName", "nik", "birthPlace", "birthDate", "maritalStatus", "bloodType", "addressKtp", "province", "city", "whatsapp", "occupation", "sermonExperience", "quranReading", "trainingReason", "trainingExpectation", "consent"];
+  const required = ["fullName", "nik", "birthPlace", "birthDate", "maritalStatus", "bloodType", "addressKtp", "province", "city", "whatsapp", "occupation", "consent"];
   const body: Record<string, unknown> = { ...base };
   for (const k of required) body[k] = "";
   const res = await post(body);

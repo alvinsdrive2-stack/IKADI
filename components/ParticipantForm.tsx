@@ -14,32 +14,12 @@ import { CustomCamera } from "@/components/CustomCamera";
 import { SearchSelect } from "@/components/ui/search-select";
 import { IdCard, Images, Camera, PencilLine, Check } from "lucide-react";
 
-const ORIGIN_OPTIONS = [
-  { value: "PW", label: "PW (Provinsi)" },
-  { value: "PD", label: "PD (Kabupaten/Kota)" },
-];
-
 const GENDER_OPTIONS = [
   { value: "LAKI_LAKI", label: "Laki-laki" },
   { value: "PEREMPUAN", label: "Perempuan" },
 ];
 
-const SERMON_OPTIONS = [
-  { value: "SERING", label: "Sering" },
-  { value: "KADANG_KADANG", label: "Kadang-Kadang" },
-  { value: "BELUM_PERNAH", label: "Belum Pernah" },
-  { value: "LAINNYA", label: "Lainnya" },
-];
-
-const QURAN_OPTIONS = [
-  { value: "TAJWID_BAIK", label: "Baik Sesuai Hukum Tajwid" },
-  { value: "BIASA", label: "Biasa Saja" },
-  { value: "TIDAK_LANCAR", label: "Tidak Lancar" },
-];
-
 const EMPTY = {
-  originType: "",
-  originName: "",
   fullName: "",
   nik: "",
   birthPlace: "",
@@ -60,12 +40,6 @@ const EMPTY = {
   studyField: "",
   occupation: "",
   expertise: "",
-  sermonExperience: "",
-  sermonExperienceOther: "",
-  organizationExperience: "",
-  quranReading: "",
-  trainingReason: "",
-  trainingExpectation: "",
   consent: false,
 } as unknown as ParticipantInput;
 
@@ -79,8 +53,6 @@ type FieldKey = keyof ParticipantInput;
 
 /** Urutan DOM = urutan visual (dipakai ErrorSummary). */
 const FIELD_LABELS: Record<FieldKey, string> = {
-  originType: "Asal IKADI",
-  originName: "Nama PW/PD IKADI",
   fullName: "Nama Lengkap & Gelar",
   nik: "Nomor NIK KTP",
   gender: "Jenis Kelamin",
@@ -101,12 +73,6 @@ const FIELD_LABELS: Record<FieldKey, string> = {
   studyField: "Bidang Studi",
   occupation: "Pekerjaan",
   expertise: "Bidang Keahlian",
-  sermonExperience: "Pengalaman Khutbah",
-  sermonExperienceOther: "Keterangan Pengalaman Khutbah",
-  organizationExperience: "Pengalaman Organisasi - Jabatan",
-  quranReading: "Kemampuan Membaca Al-Qur'an",
-  trainingReason: "Alasan Mengikuti Pelatihan",
-  trainingExpectation: "Harapan Setelah Pelatihan",
   consent: "Persetujuan",
 };
 
@@ -169,17 +135,17 @@ const STEPS: readonly Step[] = [
   {
     key: "identitas",
     title: "Identitas",
-    fields: ["originType", "originName", "fullName", "nik", "gender", "maritalStatus", "bloodType", "birthPlace", "birthDate", "photo"],
+    fields: ["fullName", "nik", "gender", "maritalStatus", "bloodType", "birthPlace", "birthDate", "photo"],
   },
   {
     key: "latar",
     title: "Latar belakang",
-    fields: ["occupation", "lastEducation", "studyField", "expertise", "sermonExperience", "sermonExperienceOther", "organizationExperience", "quranReading"],
+    fields: ["occupation", "lastEducation", "studyField", "expertise"],
   },
   {
     key: "kirim",
-    title: "Motivasi & persetujuan",
-    fields: ["trainingReason", "trainingExpectation", "consent"],
+    title: "Sandi & persetujuan",
+    fields: ["consent"],
   },
 ];
 
@@ -209,6 +175,7 @@ export function ParticipantForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string>();
+  const [confirmError, setConfirmError] = useState<string>();
 
   const {
     register,
@@ -228,9 +195,6 @@ export function ParticipantForm() {
     reValidateMode: "onChange",
   });
 
-  const originType = useWatch({ control, name: "originType" });
-  const sermon = useWatch({ control, name: "sermonExperience" });
-  const quran = useWatch({ control, name: "quranReading" });
   const consent = useWatch({ control, name: "consent" });
   const gender = useWatch({ control, name: "gender" });
   const maritalStatus = useWatch({ control, name: "maritalStatus" });
@@ -395,10 +359,6 @@ export function ParticipantForm() {
     [applyOcr, downscaleForOcr, rootChoice, setError, setValue],
   );
 
-  useEffect(() => {
-    if (sermon && sermon !== "LAINNYA") setValue("sermonExperienceOther", "");
-  }, [sermon, setValue]);
-
   // Dicentang "sesuai KTP" -> alamat tinggal selalu ikut alamat KTP (disabled).
   useEffect(() => {
     if (sameAsKtp) setValue("addressCurrent", addressKtp ?? "");
@@ -430,7 +390,6 @@ export function ParticipantForm() {
     }
   }, [getValues]);
 
-  const isOther = sermon === "LAINNYA";
   const current = STEPS[step];
   const isLast = step === STEPS.length - 1;
 
@@ -483,7 +442,7 @@ export function ParticipantForm() {
 
   const onInvalid = () => {
     const items = (Object.keys(FIELD_LABELS) as FieldKey[])
-      .filter((k) => errors[k] && (k !== "sermonExperienceOther" || isOther))
+      .filter((k) => errors[k])
       .map((k) => ({ field: k, message: String(errors[k]?.message ?? "") }));
     setSummary(items);
     setGlobalError(null);
@@ -514,15 +473,14 @@ export function ParticipantForm() {
       return;
     }
     // Sandi keanggotaan: wajib, min 8, dua isian sama.
-    const pwErr =
-      password.length < 8
-        ? "Sandi minimal 8 karakter."
-        : password !== confirmPassword
-          ? "Konfirmasi sandi tidak sama."
-          : undefined;
-    setPasswordError(pwErr);
-    if (pwErr) {
-      requestAnimationFrame(() => document.getElementById("password")?.focus());
+    const tooShort = password.length < 8;
+    const mismatch = !tooShort && password !== confirmPassword;
+    setPasswordError(tooShort ? "Sandi minimal 8 karakter." : undefined);
+    setConfirmError(mismatch ? "Konfirmasi sandi tidak sama." : undefined);
+    if (tooShort || mismatch) {
+      requestAnimationFrame(() =>
+        document.getElementById(tooShort ? "password" : "confirmPassword")?.focus(),
+      );
       return;
     }
     try {
@@ -903,26 +861,6 @@ export function ParticipantForm() {
 
       {step === 1 && (
         <StepPanel n={2} title="Identitas">
-          <div id="originType">
-            <RadioGroup
-              label="Asal IKADI"
-              required
-              name="originType"
-              columns={2}
-              options={ORIGIN_OPTIONS}
-              value={originType ?? ""}
-              onChange={(v) => setValue("originType", v as ParticipantInput["originType"], { shouldValidate: true })}
-              error={opt("originType")}
-            />
-          </div>
-          <Input
-            id="originName"
-            label="Nama PW/PD IKADI"
-            required
-            placeholder={originType === "PD" ? "Contoh: PD IKADI Kab. Sleman" : "Contoh: PW IKADI DIY"}
-            error={opt("originName")}
-            {...register("originName")}
-          />
           <Input
             id="fullName"
             label="Nama Lengkap & Gelar"
@@ -1063,134 +1001,45 @@ export function ParticipantForm() {
               {...register("expertise")}
             />
           </div>
-          <div id="sermonExperience">
-            <RadioGroup
-              label="Pengalaman Khutbah"
-              required
-              name="sermonExperience"
-              columns={1}
-              options={SERMON_OPTIONS}
-              value={sermon ?? ""}
-              onChange={(v) => {
-                setValue(
-                  "sermonExperience",
-                  v as ParticipantInput["sermonExperience"],
-                  { shouldValidate: true },
-                );
-                if (v === "LAINNYA") {
-                  requestAnimationFrame(() =>
-                    document.getElementById("sermonExperienceOther")?.focus(),
-                  );
-                }
-              }}
-              error={opt("sermonExperience")}
-              controlsId={isOther ? "sermonExperienceOther" : undefined}
-            />
-          </div>
-          {isOther && (
-            <Textarea
-              id="sermonExperienceOther"
-              label="Keterangan Pengalaman Khutbah"
-              rows={2}
-              error={opt("sermonExperienceOther")}
-              {...register("sermonExperienceOther")}
-            />
-          )}
-          <Textarea
-            id="organizationExperience"
-            label="Pengalaman Organisasi - Jabatan"
-            rows={2}
-            hint="Opsional."
-            error={opt("organizationExperience")}
-            {...register("organizationExperience")}
-          />
-          <div id="quranReading">
-            <RadioGroup
-              label="Kemampuan Membaca Al-Qur'an"
-              required
-              name="quranReading"
-              columns={1}
-              options={QURAN_OPTIONS}
-              value={quran ?? ""}
-              onChange={(v) =>
-                setValue("quranReading", v as ParticipantInput["quranReading"], {
-                  shouldValidate: true,
-                })
-              }
-              error={opt("quranReading")}
-            />
-          </div>
         </StepPanel>
       )}
 
       {step === 3 && (
-        <StepPanel n={4} title="Motivasi & persetujuan">
-          <Textarea
-            id="trainingReason"
-            label="Alasan Mengikuti Pelatihan"
-            required
-            rows={3}
-            error={opt("trainingReason")}
-            {...register("trainingReason")}
-          />
-          <Textarea
-            id="trainingExpectation"
-            label="Harapan Setelah Pelatihan"
-            required
-            rows={3}
-            error={opt("trainingExpectation")}
-            {...register("trainingExpectation")}
-          />
-          <div className="space-y-6 rounded-2xl border border-border bg-primary-soft/40 p-4">
-            <h3 className="text-base font-semibold text-ink">Sandi keanggotaan</h3>
-            <Field
+        <StepPanel n={4} title="Sandi & persetujuan">
+          <fieldset className="space-y-4 rounded-xl border border-border bg-primary-soft/40 p-4 sm:p-5">
+            <legend className="px-1 text-sm font-semibold text-ink">Sandi keanggotaan</legend>
+            <p className="text-sm text-ink-muted">
+              Dipakai untuk masuk ke halaman anggota memakai NIK dan sandi ini.
+            </p>
+            <Input
               id="password"
               label="Sandi"
               required
-              hint="Minimal 8 karakter. Dipakai untuk masuk ke halaman anggota lewat NIK."
+              type="password"
+              autoComplete="new-password"
+              hint="Minimal 8 karakter."
               error={passwordError}
-            >
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setPasswordError(undefined);
-                }}
-                aria-required="true"
-                aria-invalid={passwordError ? true : undefined}
-                aria-describedby={passwordError ? "password-error" : "password-hint"}
-                className={`h-11 ${controlClass} px-3 ${controlState(passwordError)}`}
-              />
-            </Field>
-            <Field
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setPasswordError(undefined);
+                setConfirmError(undefined);
+              }}
+            />
+            <Input
               id="confirmPassword"
               label="Ulangi sandi"
               required
-              error={passwordError}
-            >
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  setPasswordError(undefined);
-                }}
-                aria-required="true"
-                aria-invalid={passwordError ? true : undefined}
-                aria-describedby={passwordError ? "confirmPassword-error" : undefined}
-                className={`h-11 ${controlClass} px-3 ${controlState(passwordError)}`}
-              />
-            </Field>
-          </div>
+              type="password"
+              autoComplete="new-password"
+              error={confirmError}
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                setConfirmError(undefined);
+              }}
+            />
+          </fieldset>
           <div id="consent">
             <Checkbox
               id="consent"

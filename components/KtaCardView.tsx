@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+
 /**
  * Markup kartu KTA final — dirender di atas artwork asli (depan & belakang)
  * memakai koordinat dari `lib/kta-layout.ts`, sumber yang sama dengan lab
@@ -10,14 +12,14 @@
  * Tidak memakai container query / cqw: beberapa renderer print menghitungnya 0.
  */
 
-import { KTA_FACE_SRC, KTA_LAYOUT, KTA_NOTE_DEFAULT, boxStyle, fontStyle, type KtaBox } from "@/lib/kta-layout";
+import { KTA_FACE_SRC, KTA_LAYOUT, boxStyle, fontStyle, type KtaBox } from "@/lib/kta-layout";
 import { compactPersonName } from "@/lib/person-name";
+import { displayMemberNumber } from "@/lib/member-number";
+import { cn } from "@/lib/utils";
 
 export type KtaCardData = {
   memberNumber: string;
   fullName: string;
-  originType: string;
-  originName: string;
   levelLabel: string;
   provinceName: string | null;
   regencyName: string | null;
@@ -25,8 +27,6 @@ export type KtaCardData = {
   issuedAt: string;
   verifyUrl: string;
   qrPng: string;
-  /** Teks bebas di bawah QR otentikasi. Kosong = pakai KTA_NOTE_DEFAULT. */
-  note?: string | null;
   pejabat: {
     ketuaUmum: { nama: string; jabatan: string };
     sekjen: { nama: string; jabatan: string };
@@ -63,17 +63,66 @@ function Slot({
   );
 }
 
-export function KtaCardView({ data }: { data: KtaCardData }) {
+/** Lebar kartu dalam px CSS: 85,6 mm pada 96 dpi. */
+const CARD_PX = (85.6 / 25.4) * 96;
+
+export function KtaCardView({
+  data,
+  compact = false,
+  wide = false,
+}: {
+  data: KtaCardData;
+  /** Pratinjau kecil untuk dashboard. */
+  compact?: boolean;
+  /** Pratinjau selebar kontainer (halaman kartu). */
+  wide?: boolean;
+}) {
   const d = data;
+  const [flipped, setFlipped] = useState(false);
+  const [zoom, setZoom] = useState<number | null>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+
+  // `zoom` tidak menerima calc()/panjang, jadi skala dihitung dari lebar
+  // kontainer. Cap 4.4× mencegah pratinjau raksasa di layar ultra-wide.
+  useEffect(() => {
+    if (!wide) return;
+    const el = stageRef.current;
+    if (!el || typeof ResizeObserver !== "function") return;
+    const ro = new ResizeObserver(([entry]) => {
+      const w = entry.contentRect.width;
+      if (w > 0) setZoom(Math.min(4.4, Math.max(0.8, w / CARD_PX)));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [wide]);
   const L = KTA_LAYOUT;
   const align = (b: KtaBox) => (b.align === "center" ? "text-center" : "text-left");
   const kosong = (b: KtaBox) => b.size === 0;
 
   return (
-    <div className="kta-print-stage flex flex-col items-center gap-4">
+    <div ref={stageRef} className="kta-print-stage flex flex-col items-center gap-3">
+      {/* Flip: dua sisi menempati ruang yang sama, diputar 180° lewat CSS.
+          Kartu sendiri yang jadi tombol — tap = balik. `kta-flip` hanya
+          berlaku di layar; saat print kedua sisi dicetak berurutan. */}
+      <div
+        className={cn("kta-flip", flipped && "is-flipped", compact && "kta-flip-compact")}
+        style={wide && zoom ? { zoom } : undefined}
+        role="button"
+        tabIndex={0}
+        aria-pressed={flipped}
+        aria-label={flipped ? "Preview sisi belakang. Tekan untuk balik ke depan." : "Preview sisi depan. Tekan untuk balik kartu."}
+        onClick={() => setFlipped((v) => !v)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setFlipped((v) => !v);
+          }
+        }}
+      >
+      <div className="kta-flip-inner">
       {/* ---------- DEPAN ---------- */}
       <article
-        className="kta-card"
+        className="kta-card kta-flip-face kta-flip-front font-kta"
         aria-label={`Kartu tanda anggota ${d.fullName} — sisi depan`}
         data-face="depan"
       >
@@ -88,6 +137,7 @@ export function KtaCardView({ data }: { data: KtaCardData }) {
             top: `${L.photo.y}%`,
             width: `${L.photo.w}%`,
             aspectRatio: "13 / 17",
+            borderRadius: "0.7mm",
           }}
         >
           {d.photoPath ? (
@@ -106,7 +156,7 @@ export function KtaCardView({ data }: { data: KtaCardData }) {
         {/* Nama */}
         {!kosong(L.fullName) && (
           <Slot box={L.fullName} className={`text-white ${align(L.fullName)}`}>
-            <p className="truncate font-bold leading-tight">{compactPersonName(d.fullName)}</p>
+            <p className="truncate font-extrabold leading-tight">{compactPersonName(d.fullName)}</p>
           </Slot>
         )}
 
@@ -120,51 +170,45 @@ export function KtaCardView({ data }: { data: KtaCardData }) {
         {/* Nomor KTA — paling tebal yang ada di font (800) */}
         {!kosong(L.memberNumber) && (
           <Slot box={L.memberNumber} className={`text-white ${align(L.memberNumber)}`}>
-            <p className="truncate font-mono font-extrabold leading-none tracking-wider">{d.memberNumber}</p>
+            <p className="truncate font-medium leading-none tracking-wider">{displayMemberNumber(d.memberNumber)}</p>
           </Slot>
         )}
 
-        {/* Dua QR di blok tanda tangan (QR otentikasi terpisah sudah dihapus). */}
-
-        {/* Teks bebas di blok bawah kartu */}
-        {!kosong(L.noteAuth) && (
-          <Slot box={L.noteAuth} className={`text-white/85 ${align(L.noteAuth)}`}>
-            <p className="leading-tight">{d.note?.trim() || KTA_NOTE_DEFAULT}</p>
-          </Slot>
-        )}
+        {/* Satu QR: scan = halaman verifikasi berisi detail kartu. */}
+        {/* QR tidak memakai font, jadi size 0 itu normal — jangan pakai kosong(). */}
         <QrSlot
-          box={L.qrKetum}
+          box={L.qrVerifikasi}
           src={d.qrPng}
           url={d.verifyUrl}
-          label={`QR verifikasi ${d.pejabat.ketuaUmum.jabatan}`}
+          label={`QR verifikasi ${d.fullName}`}
         />
-        <QrSlot
-          box={L.qrSekjen}
-          src={d.qrPng}
-          url={d.verifyUrl}
-          label={`QR verifikasi ${d.pejabat.sekjen.jabatan}`}
-        />
-
-        <SignatureSlot box={L.ketum} jabatan={d.pejabat.ketuaUmum.jabatan} nama={d.pejabat.ketuaUmum.nama} />
-        <SignatureSlot box={L.sekjen} jabatan={d.pejabat.sekjen.jabatan} nama={d.pejabat.sekjen.nama} />
       </article>
 
       {/* ---------- BELAKANG ---------- */}
       {/* Sisi belakang = artwork apa adanya. Jangan tambah teks overlay di sini. */}
       <article
-        className="kta-card"
+        className="kta-card kta-flip-face kta-flip-back"
         aria-label={`Kartu tanda anggota ${d.fullName} — sisi belakang`}
         data-face="belakang"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={KTA_FACE_SRC.belakang} alt="" className="absolute inset-0 size-full object-cover" />
       </article>
+      </div>
+      </div>
+      <p className="kta-flip-hint no-print text-center text-sm text-ink-muted">Tap kartu untuk membalik preview.</p>
     </div>
   );
 }
 
 /** Radius sudut kotak QR. QR 8,5mm → 1mm ≈ 12% (membulat halus, tidak jadi lingkaran). */
 const QR_RADIUS = "1mm";
+/**
+ * Quiet zone tambahan di dalam kotak QR. Gambar QR sudah punya margin sendiri
+ * dari generator, tapi tepi artwork kartu bisa memotongnya — padding ini
+ * memastikan modul paling luar tetap terbaca pemindai.
+ */
+const QR_PADDING = "6%";
 
 function QrSlot({ box, src, url, label }: { box: KtaBox; src: string; url: string; label: string }) {
   return (
@@ -183,7 +227,7 @@ function QrSlot({ box, src, url, label }: { box: KtaBox; src: string; url: strin
             src={src}
             alt={label}
             className="size-full bg-white object-contain"
-            style={{ borderRadius: QR_RADIUS }}
+            style={{ borderRadius: QR_RADIUS, padding: QR_PADDING }}
           />
         </a>
       ) : (
@@ -198,15 +242,3 @@ function QrSlot({ box, src, url, label }: { box: KtaBox; src: string; url: strin
   );
 }
 
-function SignatureSlot({ box, jabatan, nama }: { box: KtaBox; jabatan: string; nama: string }) {
-  return (
-    <Slot box={box} className={`text-white ${box.align === "center" ? "text-center" : "text-left"}`}>
-      <p className="uppercase leading-tight tracking-wider text-white/80" style={{ fontSize: "80%" }}>
-        {jabatan}
-      </p>
-      <p className="font-semibold leading-tight" style={{ fontSize: "100%" }}>
-        {nama}
-      </p>
-    </Slot>
-  );
-}

@@ -2,17 +2,12 @@ import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
 import { requireAnggota } from "@/lib/auth";
 import { LEVEL_LABELS } from "@/lib/member-number";
+import { PENGURUS_MAX_LEVEL } from "@/lib/pengurus";
 import { KTA_QR_COLOR, getPejabat, type KtaPejabatMap } from "@/lib/kta";
 import { jsonError } from "@/lib/http";
 import { logRouteError } from "@/lib/route-log";
+import { publicBaseUrl, verifyPath } from "@/lib/base-url";
 
-/** Base URL publik untuk QR. Di produksi wajib di-set agar QR tidak menunjuk localhost. */
-function baseUrl(request: Request): string {
-  const configured = process.env.PUBLIC_BASE_URL?.replace(/\/+$/, "");
-  if (configured) return configured;
-  const url = new URL(request.url);
-  return `${url.protocol}//${url.host}`;
-}
 
 export async function GET(request: Request) {
   const auth = await requireAnggota();
@@ -30,9 +25,8 @@ export async function GET(request: Request) {
       select: {
         fullName: true,
         nik: true,
-        originType: true,
-        originName: true,
         levelCode: true,
+        isPengurus: true,
         membershipStatus: true,
         provinceCode: true,
         regencyCode: true,
@@ -68,7 +62,7 @@ export async function GET(request: Request) {
 
   let kta: { verifyUrl: string; qrPng: string; issuedAt: string; pejabat: KtaPejabatMap } | null = null;
   if (p.memberNumber) {
-    const verifyUrl = `${baseUrl(request)}/verifikasi/${encodeURIComponent(p.memberNumber)}`;
+    const verifyUrl = `${publicBaseUrl(request)}${verifyPath(p.memberNumber)}`;
     try {
       const qrPng = await QRCode.toDataURL(verifyUrl, {
         width: 600,
@@ -93,10 +87,10 @@ export async function GET(request: Request) {
     data: {
       fullName: p.fullName,
       nik: p.nik,
-      originType: p.originType,
-      originName: p.originName,
       levelCode: p.levelCode,
       levelLabel: LEVEL_LABELS[p.levelCode] ?? "Anggota",
+      /** Peran pengurus: memberi akses menu pengurus. Level 1..3 saja. */
+      isPengurus: p.isPengurus && p.levelCode <= PENGURUS_MAX_LEVEL,
       membershipStatus: p.membershipStatus,
       province: provinceName,
       city: regencyName,

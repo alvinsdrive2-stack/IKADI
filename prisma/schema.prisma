@@ -7,27 +7,9 @@ datasource db {
 
 }
 
-enum OriginType {
-  PW
-  PD
-}
-
 enum Gender {
   LAKI_LAKI
   PEREMPUAN
-}
-
-enum SermonExperience {
-  SERING
-  KADANG_KADANG
-  BELUM_PERNAH
-  LAINNYA
-}
-
-enum QuranReading {
-  TAJWID_BAIK
-  BIASA
-  TIDAK_LANCAR
 }
 
 enum MaritalStatus {
@@ -55,8 +37,6 @@ enum MembershipStatus {
 
 model Participant {
   id                      BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
-  originType              OriginType       @map("origin_type")
-  originName              String           @map("origin_name") @db.VarChar(150)
   fullName                String           @map("full_name") @db.VarChar(200)
   nik                     String           @unique(map: "uq_participants_nik") @db.VarChar(16)
   birthPlace              String           @map("birth_place") @db.VarChar(120)
@@ -75,12 +55,6 @@ model Participant {
   studyField              String?          @map("study_field") @db.VarChar(150)
   occupation              String           @db.VarChar(150)
   expertise               String?          @db.Text
-  sermonExperience        SermonExperience @map("sermon_experience")
-  sermonExperienceOther   String?          @map("sermon_experience_other") @db.VarChar(200)
-  organizationExperience  String?          @map("organization_experience") @db.Text
-  quranReading            QuranReading     @map("quran_reading")
-  trainingReason          String           @map("training_reason") @db.Text
-  trainingExpectation     String           @map("training_expectation") @db.Text
   photoPath               String?          @map("photo_path") @db.VarChar(255)
   ktpPath                 String?          @map("ktp_path") @db.VarChar(255)
   createdAt               DateTime         @default(now()) @map("created_at")
@@ -88,6 +62,9 @@ model Participant {
 
   /// Hash argon2id sandi login anggota. NULL = belum set (peserta lama).
   passwordHash            String?          @map("password_hash") @db.VarChar(255)
+  /// Peran pengurus. Terpisah dari levelCode: level cuma jenis kepengurusan,
+  /// isPengurus yang memberi akses menu pengurus. Level pengurus = 1..3.
+  isPengurus              Boolean          @default(false) @map("is_pengurus")
   /// Kode level kepengurusan 1..7. 6 = Anggota (default pendaftar).
   levelCode               Int              @default(6) @map("level_code") @db.TinyInt
   /// Kode wilayah (provinsi) 2 digit, merujuk Province.code.
@@ -100,9 +77,9 @@ model Participant {
   membershipStatus        MembershipStatus @default(AKTIF) @map("membership_status")
 
   @@index([createdAt], map: "idx_participants_created_at")
-  @@index([originType, originName], map: "idx_participants_origin")
   @@index([fullName], map: "idx_participants_full_name")
   @@index([provinceCode, regencyCode], map: "idx_participants_region")
+  @@index([isPengurus, levelCode], map: "idx_participants_pengurus")
   @@map("participants")
 }
 
@@ -155,7 +132,9 @@ model KtaPrint {
   id               BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
   participantId    BigInt   @map("participant_id") @db.UnsignedBigInt
   memberNumber     String   @map("member_number") @db.VarChar(20)
-  printedByAdminId BigInt   @map("printed_by_admin_id") @db.UnsignedBigInt
+  /// Pemegang nomor dicetak oleh admin (area /admin) atau oleh pengurus (area /anggota).
+  printedByAdminId BigInt?  @map("printed_by_admin_id") @db.UnsignedBigInt
+  printedByParticipantId BigInt? @map("printed_by_participant_id") @db.UnsignedBigInt
   printedAt        DateTime @default(now()) @map("printed_at")
 
   @@index([printedAt], map: "idx_kta_prints_printed_at")

@@ -55,8 +55,8 @@ function inisial(word: string): string {
   return first ? `${first.toUpperCase()}.` : word;
 }
 
-/** Ambang panjang: nama ≤ 23 karakter dibiarkan utuh, lebih dari itu dipadatkan. */
-export const COMPACT_THRESHOLD = 23;
+/** Ambang panjang: nama ≤ 32 karakter dibiarkan utuh, lebih dari itu dipadatkan. */
+export const COMPACT_THRESHOLD = 32;
 
 export function compactPersonName(raw: string): string {
   const value = (raw ?? "").trim().replace(/\s+/g, " ");

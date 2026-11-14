@@ -3,8 +3,6 @@ import { listParticipants, SORTS, type Sort } from "@/lib/queries";
 import { jsonError } from "@/lib/http";
 
 
-const ORIGIN_TYPES = ["PW", "PD"] as const;
-const SERMONS = ["SERING", "KADANG_KADANG", "BELUM_PERNAH", "LAINNYA"] as const;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function GET(request: Request) {
@@ -17,14 +15,6 @@ export async function GET(request: Request) {
     return v ? v.slice(0, max) : undefined;
   };
 
-  const originTypeRaw = sp.get("originType") ?? undefined;
-  if (originTypeRaw && !ORIGIN_TYPES.includes(originTypeRaw as "PW" | "PD")) {
-    return jsonError(400, "VALIDATION", "originType harus PW atau PD");
-  }
-  const sermonRaw = sp.get("sermon") ?? undefined;
-  if (sermonRaw && !(SERMONS as readonly string[]).includes(sermonRaw)) {
-    return jsonError(400, "VALIDATION", "Nilai sermon tidak valid");
-  }
   const sortRaw = sp.get("sort") ?? "newest";
   if (!(SORTS as readonly string[]).includes(sortRaw)) {
     return jsonError(400, "VALIDATION", "Nilai sort tidak valid");
@@ -41,10 +31,7 @@ export async function GET(request: Request) {
 
   const result = await listParticipants({
     q: str("q", 100),
-    originType: originTypeRaw as "PW" | "PD" | undefined,
-    originName: str("originName", 150),
     education: str("education", 100),
-    sermon: sermonRaw as (typeof SERMONS)[number] | undefined,
     dateFrom,
     dateTo,
     sort: sortRaw as Sort,

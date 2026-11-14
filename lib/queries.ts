@@ -8,15 +8,14 @@ export type Sort = (typeof SORTS)[number];
 
 export type ListParams = {
   q?: string;
-  originType?: "PW" | "PD";
-  originName?: string;
   education?: string;
-  sermon?: "SERING" | "KADANG_KADANG" | "BELUM_PERNAH" | "LAINNYA";
   dateFrom?: string; // YYYY-MM-DD
   dateTo?: string; // YYYY-MM-DD
   sort?: Sort;
   page: number;
   perPage: number;
+  /** Batas wilayah untuk pengurus. Admin tidak mengirim apa pun = tanpa batas. */
+  scopeWhere?: Prisma.ParticipantWhereInput;
 };
 
 const orderBy: Record<Sort, Prisma.ParticipantOrderByWithRelationInput[]> = {
@@ -42,10 +41,8 @@ function where(p: ListParams): Prisma.ParticipantWhereInput {
       ],
     });
   }
-  if (p.originType) and.push({ originType: p.originType });
-  if (p.originName) and.push({ originName: { contains: p.originName } });
   if (p.education) and.push({ lastEducation: p.education });
-  if (p.sermon) and.push({ sermonExperience: p.sermon });
+  if (p.scopeWhere) and.push(p.scopeWhere);
   if (p.dateFrom || p.dateTo) {
     const range: Prisma.DateTimeFilter = {};
     if (p.dateFrom) range.gte = new Date(`${p.dateFrom}T00:00:00`);
@@ -69,8 +66,6 @@ export async function listParticipants(p: ListParams) {
         createdAt: true,
         fullName: true,
         nik: true,
-        originType: true,
-        originName: true,
         whatsapp: true,
         lastEducation: true,
         memberNumber: true,
@@ -86,8 +81,6 @@ export async function listParticipants(p: ListParams) {
       createdAt: r.createdAt.toISOString(),
       fullName: r.fullName,
       nikMasked: maskNik(r.nik),
-      originType: r.originType,
-      originName: r.originName,
       whatsappMasked: maskWhatsapp(r.whatsapp),
       lastEducation: r.lastEducation,
       memberNumber: r.memberNumber,
@@ -135,25 +128,12 @@ export async function getParticipantKtpPath(id: bigint) {
 export async function getStats() {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
-  const ktaPrintLimit = Number(process.env.KTA_PRINT_LIMIT ?? 10);
-  const [total, pw, pd, today, ktaPrinted] = await Promise.all([
+  const [total, today, ktaPrinted] = await Promise.all([
     prisma.participant.count(),
-    prisma.participant.count({ where: { originType: "PW" } }),
-    prisma.participant.count({ where: { originType: "PD" } }),
     prisma.participant.count({ where: { createdAt: { gte: startOfDay } } }),
     prisma.ktaPrint.count(),
   ]);
-  return {
-    total,
-    pw,
-    pd,
-    today,
-    kta: {
-      printed: ktaPrinted,
-      limit: ktaPrintLimit,
-      remaining: Math.max(0, ktaPrintLimit - ktaPrinted),
-    },
-  };
+  return { total, today, ktaPrinted };
 }
 
 /**
@@ -170,8 +150,6 @@ export async function getMemberCard(memberNumber: string) {
       memberNumberIssuedAt: true,
       createdAt: true,
       levelCode: true,
-      originType: true,
-      originName: true,
       membershipStatus: true,
       provinceCode: true,
       regencyCode: true,
@@ -199,8 +177,6 @@ export async function getMemberCard(memberNumber: string) {
     memberNumberIssuedAt: r.memberNumberIssuedAt?.toISOString() ?? null,
     createdAt: r.createdAt.toISOString(),
     levelLabel: LEVEL_LABELS[r.levelCode] ?? "Anggota",
-    originType: r.originType,
-    originName: r.originName,
     membershipStatus: r.membershipStatus,
     provinceName: prov?.name ?? null,
     regencyName: reg?.name ?? null,

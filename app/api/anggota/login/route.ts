@@ -41,8 +41,6 @@ export async function POST(request: Request) {
     fullName: string;
     memberNumber: string | null;
     levelCode: number;
-    originType: "PW" | "PD";
-    originName: string;
     passwordHash: string | null;
   } | null;
   try {
@@ -53,8 +51,6 @@ export async function POST(request: Request) {
         fullName: true,
         memberNumber: true,
         levelCode: true,
-        originType: true,
-        originName: true,
         passwordHash: true,
       },
     });
@@ -88,8 +84,6 @@ export async function POST(request: Request) {
       fullName: participant.fullName,
       memberNumber: participant.memberNumber,
       levelCode: participant.levelCode,
-      originType: participant.originType,
-      originName: participant.originName,
     },
   });
 }

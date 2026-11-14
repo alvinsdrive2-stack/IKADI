@@ -1,5 +1,20 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./verifikasi.css";
+
+/*
+ * Font kartu KTA. Hanya dipakai di kartu anggota, bukan UI aplikasi.
+ * Dideklarasikan di sini supaya `@font-face` ikut ter-bundle, dan supaya
+ * canvas 3D preview (KtaPreview3D) juga menemukan font yang sama.
+ * Catatan lisensi: berkas di public/fonts/Eurostar berasal dari pihak ketiga.
+ */
+@font-face {
+  font-family: "Eurostar";
+  src: url("/fonts/Eurostar/eurostar.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   --radius: 0.25rem;
@@ -31,6 +46,7 @@
 
 @theme inline {
   --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-kta: "Eurostar", ui-sans-serif, system-ui, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -318,6 +334,97 @@ body {
 @page {
   size: 85.6mm 48.914mm;
   margin: 0;
+}
+
+/* ---------- Flip pratinjau (layar saja) ----------
+   Dua sisi menempati ruang yang sama; `is-flipped` memutar 180°.
+   Ditulis di top-level supaya tidak bentrok dengan aturan print di bawah.
+   Skala 200% hanya di layar — ukuran cetak tetap 85,6 mm. */
+.kta-flip {
+  perspective: 2800px;
+  cursor: pointer;
+  /* Pratinjau diperbesar di layar. Di layar sempit diturunkan supaya tidak
+     memicu scroll horizontal; print selalu 85,6 mm. */
+  zoom: 1.35;
+}
+@media (min-width: 768px) {
+  .kta-flip {
+    zoom: 2;
+  }
+}
+/* Di dashboard kartu tampil di dalam kolom sempit — jangan sampai meluber. */
+.kta-flip.kta-flip-compact {
+  zoom: 0.9;
+}
+@media (min-width: 640px) {
+  .kta-flip.kta-flip-compact {
+    zoom: 1.05;
+  }
+}
+/* Halaman /anggota/kartu memakai zoom dinamis (dihitung di KtaCardView dari
+   lebar kontainer) — `zoom` tidak menerima calc()/panjang, jadi tidak di CSS. */
+/* Bayangan pratinjau kartu di dashboard. Dipasang di `.kta-card`, bukan di
+   wadah: box-shadow luar tidak terpotong `overflow: hidden` kartu, dan kedua
+   sisi flip dapat bayangannya sendiri. Print selalu tanpa bayangan. */
+.kta-preview-shadow .kta-card {
+  box-shadow: 0 14px 28px -10px rgb(0 0 0 / 0.45);
+}
+/* Di dashboard kartu duduk di artwork hijau: hint harus putih. */
+.kta-preview-shadow .kta-flip-hint {
+  color: #fff;
+}
+.kta-flip-inner {
+  position: relative;
+  width: 85.6mm;
+  height: 48.914mm;
+  transform-style: preserve-3d;
+  transition: transform 600ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.kta-flip.is-flipped .kta-flip-inner {
+  transform: rotateY(180deg);
+}
+.kta-flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+/* Sisi belakang menghadap layar setelah diputar; jangan sampai kartu flip
+   balik lagi saat area kosongnya ditap. */
+.kta-flip.is-flipped .kta-flip-front {
+  pointer-events: none;
+}
+.kta-flip:not(.is-flipped) .kta-flip-back {
+  pointer-events: none;
+}
+.kta-flip-back {
+  transform: rotateY(180deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .kta-flip-inner {
+    transition: none;
+  }
+}
+@media print {
+  /* Print: batalkan 3D sepenuhnya, kedua sisi jadi blok normal dan tercetak
+     berurutan pada halaman masing-masing. */
+  .kta-flip,
+  .kta-flip-inner {
+    display: contents !important;
+    perspective: none !important;
+    transform: none !important;
+    transform-style: flat !important;
+    zoom: 1 !important;
+  }
+  .kta-flip-face {
+    position: relative !important;
+    transform: none !important;
+    backface-visibility: visible !important;
+    -webkit-backface-visibility: visible !important;
+  }
+  .no-print {
+    display: none !important;
+  }
 }
 
 @media print {

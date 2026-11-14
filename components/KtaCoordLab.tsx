@@ -42,12 +42,10 @@ const SLOT_LABEL = KTA_SLOT_LABEL;
 const DEFAULTS: Layout = KTA_LAYOUT;
 
 const SAMPLE = {
-  memberNumber: "6.32.03.26.0001",
+  memberNumber: "6.32.03.26.00100",
   fullName: "H. Ahmad Fauzi, S.Pd.",
   levelLabel: "Anggota | Jawa Barat | Kabupaten Cianjur",
-  noteAuth: "Terbit dan berlaku selama terdaftar sebagai anggota IKADI.",
-  sekjen: { jabatan: "Sekretaris Jenderal", nama: "H. Abdul Rahman, Lc." },
-  ketum: { jabatan: "Ketua Umum", nama: "Dr. KH. Ahmad Zaini, M.A." },
+  qrVerifikasi: "QR verifikasi",
 };
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
@@ -222,7 +220,7 @@ export function KtaCoordLab() {
             {SLOT_ORDER.map((key) => {
               const b = layout[key];
               const active = selected === key;
-              const isQr = key === "qrSekjen" || key === "qrKetum";
+              const isQr = key === "qrVerifikasi";
               // Wrapper = posisi + lebar (em dari font-size permukaan preview).
               // Font-size HANYA di elemen dalam, persis seperti kartu final.
               return (
@@ -255,21 +253,12 @@ export function KtaCoordLab() {
                         className="grid place-items-center bg-white text-center leading-tight text-ink-muted"
                         style={{ aspectRatio: "1 / 1", fontSize: "2cqw", borderRadius: "1mm" }}
                       >
-                        QR {key === "qrSekjen" ? "sekjen" : "ketum"}
-                      </div>
-                    ) : key === "sekjen" || key === "ketum" ? (
-                      <div className={cn("leading-tight text-white", b.align === "center" && "text-center")}>
-                        <p className="uppercase tracking-wider text-white/70" style={{ fontSize: "80%" }}>
-                          {SAMPLE[key].jabatan}
-                        </p>
-                        <p className="font-semibold" style={{ fontSize: "100%" }}>
-                          {SAMPLE[key].nama}
-                        </p>
+                        QR
                       </div>
                     ) : (
                       <p
                         className={cn(
-                          key === "noteAuth" ? "leading-tight text-white/85" : "truncate leading-tight text-white",
+                          "truncate leading-tight text-white",
                           b.align === "center" ? "text-center" : "text-left",
                           key === "memberNumber" && "font-mono font-extrabold tracking-wide",
                           key === "fullName" && "font-bold",

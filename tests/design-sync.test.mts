@@ -141,7 +141,7 @@ test("AC-12: empty state dashboard menampilkan pesan + tombol Reset filter", () 
   assert.match(src, /<EmptyState/);
   assert.match(src, /Reset filter/);
   assert.match(src, /list\.data\.length === 0/, "empty state hanya saat data kosong");
-  assert.match(src, /const resetAll = \(\) => router\.(push|replace)\("\/admin\/peserta"\)/, "reset harus menghapus semua query filter");
+  assert.match(src, /const resetAll = \(\) => router\.(push|replace)\(basePath\)/, "reset harus menghapus semua query filter");
   const empty = read("components/EmptyState.tsx");
   assert.match(empty, /<h3/);
   assert.match(empty, /aria-hidden/, "ikon dekoratif harus aria-hidden");

@@ -59,8 +59,6 @@ function seedReady(overrides: Record<string, unknown> = {}) {
     membershipStatus: "AKTIF",
     passwordHash: null,
     createdAt: new Date("2026-06-01T00:00:00Z"),
-    originType: "PW",
-    originName: "Sumatera Selatan",
     photoPath: null,
     ...overrides,
   };

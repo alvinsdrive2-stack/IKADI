@@ -6,7 +6,17 @@ const buckets = new Map<string, Hits>();
 
 export type RateLimitResult = { allowed: boolean; retryAfter: number };
 
+/**
+ * Saat dev, semua percobaan datang dari IP yang sama dengan curl/agent, jadi
+ * bucket cepat penuh dan mengunci pengembang. Production tetap dibatasi.
+ * Set `RATE_LIMIT_DISABLED=1` untuk memaksa mati juga.
+ */
+const disabled = () =>
+  process.env.RATE_LIMIT_FORCE !== "1" &&
+  (process.env.NODE_ENV !== "production" || process.env.RATE_LIMIT_DISABLED === "1");
+
 export function rateLimit(key: string, limit: number, windowMs: number): RateLimitResult {
+  if (disabled()) return { allowed: true, retryAfter: 0 };
   const now = Date.now();
   const hits = buckets.get(key) ?? { timestamps: [] };
   hits.timestamps = hits.timestamps.filter((t) => now - t < windowMs);

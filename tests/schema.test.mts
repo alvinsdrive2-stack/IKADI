@@ -7,8 +7,6 @@ import { maskNik } from "../lib/mask.ts";
 import { rateLimit, resetRateLimit } from "../lib/rate-limit.ts";
 
 const base = {
-  originType: "PW",
-  originName: "  Jawa Timur ",
   fullName: "H. Ahmad Fauzi, S.Pd.",
   nik: "3576014241026002",
   birthPlace: "Surabaya",
@@ -25,10 +23,6 @@ const base = {
   address: "Jl. Raya No. 1",
   whatsapp: "085987654321",
   occupation: "Guru",
-  sermonExperience: "SERING",
-  quranReading: "TAJWID_BAIK",
-  trainingReason: "Ingin memperdalam",
-  trainingExpectation: "Bisa khutbah",
   consent: true,
 };
 
@@ -37,7 +31,6 @@ const parse = (patch: Record<string, unknown>) => participantSchema.safeParse({ 
 test("baseline valid + trim", () => {
   const r = parse({});
   assert.ok(r.success);
-  assert.equal(r.data.originName, "Jawa Timur");
   assert.equal(r.data.lastEducation, undefined);
 });
 
@@ -86,7 +79,7 @@ test("AC-08: WA tetap string, awalan 0 / +62 utuh", () => {
 });
 
 test("AC-03: setiap field wajib menolak string kosong / spasi / hilang", () => {
-  const required = ["originType", "originName", "fullName", "nik", "gender", "birthPlace", "birthDate", "maritalStatus", "bloodType", "addressKtp", "province", "city", "whatsapp", "occupation", "sermonExperience", "quranReading", "trainingReason", "trainingExpectation"];
+  const required = ["fullName", "nik", "gender", "birthPlace", "birthDate", "maritalStatus", "bloodType", "addressKtp", "province", "city", "whatsapp", "occupation"];
   for (const field of required) {
     for (const blank of ["", "   "]) {
       const r = parse({ [field]: blank });
@@ -148,24 +141,7 @@ test("birthDate: format, tanggal mustahil, masa depan", () => {
   assert.equal(parse({ birthDate: todayIso }).success, true, "hari ini diterima");
 });
 
-test("sermonExperience: LAINNYA wajib teks, selain itu teks dibuang", () => {
-  assert.equal(parse({ sermonExperience: "LAINNYA" }).success, false);
-  assert.equal(parse({ sermonExperience: "LAINNYA", sermonExperienceOther: "  " }).success, false);
-  const lain = parse({ sermonExperience: "LAINNYA", sermonExperienceOther: "  Pernah sekali " });
-  assert.ok(lain.success);
-  assert.equal(lain.data.sermonExperienceOther, "Pernah sekali");
-  for (const v of ["SERING", "KADANG_KADANG", "BELUM_PERNAH"]) {
-    const r = parse({ sermonExperience: v, sermonExperienceOther: "harus dibuang" });
-    assert.ok(r.success);
-    assert.equal(r.data.sermonExperienceOther, undefined, `${v} tidak boleh simpan teks lain`);
-  }
-});
-
 test("enum asing ditolak", () => {
-  assert.equal(parse({ originType: "PWK" }).success, false);
-  assert.equal(parse({ originType: "pw" }).success, false);
-  assert.equal(parse({ quranReading: "TAJWID" }).success, false);
-  assert.equal(parse({ sermonExperience: "" }).success, false);
   assert.equal(parse({ gender: "LAKI" }).success, false);
   assert.equal(parse({ gender: "" }).success, false);
 });
@@ -184,18 +160,16 @@ test("pas foto opsional: kosong / hilang -> undefined, format & ukuran divalidas
 });
 
 test("field opsional: kosong -> undefined, spasi di-trim", () => {
-  const r = parse({ lastEducation: "  ", expertise: " fiqih ", organizationExperience: "" });
+  const r = parse({ lastEducation: "  ", expertise: " fiqih " });
   assert.ok(r.success);
   assert.equal(r.data.lastEducation, undefined);
   assert.equal(r.data.expertise, "fiqih");
-  assert.equal(r.data.organizationExperience, undefined);
 });
 
 test("batas panjang field", () => {
-  assert.equal(parse({ originName: "x".repeat(151) }).success, false);
-  assert.equal(parse({ originName: "x".repeat(150) }).success, true);
+  assert.equal(parse({ fullName: "x".repeat(201) }).success, false);
+  assert.equal(parse({ fullName: "x".repeat(200) }).success, true);
   assert.equal(parse({ nik: "1".repeat(17) }).success, false);
-  assert.equal(parse({ sermonExperience: "LAINNYA", sermonExperienceOther: "x".repeat(201) }).success, false);
 });
 
 test("maskNik sesuai spesifikasi AC/privacy", () => {

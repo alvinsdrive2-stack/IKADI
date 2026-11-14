@@ -9,19 +9,6 @@ export const EDUCATION_OPTIONS = [
   "Lainnya",
 ] as const;
 
-export const SERMON_LABELS: Record<string, string> = {
-  SERING: "Sering",
-  KADANG_KADANG: "Kadang-Kadang",
-  BELUM_PERNAH: "Belum Pernah",
-  LAINNYA: "Lainnya",
-};
-
-export const QURAN_LABELS: Record<string, string> = {
-  TAJWID_BAIK: "Baik Sesuai Hukum Tajwid",
-  BIASA: "Biasa Saja",
-  TIDAK_LANCAR: "Tidak Lancar",
-};
-
 export const GENDER_LABELS: Record<string, string> = {
   LAKI_LAKI: "Laki-laki",
   PEREMPUAN: "Perempuan",
@@ -76,13 +63,5 @@ export const formatDateTime = (iso: string) => {
   });
 };
 
-/** Nama dari KTP sering tersimpan kapital. Tampilkan sebagai Title Case. */
-export const formatPersonName = (value: string) =>
-  value
-    .trim()
-    .split(/\s+/)
-    .map((word) => {
-      if (word.includes(".") || word.length <= 2) return word.toUpperCase();
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    })
-    .join(" ");
+/** Nama peserta selalu disimpan kapital; tampilkan apa adanya agar gelar tetap terbaca. */
+export const formatPersonName = (value: string) => value.trim().split(/\s+/).join(" ");

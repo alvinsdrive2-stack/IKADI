@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, ArrowUpDown, Search } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
-import { OriginBadge } from "@/components/Badge";
 import { PageBanner } from "@/components/PageBanner";
 import { Pagination } from "@/components/Pagination";
 import { SessionExpired } from "@/components/AdminNav";
@@ -14,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SearchSelect } from "@/components/ui/search-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { EDUCATION_OPTIONS, SERMON_LABELS, formatDateTime } from "@/components/constants";
+import { EDUCATION_OPTIONS, formatDateTime } from "@/components/constants";
 import { cn } from "@/lib/utils";
 
 export type ParticipantRow = {
@@ -22,8 +21,6 @@ export type ParticipantRow = {
   createdAt: string;
   fullName: string;
   nikMasked: string;
-  originType: string;
-  originName: string;
   whatsappMasked: string;
   lastEducation: string | null;
   memberNumber: string | null;
@@ -32,16 +29,37 @@ export type ParticipantRow = {
 };
 
 type ListResponse = { ok: boolean; data: ParticipantRow[]; total: number; page: number; perPage: number; totalPages: number };
-type Stats = { total: number; pw: number; pd: number; today: number; kta?: { printed: number; limit: number; remaining: number } };
+type Stats = { total: number; today: number; ktaPrinted: number };
 
-const FILTER_KEYS = ["q", "originType", "originName", "education", "sermon", "dateFrom", "dateTo"] as const;
+const FILTER_KEYS = ["q", "education", "dateFrom", "dateTo"] as const;
 
-export function AdminParticipants({ mode = "list" }: { mode?: "dashboard" | "list" }) {
+export function AdminParticipants({
+  mode = "list",
+  basePath = "/admin/peserta",
+  apiBase = "/api/admin/participants",
+  statsUrl = "/api/admin/stats",
+}: {
+  mode?: "dashboard" | "list";
+  /** Halaman detail peserta. Admin: /admin/peserta, pengurus: /anggota/pengurus/anggota. */
+  basePath?: string;
+  /** Endpoint daftar. Dipakai bersama admin & pengurus. */
+  apiBase?: string;
+  /** Endpoint ringkasan. `null` = tidak ada ringkasan lintas cakupan untuk peran ini. */
+  statsUrl?: string | null;
+}) {
   const searchParams = useSearchParams();
-  return <AdminData qs={searchParams.toString()} mode={mode} />;
+  return (
+    <AdminData
+      qs={searchParams.toString()}
+      mode={mode}
+      basePath={basePath}
+      apiBase={apiBase}
+      statsUrl={statsUrl}
+    />
+  );
 }
 
-function AdminData({ qs, mode }: { qs: string; mode: "dashboard" | "list" }) {
+function AdminData({ qs, mode, basePath, apiBase, statsUrl }: { qs: string; mode: "dashboard" | "list"; basePath: string; apiBase: string; statsUrl: string | null }) {
   const router = useRouter();
   const params = new URLSearchParams(qs);
   const query = mode === "dashboard" ? "perPage=10&sort=newest" : qs;
@@ -52,13 +70,23 @@ function AdminData({ qs, mode }: { qs: string; mode: "dashboard" | "list" }) {
   useEffect(() => {
     const ctrl = new AbortController();
     Promise.all([
-      fetch(`/api/admin/participants?${query}`, { signal: ctrl.signal, cache: "no-store", credentials: "same-origin" }),
-      fetch("/api/admin/stats", { signal: ctrl.signal, cache: "no-store", credentials: "same-origin" }),
+      fetch(`${apiBase}?${query}`, { signal: ctrl.signal, cache: "no-store", credentials: "same-origin" }),
+      statsUrl
+        ? fetch(statsUrl, { signal: ctrl.signal, cache: "no-store", credentials: "same-origin" })
+        : Promise.resolve(null),
     ])
       .then(async ([listRes, statsRes]) => {
-        if (listRes.status === 401 || statsRes.status === 401) return { qs: query, list: null, stats: null, error: null, unauthorized: true };
-        if (!listRes.ok || !statsRes.ok) throw new Error("Gagal memuat data.");
-        return { qs: query, list: (await listRes.json()) as ListResponse, stats: (await statsRes.json()) as Stats, error: null, unauthorized: false };
+        if (listRes.status === 401 || listRes.status === 403 || statsRes?.status === 401) {
+          return { qs: query, list: null, stats: null, error: null, unauthorized: true };
+        }
+        if (!listRes.ok || (statsRes && !statsRes.ok)) throw new Error("Gagal memuat data.");
+        return {
+          qs: query,
+          list: (await listRes.json()) as ListResponse,
+          stats: statsRes ? ((await statsRes.json()) as Stats) : null,
+          error: null,
+          unauthorized: false,
+        };
       })
       .then(setResult)
       .catch((e: unknown) => {
@@ -66,7 +94,7 @@ function AdminData({ qs, mode }: { qs: string; mode: "dashboard" | "list" }) {
         setResult({ qs: query, list: null, stats: null, error: "Gagal memuat data.", unauthorized: false });
       });
     return () => ctrl.abort();
-  }, [query]);
+  }, [query, apiBase, statsUrl]);
 
   const fresh = result.qs === query;
   const list = fresh ? result.list : null;
@@ -76,7 +104,7 @@ function AdminData({ qs, mode }: { qs: string; mode: "dashboard" | "list" }) {
   const loading = !fresh;
   const retry = () => setResult((prev) => ({ ...prev, qs: "" }));
   const hasFilter = FILTER_KEYS.some((k) => params.get(k));
-  const resetAll = () => router.push("/admin/peserta");
+  const resetAll = () => router.push(basePath);
   const isDashboard = mode === "dashboard";
 
   if (unauthorized) return <SessionExpired />;
@@ -91,7 +119,7 @@ function AdminData({ qs, mode }: { qs: string; mode: "dashboard" | "list" }) {
           image="/ornaments/2.svg"
           action={
             <Button asChild>
-              <Link href="/admin/peserta">
+              <Link href={basePath}>
                 Kelola peserta
                 <ArrowRight aria-hidden />
               </Link>
@@ -107,14 +135,13 @@ function AdminData({ qs, mode }: { qs: string; mode: "dashboard" | "list" }) {
         />
       )}
 
+      {statsUrl && (
       <section aria-labelledby="stats-h" className="rounded-xl border border-border bg-white">
         <h2 id="stats-h" className="sr-only">Ringkasan data</h2>
         <dl className="grid grid-cols-2 divide-border sm:grid-cols-4 sm:divide-x">
           {[
             { label: "Total peserta", value: stats?.total },
             { label: "Masuk hari ini", value: stats?.today },
-            { label: "PW", value: stats?.pw },
-            { label: "PD", value: stats?.pd },
           ].map((s) => (
             <div key={s.label} className="border-b border-border px-5 py-4 sm:border-b-0">
               <dt className="text-xs text-ink-muted">{s.label}</dt>
@@ -125,9 +152,10 @@ function AdminData({ qs, mode }: { qs: string; mode: "dashboard" | "list" }) {
           ))}
         </dl>
       </section>
+      )}
 
       {!isDashboard && (
-        <FiltersPanel params={params} onApply={(next) => router.push(`/admin/peserta${next ? `?${next}` : ""}`)} />
+        <FiltersPanel params={params} onApply={(next) => router.push(`${basePath}${next ? `?${next}` : ""}`)} />
       )}
 
       {!isDashboard && hasFilter && (
@@ -139,7 +167,7 @@ function AdminData({ qs, mode }: { qs: string; mode: "dashboard" | "list" }) {
             if (value) next.set(key, value);
             else next.delete(key);
             next.delete("page");
-            router.push(`/admin/peserta${next.size ? `?${next}` : ""}`);
+            router.push(`${basePath}${next.size ? `?${next}` : ""}`);
           }}
         />
       )}
@@ -173,16 +201,15 @@ function AdminData({ qs, mode }: { qs: string; mode: "dashboard" | "list" }) {
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="hidden text-xs font-medium text-ink-muted md:table-cell" aria-sort={ariaSort(params.get("sort"), "date")}>
-                      <SortButton label="Tanggal" current={params.get("sort") ?? "newest"} asc="oldest" desc="newest" qs={qs} />
+                      <SortButton label="Tanggal" current={params.get("sort") ?? "newest"} asc="oldest" desc="newest" qs={qs} basePath={basePath} />
                     </TableHead>
                     <TableHead className="text-xs font-medium text-ink-muted" aria-sort={ariaSort(params.get("sort"), "name")}>
-                      <SortButton label="Nama" current={params.get("sort") ?? "newest"} asc="name_asc" desc="name_desc" qs={qs} />
+                      <SortButton label="Nama" current={params.get("sort") ?? "newest"} asc="name_asc" desc="name_desc" qs={qs} basePath={basePath} />
                     </TableHead>
                     {!isDashboard && <TableHead className="hidden text-xs font-medium text-ink-muted lg:table-cell">NIK</TableHead>}
                     <TableHead className="hidden text-xs font-medium text-ink-muted sm:table-cell">Nomor anggota</TableHead>
                     {!isDashboard && (
                       <>
-                        <TableHead className="hidden text-xs font-medium text-ink-muted md:table-cell">Asal IKADI</TableHead>
                         <TableHead className="hidden text-xs font-medium text-ink-muted xl:table-cell">WhatsApp</TableHead>
                       </>
                     )}
@@ -207,18 +234,12 @@ function AdminData({ qs, mode }: { qs: string; mode: "dashboard" | "list" }) {
                       </TableCell>
                       {!isDashboard && (
                         <>
-                          <TableCell className="hidden md:table-cell">
-                            <div className="flex items-center gap-1.5">
-                              <OriginBadge type={p.originType} />
-                              <span className="text-sm text-ink">{p.originName}</span>
-                            </div>
-                          </TableCell>
                           <TableCell className="hidden whitespace-nowrap font-mono text-xs tabular-nums text-ink-muted xl:table-cell">{p.whatsappMasked}</TableCell>
                         </>
                       )}
                       <TableCell className="text-right">
                         <Link
-                          href={`/admin/peserta/${p.id}`}
+                          href={`${basePath}/${p.id}`}
                           aria-label={`Buka detail ${p.fullName}`}
                           className="inline-flex min-h-10 items-center gap-1 rounded-md px-2 text-sm font-medium text-primary transition-colors hover:bg-primary-soft md:min-h-0 md:py-1"
                         >
@@ -247,23 +268,21 @@ function AdminData({ qs, mode }: { qs: string; mode: "dashboard" | "list" }) {
               totalPages={list.totalPages}
               total={list.total}
               perPage={list.perPage}
-              onPrev={() => setPage(router, qs, list.page - 1)}
-              onNext={() => setPage(router, qs, list.page + 1)}
+              onPrev={() => setPage(router, qs, list.page - 1, basePath)}
+              onNext={() => setPage(router, qs, list.page + 1, basePath)}
             />
           )}
         </section>
 
-        {isDashboard && <DashboardAside list={list} stats={stats} loading={loading} />}
+        {isDashboard && <DashboardAside list={list} stats={stats} loading={loading} basePath={basePath} />}
       </div>
     </div>
   );
 }
 
-function DashboardAside({ list, stats, loading }: { list: ListResponse | null; stats: Stats | null; loading: boolean }) {
+function DashboardAside({ list, stats, loading, basePath }: { list: ListResponse | null; stats: Stats | null; loading: boolean; basePath: string }) {
   const pending = list?.data.filter((p) => !p.memberNumber).slice(0, 5) ?? [];
-  const remaining = stats?.kta?.remaining;
-  const limit = stats?.kta?.limit;
-  const percent = limit ? Math.min(100, Math.round(((remaining ?? 0) / limit) * 100)) : 0;
+  const totalTerbit = stats?.ktaPrinted;
 
   return (
     <aside className="space-y-4">
@@ -290,12 +309,12 @@ function DashboardAside({ list, stats, loading }: { list: ListResponse | null; s
               {pending.map((p) => (
                 <li key={p.id}>
                   <Link
-                    href={`/admin/peserta/${p.id}`}
+                    href={`${basePath}/${p.id}`}
                     className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-bg"
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-medium text-ink">{p.fullName}</span>
-                      <span className="block truncate text-xs text-ink-muted">{p.originName}</span>
+                      <span className="block truncate text-xs text-ink-muted">{p.levelLabel}</span>
                     </span>
                     <ArrowRight aria-hidden className="size-4 shrink-0 text-ink-muted" />
                   </Link>
@@ -304,7 +323,7 @@ function DashboardAside({ list, stats, loading }: { list: ListResponse | null; s
             </ul>
           )}
           <div className="border-t border-border px-4 py-2.5">
-            <Link href="/admin/peserta" className="text-sm font-medium text-primary hover:text-primary-hover">
+            <Link href={basePath} className="text-sm font-medium text-primary hover:text-primary-hover">
               Semua peserta
             </Link>
           </div>
@@ -312,32 +331,23 @@ function DashboardAside({ list, stats, loading }: { list: ListResponse | null; s
       </section>
 
       <section className="rounded-xl border border-border bg-white p-4">
-        <h2 className="text-sm font-semibold text-ink">Kuota cetak</h2>
+        <h2 className="text-sm font-semibold text-ink">KTA terbit</h2>
         <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-ink">
-          {remaining ?? "—"}
-          <span className="text-sm font-normal text-ink-muted"> / {limit ?? "—"}</span>
+          {totalTerbit === undefined ? "—" : totalTerbit.toLocaleString("id-ID")}
         </p>
-        <div
-          className="mt-2 h-1 overflow-hidden rounded-full bg-border"
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={limit ?? 0}
-          aria-valuenow={remaining ?? 0}
-          aria-label="Sisa kuota cetak"
-        >
-          <div className="h-full rounded-full bg-primary" style={{ width: `${percent}%` }} />
-        </div>
-        <p className="mt-2 text-xs leading-relaxed text-ink-muted">Sisa kartu yang dapat dicetak.</p>
+        <p className="mt-2 text-xs leading-relaxed text-ink-muted">
+          Total nomor anggota yang sudah diterbitkan. Cetak ulang tidak menambah hitungan ini.
+        </p>
       </section>
     </aside>
   );
 }
 
-function setPage(router: ReturnType<typeof useRouter>, qs: string, page: number) {
+function setPage(router: ReturnType<typeof useRouter>, qs: string, page: number, basePath: string) {
   const next = new URLSearchParams(qs);
   if (page > 1) next.set("page", String(page));
   else next.delete("page");
-  router.push(`/admin/peserta${next.size ? `?${next}` : ""}`);
+  router.push(`${basePath}${next.size ? `?${next}` : ""}`);
 }
 
 function ariaSort(current: string | null, col: "date" | "name"): "ascending" | "descending" | "none" {
@@ -351,7 +361,7 @@ function ariaSort(current: string | null, col: "date" | "name"): "ascending" | "
   return "none";
 }
 
-function SortButton({ label, current, asc, desc, qs }: { label: string; current: string; asc: string; desc: string; qs: string }) {
+function SortButton({ label, current, asc, desc, qs, basePath }: { label: string; current: string; asc: string; desc: string; qs: string; basePath: string }) {
   const isAsc = current === asc;
   const next = isAsc ? desc : current === desc ? asc : desc;
   const params = new URLSearchParams(qs);
@@ -360,7 +370,7 @@ function SortButton({ label, current, asc, desc, qs }: { label: string; current:
   const active = current === asc || current === desc;
   return (
     <Link
-      href={`/admin/peserta?${params}`}
+      href={`${basePath}?${params}`}
       className="inline-flex min-h-10 items-center gap-1 font-medium hover:text-ink md:min-h-0"
     >
       {label}
@@ -372,10 +382,7 @@ function SortButton({ label, current, asc, desc, qs }: { label: string; current:
 function FiltersPanel({ params, onApply }: { params: URLSearchParams; onApply: (nextQs: string) => void }) {
   const initial = {
     q: params.get("q") ?? "",
-    originType: params.get("originType") ?? "",
-    originName: params.get("originName") ?? "",
     education: params.get("education") ?? "",
-    sermon: params.get("sermon") ?? "",
     dateFrom: params.get("dateFrom") ?? "",
     dateTo: params.get("dateTo") ?? "",
   };
@@ -394,7 +401,7 @@ function FiltersPanel({ params, onApply }: { params: URLSearchParams; onApply: (
   };
 
   const reset = () => {
-    setValues({ q: "", originType: "", originName: "", education: "", sermon: "", dateFrom: "", dateTo: "" });
+    setValues({ q: "", education: "", dateFrom: "", dateTo: "" });
     const next = new URLSearchParams();
     const sort = params.get("sort");
     if (sort) next.set("sort", sort);
@@ -443,28 +450,11 @@ function FiltersPanel({ params, onApply }: { params: URLSearchParams; onApply: (
   );
 }
 
-type FilterValues = { q: string; originType: string; originName: string; education: string; sermon: string; dateFrom: string; dateTo: string };
+type FilterValues = { q: string; education: string; dateFrom: string; dateTo: string };
 
 function FilterFields({ values, set }: { values: FilterValues; set: (k: keyof FilterValues) => (v: string) => void }) {
   return (
     <>
-      <div className="space-y-1.5">
-        <label htmlFor="f-origin" className="block text-sm font-medium text-ink">Asal IKADI</label>
-        <SearchSelect
-          id="f-origin"
-          value={values.originType}
-          onValueChange={(v) => set("originType")(v)}
-          options={[
-            { value: "", label: "Semua" },
-            { value: "PW", label: "PW" },
-            { value: "PD", label: "PD" },
-          ]}
-        />
-      </div>
-      <div className="space-y-1.5">
-        <label htmlFor="f-origin-name" className="block text-sm font-medium text-ink">Nama PW/PD IKADI</label>
-        <Input id="f-origin-name" type="text" value={values.originName} onChange={(e) => set("originName")(e.target.value)} placeholder="Contoh: PW Jawa Timur" />
-      </div>
       <div className="space-y-1.5">
         <label htmlFor="f-education" className="block text-sm font-medium text-ink">Pendidikan terakhir</label>
         <SearchSelect
@@ -472,15 +462,6 @@ function FilterFields({ values, set }: { values: FilterValues; set: (k: keyof Fi
           value={values.education}
           onValueChange={(v) => set("education")(v)}
           options={[{ value: "", label: "Semua" }, ...EDUCATION_OPTIONS.map((o) => ({ value: o, label: o }))]}
-        />
-      </div>
-      <div className="space-y-1.5">
-        <label htmlFor="f-sermon" className="block text-sm font-medium text-ink">Pengalaman khutbah</label>
-        <SearchSelect
-          id="f-sermon"
-          value={values.sermon}
-          onValueChange={(v) => set("sermon")(v)}
-          options={[{ value: "", label: "Semua" }, ...Object.entries(SERMON_LABELS).map(([v, text]) => ({ value: v, label: text }))]}
         />
       </div>
       <div className="space-y-1.5">
@@ -497,10 +478,7 @@ function FilterFields({ values, set }: { values: FilterValues; set: (k: keyof Fi
 
 const CHIP_LABELS: Record<string, (v: string) => string> = {
   q: (v) => `Cari: ${v}`,
-  originType: (v) => `Asal: ${v}`,
-  originName: (v) => `PW/PD: ${v}`,
   education: (v) => `Pendidikan: ${v}`,
-  sermon: (v) => `Khutbah: ${SERMON_LABELS[v] ?? v}`,
   dateFrom: (v) => `Dari: ${v}`,
   dateTo: (v) => `Sampai: ${v}`,
 };

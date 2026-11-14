@@ -34,8 +34,6 @@ const participantRow = {
   nik: "3576014241026002",
   memberNumber: "6.16.01.26.0001",
   levelCode: 6,
-  originType: "PW",
-  originName: "Sumatera Selatan",
   passwordHash: null as string | null,
 };
 
@@ -115,11 +113,10 @@ test("sukses -> 200, payload sesuai kontrak, sesi anggota terbentuk", async () =
   const json = await res.json();
   assert.equal(json.ok, true);
   // Kontrak A: persis lima field ini.
-  assert.deepEqual(Object.keys(json.data).sort(), ["fullName", "levelCode", "memberNumber", "originName", "originType"]);
+  assert.deepEqual(Object.keys(json.data).sort(), ["fullName", "levelCode", "memberNumber"]);
   assert.equal(json.data.fullName, "H. Ahmad Fauzi, S.Pd.");
   assert.equal(json.data.memberNumber, "6.16.01.26.0001");
   assert.equal(json.data.levelCode, 6);
-  assert.equal(json.data.originType, "PW");
   // Tidak bocor: passwordHash & NIK tidak di payload.
   assert.equal("passwordHash" in json.data, false);
   assert.equal("nik" in json.data, false);

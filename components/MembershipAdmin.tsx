@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { SearchSelect } from "@/components/ui/search-select";
 import { PROVINCE_OPTIONS, regencyOptions, LEVEL_LABELS } from "@/components/WilayahOptions";
 import { MEMBERSHIP_STATUS_LABELS, formatDate } from "@/components/constants";
+import { PENGURUS_MAX_LEVEL } from "@/lib/pengurus";
 
 const LEVEL_OPTIONS = Array.from({ length: 7 }, (_, i) => ({
   value: String(i + 1),
@@ -35,6 +36,7 @@ type Membership = {
   memberNumberIssuedAt: string | null;
   membershipStatus: "AKTIF" | "NONAKTIF" | "PUNABAKTI";
   hasPassword: boolean;
+  isPengurus: boolean;
   eligible: boolean;
   ineligibleReason: string | null;
 };
@@ -46,7 +48,20 @@ type State =
   | { kind: "unauthorized" }
   | { kind: "error" };
 
-export function MembershipAdmin({ id }: { id: string }) {
+export function MembershipAdmin({
+  id,
+  apiBase = "/api/admin/participants",
+  detailPath = (pid) => `/admin/peserta/${encodeURIComponent(pid)}/kta`,
+  allowedLevels,
+}: {
+  id: string;
+  /** Endpoint keanggotaan. Pengurus memakai /api/anggota/pengurus/anggota. */
+  apiBase?: string;
+  /** Halaman cetak KTA untuk id ini. */
+  detailPath?: (participantId: string) => string;
+  /** Level yang boleh dipilih. Kosong = semua 1..7 (perilaku admin). */
+  allowedLevels?: number[];
+}) {
   const [state, setState] = useState<State>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
 
@@ -56,7 +71,8 @@ export function MembershipAdmin({ id }: { id: string }) {
     provinceCode: string;
     regencyCode: string;
     membershipStatus: Membership["membershipStatus"];
-  }>({ levelCode: 6, provinceCode: "", regencyCode: "", membershipStatus: "AKTIF" });
+    isPengurus: boolean;
+  }>({ levelCode: 6, provinceCode: "", regencyCode: "", membershipStatus: "AKTIF", isPengurus: false });
   const [newPassword, setNewPassword] = useState("");
   const [pwError, setPwError] = useState<string>();
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
@@ -64,7 +80,7 @@ export function MembershipAdmin({ id }: { id: string }) {
 
   const load = useCallback(() => {
     const ctrl = new AbortController();
-    fetch(`/api/admin/participants/${encodeURIComponent(id)}/membership`, {
+    fetch(`${apiBase}/${encodeURIComponent(id)}/membership`, {
       signal: ctrl.signal,
       cache: "no-store",
       credentials: "same-origin",
@@ -82,6 +98,7 @@ export function MembershipAdmin({ id }: { id: string }) {
             provinceCode: d.provinceCode ?? "",
             regencyCode: d.regencyCode ?? "",
             membershipStatus: d.membershipStatus,
+            isPengurus: d.isPengurus === true,
           });
         }
       })
@@ -90,7 +107,7 @@ export function MembershipAdmin({ id }: { id: string }) {
         setState({ kind: "error" });
       });
     return () => ctrl.abort();
-  }, [id]);
+  }, [id, apiBase]);
 
   useEffect(() => {
     return load();
@@ -121,14 +138,19 @@ export function MembershipAdmin({ id }: { id: string }) {
   }
 
   const d = state.data;
+  const levelOptions = allowedLevels?.length
+    ? LEVEL_OPTIONS.filter((o) => allowedLevels.includes(Number(o.value)))
+    : LEVEL_OPTIONS;
   const numberIssued = !!d.memberNumber;
+  // Peran pengurus hanya berlaku untuk level 1..3.
+  const bolehPengurus = form.levelCode >= 1 && form.levelCode <= PENGURUS_MAX_LEVEL;
   const locked = numberIssued; // nomor terbit -> level & wilayah tak bisa diubah
 
   const save = async (patch: Record<string, unknown>, successText: string) => {
     setSaving(true);
     setNotice(null);
     try {
-      const res = await fetch(`/api/admin/participants/${encodeURIComponent(id)}/membership`, {
+      const res = await fetch(`${apiBase}/${encodeURIComponent(id)}/membership`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
@@ -143,6 +165,7 @@ export function MembershipAdmin({ id }: { id: string }) {
           provinceCode: next.provinceCode ?? "",
           regencyCode: next.regencyCode ?? "",
           membershipStatus: next.membershipStatus,
+          isPengurus: next.isPengurus === true,
         });
         setNotice({ tone: "success", text: successText });
         return true;
@@ -167,7 +190,10 @@ export function MembershipAdmin({ id }: { id: string }) {
   const submitCore = async (e: React.FormEvent) => {
     e.preventDefault();
     // Kirim level/wilayah hanya kalau tidak terkunci (backend menolak kalau nomor sudah terbit).
-    const patch: Record<string, unknown> = { membershipStatus: form.membershipStatus };
+    const patch: Record<string, unknown> = {
+      membershipStatus: form.membershipStatus,
+      isPengurus: form.isPengurus,
+    };
     if (!locked) {
       patch.levelCode = form.levelCode;
       patch.provinceCode = form.provinceCode || null;
@@ -227,7 +253,7 @@ export function MembershipAdmin({ id }: { id: string }) {
             <Field id="m-level" label="Jenjang" required hint={locked ? "Terpaku karena nomor sudah terbit." : undefined}>
               <SearchSelect
                 id="m-level"
-                options={LEVEL_OPTIONS}
+                options={levelOptions}
                 value={String(form.levelCode)}
                 disabled={locked || saving}
                 onValueChange={(v) => setForm((f) => ({ ...f, levelCode: Number(v) }))}
@@ -267,6 +293,29 @@ export function MembershipAdmin({ id }: { id: string }) {
                 onValueChange={(v) => setForm((f) => ({ ...f, regencyCode: v }))}
               />
             </Field>
+          </div>
+
+          <div className="rounded-lg border border-border bg-bg/60 p-4">
+            <label htmlFor="m-pengurus" className="flex cursor-pointer items-start gap-3">
+              <input
+                id="m-pengurus"
+                type="checkbox"
+                checked={form.isPengurus}
+                disabled={saving || !bolehPengurus}
+                onChange={(e) => setForm((f) => ({ ...f, isPengurus: e.target.checked }))}
+                className="mt-0.5 size-4 shrink-0 rounded border-control-border"
+              />
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-ink">Jadikan pengurus</span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-ink-muted">
+                  {locked
+                    ? "Terkunci karena nomor anggota sudah terbit. Peserta tetap anggota biasa."
+                    : bolehPengurus
+                      ? "Aktif hanya untuk level Pusat, Wilayah, atau Daerah. Level lain tetap anggota biasa."
+                      : "Pilih level Pusat, Wilayah, atau Daerah dulu untuk mengaktifkan."}
+                </span>
+              </span>
+            </label>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -313,12 +362,12 @@ export function MembershipAdmin({ id }: { id: string }) {
         {d.eligible && (
           <p className="text-sm leading-relaxed text-ink-muted">
             <Link
-              href={`/admin/peserta/${encodeURIComponent(id)}/kta`}
+              href={detailPath(id)}
               className="font-medium text-primary underline-offset-2 hover:underline"
             >
               {locked ? "Cetak ulang KTA" : "Cetak KTA"}
             </Link>{" "}
-            — {locked ? "nomor tetap, kuota cetak berkurang satu." : "menerbitkan nomor anggota permanen."}
+            — {locked ? "nomor tetap, kartu dicetak ulang." : "menerbitkan nomor anggota permanen."}
           </p>
         )}
       </div>

@@ -75,3 +75,6 @@ __pycache__/
 /.kta-saya.png
 /.preview-shot.png
 /contoh-kta.png
+
+# mockup kerja lokal
+tmp-mockups/

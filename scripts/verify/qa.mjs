@@ -17,6 +17,6 @@ const args = [
 
 const r = spawnSync(process.execPath, args, {
   stdio: "inherit",
-  env: { ...process.env, QA_MOCK: "1" },
+  env: { ...process.env, QA_MOCK: "1", RATE_LIMIT_FORCE: "1" },
 });
 process.exit(r.status ?? 1);

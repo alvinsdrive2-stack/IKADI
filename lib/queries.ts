@@ -140,10 +140,20 @@ export async function getStats() {
  * Data yang boleh tampil di halaman verifikasi publik (`/verifikasi/:nomor`).
  * Proyeksi sengaja sempit: NIK, alamat, WhatsApp, path KTP, hash sandi, dan id
  * internal tidak pernah ikut terambil — bukan cuma disembunyikan di render.
+ *
+ * Nomor lama (kartu yang sudah diganti) tetap mengembalikan pemiliknya, plus
+ * `activeMemberNumber` supaya halaman bisa menyebut nomor yang berlaku.
+ * `null` hanya kalau nomor itu tidak pernah terbit.
  */
 export async function getMemberCard(memberNumber: string) {
-  const r = await prisma.participant.findUnique({
+  const card = await prisma.memberCard.findUnique({
     where: { memberNumber },
+    select: { participantId: true, isActive: true },
+  });
+  if (!card) return null;
+
+  const r = await prisma.participant.findUnique({
+    where: { id: card.participantId },
     select: {
       fullName: true,
       memberNumber: true,
@@ -171,9 +181,15 @@ export async function getMemberCard(memberNumber: string) {
       : null,
   ]);
 
+  // Nomor aktif dibaca dari cermin peserta — di halaman ini kartu lama dan baru
+  // memakai sumber yang sama, jadi hasilnya selalu nomor yang berlaku.
   return {
     fullName: r.fullName,
-    memberNumber: r.memberNumber!,
+    /** Nomor yang di-scan (kartu lama tetap menampilkan dirinya sendiri). */
+    memberNumber,
+    /** Nomor yang berlaku sekarang. */
+    activeMemberNumber: r.memberNumber,
+    isActiveCard: card.isActive,
     memberNumberIssuedAt: r.memberNumberIssuedAt?.toISOString() ?? null,
     createdAt: r.createdAt.toISOString(),
     levelLabel: LEVEL_LABELS[r.levelCode] ?? "Anggota",

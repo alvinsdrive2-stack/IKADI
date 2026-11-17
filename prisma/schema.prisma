@@ -35,6 +35,35 @@ enum MembershipStatus {
   PURNABAKTI
 }
 
+/// Riwayat kartu/nomor anggota. Satu peserta boleh punya banyak kartu, tapi
+/// hanya satu yang aktif — QR tiap kartu menuju halaman verifikasi yang
+/// menampilkan kartu aktif, dan nomor lama tetap dikenali sebagai milik orang
+/// yang sama.
+///
+/// `participants.member_number` adalah cermin kartu aktif (ditulis hanya oleh
+/// `lib/member-cards.ts`) supaya pencarian admin dan halaman lama tidak perlu
+/// join. Jangan menulis kolom itu dari tempat lain.
+model MemberCard {
+  id            BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  participantId BigInt   @map("participant_id") @db.UnsignedBigInt
+  memberNumber  String   @unique(map: "uq_member_cards_number") @map("member_number") @db.VarChar(20)
+  /// Level dan wilayah saat nomor ini terbit — snapshot riwayat, bukan acuan akses.
+  levelCode     Int      @map("level_code") @db.TinyInt
+  provinceCode  String   @map("province_code") @db.Char(2)
+  regencyCode   String   @map("regency_code") @db.Char(2)
+  issuedAt      DateTime @default(now()) @map("issued_at")
+  /// Terbit manual oleh admin (nomor cantik / nomor lama yang dipulihkan).
+  isManual      Boolean  @default(false) @map("is_manual")
+  isActive      Boolean  @default(false) @map("is_active")
+  /// Diisi saat kartu digantikan kartu lain.
+  retiredAt     DateTime? @map("retired_at")
+
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@index([participantId, isActive], map: "idx_member_cards_participant")
+  @@map("member_cards")
+}
+
 model Participant {
   id                      BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
   fullName                String           @map("full_name") @db.VarChar(200)
@@ -75,6 +104,9 @@ model Participant {
   memberNumber            String?          @unique(map: "uq_participants_member_number") @map("member_number") @db.VarChar(20)
   memberNumberIssuedAt    DateTime?        @map("member_number_issued_at")
   membershipStatus        MembershipStatus @default(AKTIF) @map("membership_status")
+
+  /// Riwayat kartu. Kolom `memberNumber` di atas = cermin kartu yang isActive.
+  memberCards             MemberCard[]
 
   @@index([createdAt], map: "idx_participants_created_at")
   @@index([fullName], map: "idx_participants_full_name")

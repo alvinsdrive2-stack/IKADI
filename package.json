@@ -12,7 +12,9 @@
     "verify:schema": "tsx scripts/verify/schema-check.mts",
     "verify:member-number": "tsx scripts/verify/member-number-check.mts",
     "postinstall": "prisma generate",
-    "verify:qa": "node scripts/verify/qa.mjs"
+    "verify:qa": "node scripts/verify/qa.mjs",
+    "verify:member-cards": "tsx scripts/verify/member-cards-check.mts",
+    "db:backfill-member-cards": "tsx scripts/backfill-member-cards.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.2",

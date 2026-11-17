@@ -6,6 +6,7 @@ import { ArrowLeft, Check, Copy, Printer, ShieldCheck } from "lucide-react";
 import { SessionExpired } from "@/components/AdminNav";
 import { Alert } from "@/components/Alert";
 import { MembershipAdmin } from "@/components/MembershipAdmin";
+import { MemberCardsPanel } from "@/components/MemberCardsPanel";
 import { PageBanner } from "@/components/PageBanner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -163,6 +164,8 @@ export function ParticipantDetail({
       />
 
       <MembershipAdmin id={id} apiBase={apiBase} allowedLevels={allowedLevels} detailPath={(pid) => `${basePath}/${pid}/kta`} />
+
+      <MemberCardsPanel id={id} apiBase={apiBase} detailPath={(pid) => `${basePath}/${pid}/kta`} />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_240px] lg:items-start">
         <div className="rounded-xl border border-border bg-white px-5 sm:px-6">

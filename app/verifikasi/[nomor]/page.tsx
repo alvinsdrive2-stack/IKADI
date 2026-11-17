@@ -58,8 +58,17 @@ export default async function VerifikasiPage({
             </div>
 
             <div className="vcard-number-block">
-              <p className="vcard-label">Nomor anggota</p>
-              <p className="vcard-number">{displayMemberNumber(kartu.memberNumber)}</p>
+              <p className="vcard-label">
+                {kartu.isActiveCard ? "Nomor anggota" : "Nomor anggota berlaku"}
+              </p>
+              <p className="vcard-number">
+                {displayMemberNumber(kartu.activeMemberNumber ?? kartu.memberNumber)}
+              </p>
+              {!kartu.isActiveCard && (
+                <p className="vcard-label">
+                  Kartu ini sudah diganti. Nomor {displayMemberNumber(kartu.memberNumber)} tidak berlaku lagi.
+                </p>
+              )}
             </div>
 
             <dl className="vcard-grid">

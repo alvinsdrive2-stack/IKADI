@@ -9,6 +9,7 @@ import { LEVEL_LABELS, issueMemberNumber, isValidLevel } from "@/lib/member-numb
 import { KTA_QR_COLOR, getPejabat, type KtaPejabatMap } from "@/lib/kta";
 import { logRouteError, isUniqueViolation } from "@/lib/route-log";
 import { publicBaseUrl, verifyPath } from "@/lib/base-url";
+import { getActiveMemberNumber, issueMemberCard } from "@/lib/member-cards";
 
 
 const SELECT = {
@@ -145,6 +146,10 @@ export async function issueKta(opts: {
             ...(applyLevel !== null ? { levelCode: applyLevel } : {}),
           },
         });
+        // Kartu pertama masuk riwayat supaya halaman verifikasi membaca sumber
+        // yang sama dengan kartu berikutnya (nomor otomatis dari sequence ini).
+        const card = await issueMemberCard({ participantId: p!.id, memberNumber: mn, isManual: false }, tx);
+        if (!card.ok) throw new Error(card.message);
         return { memberNumber: mn, issuedAt: now };
       });
       memberNumber = result.memberNumber;
@@ -206,7 +211,8 @@ export async function issueKta(opts: {
   // true kalau override dikirim tapi tidak diterapkan (nomor sudah ada / kalah race).
   const levelLocked = opts.levelCodeOverride !== undefined && !issued;
 
-  const verifyUrl = `${publicBaseUrl(opts.request)}${verifyPath(memberNumber!)}`;
+  const activeMemberNumber = (await getActiveMemberNumber(p.id)) ?? memberNumber!;
+  const verifyUrl = `${publicBaseUrl(opts.request)}${verifyPath(activeMemberNumber)}`;
   let qrPng: string;
   try {
     qrPng = await QRCode.toDataURL(verifyUrl, {

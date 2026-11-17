@@ -33,13 +33,50 @@ export type KtaCardData = {
   };
 };
 
-/** "Anggota | Jawa Barat | Kabupaten Cianjur" — level | wilayah | daerah. */
+/**
+ * "Anggota | jawa barat | kabupaten cianjur" — level | wilayah | daerah.
+ * Wilayah dihuruf-kecilkan: data master menyimpan "Dki Jakarta"/"Di Yogyakarta",
+ * yang jadi janggal kalau dipaksa title case.
+ */
 function levelWilayah(d: KtaCardData): string {
-  return [d.levelLabel, d.provinceName, d.regencyName].filter(Boolean).join(" | ");
+  const wilayah = [d.provinceName, d.regencyName]
+    .filter((v): v is string => Boolean(v))
+    .map((v) => v.toLocaleLowerCase("id-ID"));
+  return [d.levelLabel, ...wilayah].join(" | ");
 }
 
 function photoSrc(p: string): string {
   return p.startsWith("/") ? p : `/${p}`;
+}
+
+/**
+ * Slot pas foto di kartu. Kalau berkasnya hilang di storage (path tercatat di DB
+ * tapi file tidak ada), seluruh slot tidak digambar — bukan kotak putih kosong,
+ * bukan ikon gambar rusak.
+ */
+function PhotoSlot({ box, photoPath, fullName }: { box: KtaBox; photoPath: string; fullName: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+  return (
+    <div
+      className="absolute overflow-hidden bg-white"
+      style={{
+        left: `${box.x}%`,
+        top: `${box.y}%`,
+        width: `${box.w}%`,
+        aspectRatio: "13 / 17",
+        borderRadius: "0.7mm",
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={photoSrc(photoPath)}
+        alt={`Pas foto ${fullName}`}
+        className="size-full object-cover"
+        onError={() => setFailed(true)}
+      />
+    </div>
+  );
 }
 
 /**
@@ -129,29 +166,8 @@ export function KtaCardView({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={KTA_FACE_SRC.depan} alt="" className="absolute inset-0 size-full object-cover" />
 
-        {/* Pas foto */}
-        <div
-          className="absolute overflow-hidden bg-white"
-          style={{
-            left: `${L.photo.x}%`,
-            top: `${L.photo.y}%`,
-            width: `${L.photo.w}%`,
-            aspectRatio: "13 / 17",
-            borderRadius: "0.7mm",
-          }}
-        >
-          {d.photoPath ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={photoSrc(d.photoPath)} alt={`Pas foto ${d.fullName}`} className="size-full object-cover" />
-          ) : (
-            <div
-              className="grid size-full place-items-center bg-primary-soft text-center leading-tight text-primary-ink"
-              style={{ fontSize: "0.016em" }}
-            >
-              Pas foto
-            </div>
-          )}
-        </div>
+        {/* Pas foto — kosong atau berkas hilang = slot tidak digambar */}
+        {d.photoPath && <PhotoSlot box={L.photo} photoPath={d.photoPath} fullName={d.fullName} />}
 
         {/* Nama */}
         {!kosong(L.fullName) && (

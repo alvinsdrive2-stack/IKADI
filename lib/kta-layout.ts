@@ -64,7 +64,7 @@ export const KTA_SLOT_LABEL: Record<KtaSlotKey, string> = {
  * posisi yang dulu dipakai QR Ketum.
  */
 export const KTA_LAYOUT: KtaLayout = {
-  photo: { x: 9.86, y: 26.94, w: 17.8, size: 0, align: "left" },
+  photo: { x: 6.44, y: 25.71, w: 17.8, size: 0, align: "left" },
   memberNumber: { x: 6.36, y: 71.4, w: 50, size: 4, align: "left" },
   fullName: { x: 6.44, y: 77.4, w: 72.2, size: 4, align: "left" },
   levelLabel: { x: 6.45, y: 85.58, w: 55, size: 2.25, align: "left" },

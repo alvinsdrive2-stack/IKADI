@@ -23,12 +23,12 @@ const NOISE = [
 
 /** Alias nama provinsi yang tidak sama dengan nama di master. */
 const PROVINCE_ALIAS: Record<string, string> = {
-  "DKI JAKARTA": "Dki Jakarta",
-  "DKI": "Dki Jakarta",
-  "JAKARTA": "Dki Jakarta",
-  "DIY": "Di Yogyakarta",
-  "YOGYAKARTA": "Di Yogyakarta",
-  "JOGJA": "Di Yogyakarta",
+  "DKI JAKARTA": "DKI Jakarta",
+  "DKI": "DKI Jakarta",
+  "JAKARTA": "DKI Jakarta",
+  "DIY": "DI Yogyakarta",
+  "YOGYAKARTA": "DI Yogyakarta",
+  "JOGJA": "DI Yogyakarta",
   "SUMUT": "Sumatera Utara",
   "SUMBAR": "Sumatera Barat",
   "SUMSEL": "Sumatera Selatan",

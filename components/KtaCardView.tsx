@@ -33,16 +33,9 @@ export type KtaCardData = {
   };
 };
 
-/**
- * "Anggota | jawa barat | kabupaten cianjur" — level | wilayah | daerah.
- * Wilayah dihuruf-kecilkan: data master menyimpan "Dki Jakarta"/"Di Yogyakarta",
- * yang jadi janggal kalau dipaksa title case.
- */
+/** "Anggota | DKI Jakarta | Kabupaten Cianjur" — level | wilayah | daerah. */
 function levelWilayah(d: KtaCardData): string {
-  const wilayah = [d.provinceName, d.regencyName]
-    .filter((v): v is string => Boolean(v))
-    .map((v) => v.toLocaleLowerCase("id-ID"));
-  return [d.levelLabel, ...wilayah].join(" | ");
+  return [d.levelLabel, d.provinceName, d.regencyName].filter(Boolean).join(" | ");
 }
 
 function photoSrc(p: string): string {

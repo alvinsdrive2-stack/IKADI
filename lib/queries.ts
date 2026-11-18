@@ -25,7 +25,9 @@ const orderBy: Record<Sort, Prisma.ParticipantOrderByWithRelationInput[]> = {
   name_desc: [{ fullName: "desc" }],
 };
 
-function where(p: ListParams): Prisma.ParticipantWhereInput {
+type FilterParams = Omit<ListParams, "page" | "perPage">;
+
+function where(p: FilterParams): Prisma.ParticipantWhereInput {
   const and: Prisma.ParticipantWhereInput[] = [];
   const q = p.q?.trim();
   if (q) {
@@ -123,6 +125,19 @@ export async function getParticipantPhotoPath(id: bigint) {
 export async function getParticipantKtpPath(id: bigint) {
   const r = await prisma.participant.findUnique({ where: { id }, select: { ktpPath: true } });
   return r?.ktpPath ?? null;
+}
+
+/**
+ * Semua id peserta yang cocok dengan filter — dipakai ekspor massal supaya
+ * "semua hasil filter" tidak dibatasi paginasi tabel. Urutan sama dengan tabel.
+ */
+export async function listParticipantIds(p: FilterParams): Promise<string[]> {
+  const rows = await prisma.participant.findMany({
+    where: where(p),
+    orderBy: orderBy[p.sort ?? "newest"],
+    select: { id: true },
+  });
+  return rows.map((r) => String(r.id));
 }
 
 export async function getStats() {

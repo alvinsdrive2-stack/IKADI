@@ -13,6 +13,8 @@ export default function PengurusAnggotaPage() {
         apiBase="/api/anggota/pengurus/anggota"
         // Ringkasan lintas wilayah milik admin; pengurus punya /me sendiri.
         statsUrl={null}
+        bulkExportBase="/api/anggota/pengurus/bulk/kta"
+        bulkIssueUrl="/api/anggota/pengurus/bulk/terbitkan"
       />
     </Suspense>
   );

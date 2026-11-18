@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, ArrowUpDown, Search } from "lucide-react";
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SearchSelect } from "@/components/ui/search-select";
+import { BulkActions } from "@/components/BulkActions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EDUCATION_OPTIONS, formatDateTime } from "@/components/constants";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,8 @@ export function AdminParticipants({
   basePath = "/admin/peserta",
   apiBase = "/api/admin/participants",
   statsUrl = "/api/admin/stats",
+  bulkExportBase = "/api/admin/bulk/kta",
+  bulkIssueUrl = "/api/admin/bulk/terbitkan",
 }: {
   mode?: "dashboard" | "list";
   /** Halaman detail peserta. Admin: /admin/peserta, pengurus: /anggota/pengurus/anggota. */
@@ -46,6 +49,10 @@ export function AdminParticipants({
   apiBase?: string;
   /** Endpoint ringkasan. `null` = tidak ada ringkasan lintas cakupan untuk peran ini. */
   statsUrl?: string | null;
+  /** Endpoint pekerjaan ekspor massal (PDF/JPG → ZIP). */
+  bulkExportBase?: string;
+  /** Endpoint penerbitan nomor massal. */
+  bulkIssueUrl?: string;
 }) {
   const searchParams = useSearchParams();
   return (
@@ -55,17 +62,51 @@ export function AdminParticipants({
       basePath={basePath}
       apiBase={apiBase}
       statsUrl={statsUrl}
+      bulkExportBase={bulkExportBase}
+      bulkIssueUrl={bulkIssueUrl}
     />
   );
 }
 
-function AdminData({ qs, mode, basePath, apiBase, statsUrl }: { qs: string; mode: "dashboard" | "list"; basePath: string; apiBase: string; statsUrl: string | null }) {
+function AdminData({
+  qs,
+  mode,
+  basePath,
+  apiBase,
+  statsUrl,
+  bulkExportBase,
+  bulkIssueUrl,
+}: {
+  qs: string;
+  mode: "dashboard" | "list";
+  basePath: string;
+  apiBase: string;
+  statsUrl: string | null;
+  bulkExportBase: string;
+  bulkIssueUrl: string;
+}) {
   const router = useRouter();
   const params = new URLSearchParams(qs);
   const query = mode === "dashboard" ? "perPage=10&sort=newest" : qs;
   const [result, setResult] = useState<{ qs: string; list: ListResponse | null; stats: Stats | null; error: string | null; unauthorized: boolean }>({
     qs: "", list: null, stats: null, error: null, unauthorized: false,
   });
+
+  // Pilihan centang tabel disimpan bersama query asalnya: begitu filter atau
+  // halaman berubah, query tidak cocok lagi dan pilihan otomatis kosong —
+  // tanpa effect yang memicu render berantai.
+  const [selection, setSelection] = useState<{ qs: string; ids: string[] }>({ qs: query, ids: [] });
+  const selected = selection.qs === query ? selection.ids : [];
+  const setSelected = useCallback(
+    (next: string[] | ((prev: string[]) => string[])) => {
+      setSelection((prev) => {
+        const base = prev.qs === query ? prev : { qs: query, ids: [] };
+        return { qs: query, ids: typeof next === "function" ? next(base.ids) : next };
+      });
+    },
+    [query],
+  );
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -94,7 +135,7 @@ function AdminData({ qs, mode, basePath, apiBase, statsUrl }: { qs: string; mode
         setResult({ qs: query, list: null, stats: null, error: "Gagal memuat data.", unauthorized: false });
       });
     return () => ctrl.abort();
-  }, [query, apiBase, statsUrl]);
+  }, [query, apiBase, statsUrl, reloadKey]);
 
   const fresh = result.qs === query;
   const list = fresh ? result.list : null;
@@ -158,6 +199,17 @@ function AdminData({ qs, mode, basePath, apiBase, statsUrl }: { qs: string; mode
         <FiltersPanel params={params} onApply={(next) => router.push(`${basePath}${next ? `?${next}` : ""}`)} />
       )}
 
+      {!isDashboard && (
+        <BulkActions
+          selected={selected}
+          filterQuery={qs}
+          issueUrl={bulkIssueUrl}
+          exportBase={bulkExportBase}
+          onClear={() => setSelected([])}
+          onIssued={() => setReloadKey((k) => k + 1)}
+        />
+      )}
+
       {!isDashboard && hasFilter && (
         <ActiveChips
           params={params}
@@ -200,6 +252,19 @@ function AdminData({ qs, mode, basePath, apiBase, statsUrl }: { qs: string; mode
                 <caption className="sr-only">Daftar peserta pendataan KTA IKADI</caption>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
+                    {!isDashboard && (
+                      <TableHead className="w-10">
+                        <input
+                          type="checkbox"
+                          aria-label="Pilih semua peserta di halaman ini"
+                          checked={!!list && list.data.length > 0 && selected.length === list.data.length}
+                          onChange={(e) =>
+                            setSelected(e.target.checked ? (list?.data.map((p) => String(p.id)) ?? []) : [])
+                          }
+                          className="size-4 rounded border-control-border"
+                        />
+                      </TableHead>
+                    )}
                     <TableHead className="hidden text-xs font-medium text-ink-muted md:table-cell" aria-sort={ariaSort(params.get("sort"), "date")}>
                       <SortButton label="Tanggal" current={params.get("sort") ?? "newest"} asc="oldest" desc="newest" qs={qs} basePath={basePath} />
                     </TableHead>
@@ -217,9 +282,24 @@ function AdminData({ qs, mode, basePath, apiBase, statsUrl }: { qs: string; mode
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading && <SkeletonRows columns={isDashboard ? 4 : 7} />}
+                  {loading && <SkeletonRows columns={isDashboard ? 4 : 8} />}
                   {!loading && list?.data.map((p) => (
-                    <TableRow key={p.id}>
+                    <TableRow key={p.id} data-selected={selected.includes(String(p.id)) || undefined}>
+                      {!isDashboard && (
+                        <TableCell className="w-10">
+                          <input
+                            type="checkbox"
+                            aria-label={`Pilih ${p.fullName}`}
+                            checked={selected.includes(String(p.id))}
+                            onChange={(e) =>
+                              setSelected((prev) =>
+                                e.target.checked ? [...prev, String(p.id)] : prev.filter((x) => x !== String(p.id)),
+                              )
+                            }
+                            className="size-4 rounded border-control-border"
+                          />
+                        </TableCell>
+                      )}
                       <TableCell className="hidden whitespace-nowrap text-xs tabular-nums text-ink-muted md:table-cell">{formatDateTime(p.createdAt)}</TableCell>
                       <TableCell>
                         <span className="font-medium text-ink">{p.fullName}</span>

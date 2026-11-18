@@ -27,6 +27,8 @@ export type ParticipantRow = {
   memberNumber: string | null;
   levelCode: number;
   levelLabel: string;
+  /** Nama sumber data (mis. MUNAS). null = mendaftar sendiri lewat IKADI. */
+  sourceLabel?: string | null;
 };
 
 type ListResponse = { ok: boolean; data: ParticipantRow[]; total: number; page: number; perPage: number; totalPages: number };
@@ -303,7 +305,10 @@ function AdminData({
                       <TableCell className="hidden whitespace-nowrap text-xs tabular-nums text-ink-muted md:table-cell">{formatDateTime(p.createdAt)}</TableCell>
                       <TableCell>
                         <span className="font-medium text-ink">{p.fullName}</span>
-                        <span className="mt-0.5 block text-xs text-ink-muted">{p.levelLabel}</span>
+                        <span className="mt-0.5 block text-xs text-ink-muted">
+                          {p.levelLabel}
+                          {p.sourceLabel && ` · ${p.sourceLabel}`}
+                        </span>
                         <span className="mt-0.5 block font-mono text-xs tabular-nums text-ink-muted sm:hidden">
                           {p.memberNumber ?? "Belum terbit"}
                         </span>

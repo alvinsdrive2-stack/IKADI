@@ -177,6 +177,19 @@ async function main() {
       return;
     }
 
+    // Sumber data dicatat sekali per impor; peserta hanya menyimpan id-nya.
+    const munasSource = await ikadi.dataSource.upsert({
+      where: { key: "munas-iv-2026" },
+      create: {
+        key: "munas-iv-2026",
+        label: "MUNAS IV IKADI 2026",
+        origin: "Database munas_ikadi, tabel participants",
+        note: "Data tempat lahir, alamat, dan pekerjaan belum ada di sumber.",
+      },
+      update: {},
+    });
+    const munasSourceId = munasSource.id;
+
     let inserted = 0;
     for (const r of toInsert) {
       const passwordHash = await hashPassword(r.password);
@@ -195,6 +208,7 @@ async function main() {
             provinceCode: r.provinceCode,
             passwordHash,
             needsProfileCompletion: true,
+            sourceId: munasSourceId,
           },
         });
         inserted++;

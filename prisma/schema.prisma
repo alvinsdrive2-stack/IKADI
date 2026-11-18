@@ -110,6 +110,11 @@ model Participant {
   /// layanan. Kolom wajib lain diisi string kosong, bukan data karangan.
   needsProfileCompletion Boolean          @default(false) @map("needs_profile_completion")
 
+  /// Asal data peserta. NULL = mendaftar sendiri lewat formulir IKADI.
+  /// Relasi ini yang menjawab "data ini dari mana", bukan kolom teks bebas.
+  sourceId                Int?             @map("source_id")
+  source                  DataSource?      @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
   /// Riwayat kartu. Kolom `memberNumber` di atas = cermin kartu yang isActive.
   memberCards             MemberCard[]
 
@@ -117,7 +122,29 @@ model Participant {
   @@index([fullName], map: "idx_participants_full_name")
   @@index([provinceCode, regencyCode], map: "idx_participants_region")
   @@index([isPengurus, levelCode], map: "idx_participants_pengurus")
+  @@index([sourceId], map: "idx_participants_source")
   @@map("participants")
+}
+
+/// Sumber data peserta, mis. impor dari pendataan MUNAS IV.
+///
+/// Tabel terpisah, bukan kolom enum, supaya penambahan sumber baru tidak perlu
+/// migrasi skema dan supaya asal-usul bisa dicatat lengkap: kapan diimpor,
+/// oleh siapa, dari sistem mana, dan berapa baris masuk/dilewati.
+model DataSource {
+  id          Int      @id @default(autoincrement())
+  /// Kunci stabil untuk kode: "munas-iv-2026", "mandiri", dst.
+  key         String   @unique @db.VarChar(50)
+  label       String   @db.VarChar(120)
+  /// Sistem asal, mis. nama database atau aplikasi sumber.
+  origin      String?  @db.VarChar(120)
+  importedAt  DateTime @default(now()) @map("imported_at")
+  /// Catatan hasil impor (mis. jumlah baris masuk dan dilewati), teks bebas.
+  note        String?  @db.Text
+
+  participants Participant[]
+
+  @@map("data_sources")
 }
 
 model Admin {

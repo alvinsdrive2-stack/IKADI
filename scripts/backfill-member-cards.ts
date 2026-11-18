@@ -1,6 +1,6 @@
 /**
  * Backfill `member_cards` dari `participants.member_number` yang sudah terbit
- * sebelum tabel riwayat ada. Idempoten — aman dijalankan berulang.
+ * sebelum tabel riwayat ada. Idempoten, aman dijalankan berulang.
  *
  *   npx tsx scripts/backfill-member-cards.ts
  */

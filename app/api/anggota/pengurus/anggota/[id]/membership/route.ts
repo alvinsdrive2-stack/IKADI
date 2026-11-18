@@ -30,7 +30,7 @@ async function scopedTarget(
   return "ok";
 }
 
-/** GET /api/anggota/pengurus/anggota/[id]/membership — data keanggotaan. */
+/** GET /api/anggota/pengurus/anggota/[id]/membership, data keanggotaan. */
 export async function GET(
   _request: Request,
   ctx: { params: Promise<{ id: string }> },
@@ -52,7 +52,7 @@ export async function GET(
   return Response.json({ ok: true, data: r.data });
 }
 
-/** PATCH /api/anggota/pengurus/anggota/[id]/membership — ubah keanggotaan. */
+/** PATCH /api/anggota/pengurus/anggota/[id]/membership, ubah keanggotaan. */
 export async function PATCH(
   request: Request,
   ctx: { params: Promise<{ id: string }> },

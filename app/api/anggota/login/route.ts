@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     return jsonError(503, "SERVER_ERROR", "Layanan sedang tidak tersedia. Coba lagi nanti.");
   }
 
-  // Pesan sama untuk NIK tidak ada / belum set sandi / sandi salah — jangan bocorkan mana yang salah.
+  // Pesan sama untuk NIK tidak ada / belum set sandi / sandi salah, jangan bocorkan mana yang salah.
   const hash = participant?.passwordHash ?? (await getDummyHash());
   const valid = await verifyPassword(hash, password);
   if (!participant || !participant.passwordHash || !valid) {

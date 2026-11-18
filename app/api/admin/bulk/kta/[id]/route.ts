@@ -2,7 +2,7 @@ import { requireAdmin } from "@/lib/auth";
 import { jsonError } from "@/lib/http";
 import { getBulkJob, publicJob } from "@/lib/kta-bulk";
 
-/** GET /api/admin/bulk/kta/:id — status pekerjaan, atau unduhan ZIP saat selesai. */
+/** GET /api/admin/bulk/kta/:id, status pekerjaan, atau unduhan ZIP saat selesai. */
 export async function GET(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin();
   if (!auth.ok) return auth.response;

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Markup kartu KTA final — dirender di atas artwork asli (depan & belakang)
+ * Markup kartu KTA final, dirender di atas artwork asli (depan & belakang)
  * memakai koordinat dari `lib/kta-layout.ts`, sumber yang sama dengan lab
  * koordinat. Jadi preview lab == hasil cetak.
  *
@@ -33,7 +33,7 @@ export type KtaCardData = {
   };
 };
 
-/** "Anggota | DKI Jakarta | Kabupaten Cianjur" — level | wilayah | daerah. */
+/** "Anggota | DKI Jakarta | Kabupaten Cianjur", level | wilayah | daerah. */
 function levelWilayah(d: KtaCardData): string {
   return [d.levelLabel, d.provinceName, d.regencyName].filter(Boolean).join(" | ");
 }
@@ -44,7 +44,7 @@ function photoSrc(p: string): string {
 
 /**
  * Slot pas foto di kartu. Kalau berkasnya hilang di storage (path tercatat di DB
- * tapi file tidak ada), seluruh slot tidak digambar — bukan kotak putih kosong,
+ * tapi file tidak ada), seluruh slot tidak digambar, bukan kotak putih kosong,
  * bukan ikon gambar rusak.
  */
 function PhotoSlot({ box, photoPath, fullName }: { box: KtaBox; photoPath: string; fullName: string }) {
@@ -132,7 +132,7 @@ export function KtaCardView({
   return (
     <div ref={stageRef} className="kta-print-stage flex flex-col items-center gap-3">
       {/* Flip: dua sisi menempati ruang yang sama, diputar 180° lewat CSS.
-          Kartu sendiri yang jadi tombol — tap = balik. `kta-flip` hanya
+          Kartu sendiri yang jadi tombol, tap = balik. `kta-flip` hanya
           berlaku di layar; saat print kedua sisi dicetak berurutan. */}
       <div
         className={cn("kta-flip", flipped && "is-flipped", compact && "kta-flip-compact")}
@@ -153,13 +153,13 @@ export function KtaCardView({
       {/* ---------- DEPAN ---------- */}
       <article
         className="kta-card kta-flip-face kta-flip-front font-kta"
-        aria-label={`Kartu tanda anggota ${d.fullName} — sisi depan`}
+        aria-label={`Kartu tanda anggota ${d.fullName}, sisi depan`}
         data-face="depan"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={KTA_FACE_SRC.depan} alt="" className="absolute inset-0 size-full object-cover" />
 
-        {/* Pas foto — kosong atau berkas hilang = slot tidak digambar */}
+        {/* Pas foto, kosong atau berkas hilang = slot tidak digambar */}
         {d.photoPath && <PhotoSlot box={L.photo} photoPath={d.photoPath} fullName={d.fullName} />}
 
         {/* Nama */}
@@ -176,7 +176,7 @@ export function KtaCardView({
           </Slot>
         )}
 
-        {/* Nomor KTA — paling tebal yang ada di font (800) */}
+        {/* Nomor KTA, paling tebal yang ada di font (800) */}
         {!kosong(L.memberNumber) && (
           <Slot box={L.memberNumber} className={`text-white ${align(L.memberNumber)}`}>
             <p className="truncate font-medium leading-none tracking-wider">{displayMemberNumber(d.memberNumber)}</p>
@@ -184,7 +184,7 @@ export function KtaCardView({
         )}
 
         {/* Satu QR: scan = halaman verifikasi berisi detail kartu. */}
-        {/* QR tidak memakai font, jadi size 0 itu normal — jangan pakai kosong(). */}
+        {/* QR tidak memakai font, jadi size 0 itu normal, jangan pakai kosong(). */}
         <QrSlot
           box={L.qrVerifikasi}
           src={d.qrPng}
@@ -197,7 +197,7 @@ export function KtaCardView({
       {/* Sisi belakang = artwork apa adanya. Jangan tambah teks overlay di sini. */}
       <article
         className="kta-card kta-flip-face kta-flip-back"
-        aria-label={`Kartu tanda anggota ${d.fullName} — sisi belakang`}
+        aria-label={`Kartu tanda anggota ${d.fullName}, sisi belakang`}
         data-face="belakang"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -214,7 +214,7 @@ export function KtaCardView({
 const QR_RADIUS = "1mm";
 /**
  * Quiet zone tambahan di dalam kotak QR. Gambar QR sudah punya margin sendiri
- * dari generator, tapi tepi artwork kartu bisa memotongnya — padding ini
+ * dari generator, tapi tepi artwork kartu bisa memotongnya, padding ini
  * memastikan modul paling luar tetap terbaca pemindai.
  */
 const QR_PADDING = "6%";

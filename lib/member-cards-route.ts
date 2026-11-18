@@ -9,7 +9,7 @@ type Ctx = { params: Promise<{ id: string }> };
 const memberCardError = (r: { status: number; code: string; message: string }) =>
   jsonError(r.status, r.code, r.message);
 
-/** GET — riwayat kartu + nomor aktif peserta. */
+/** GET, riwayat kartu + nomor aktif peserta. */
 export async function readMemberCards(ctx: Ctx) {
   const { id: raw } = await ctx.params;
   if (!/^\d{1,20}$/.test(raw)) return jsonError(404, "NOT_FOUND", "Data peserta tidak ditemukan");
@@ -35,7 +35,7 @@ export async function readMemberCards(ctx: Ctx) {
   }
 }
 
-/** POST — terbitkan kartu baru (otomatis atau nomor manual). Kartu baru aktif. */
+/** POST, terbitkan kartu baru (otomatis atau nomor manual). Kartu baru aktif. */
 export async function createMemberCard(ctx: Ctx, body: unknown) {
   const { id: raw } = await ctx.params;
   if (!/^\d{1,20}$/.test(raw)) return jsonError(404, "NOT_FOUND", "Data peserta tidak ditemukan");
@@ -63,7 +63,7 @@ export async function createMemberCard(ctx: Ctx, body: unknown) {
   });
 }
 
-/** POST activate — jadikan kartu tertentu aktif. */
+/** POST activate, jadikan kartu tertentu aktif. */
 export async function activateCard(ctx: Ctx, body: unknown) {
   const { id: raw } = await ctx.params;
   if (!/^\d{1,20}$/.test(raw)) return jsonError(404, "NOT_FOUND", "Data peserta tidak ditemukan");
@@ -85,7 +85,7 @@ export async function activateCard(ctx: Ctx, body: unknown) {
   });
 }
 
-/** Ada/tidaknya peserta — dipakai route pengurus untuk cek cakupan sebelum aksi. */
+/** Ada/tidaknya peserta, dipakai route pengurus untuk cek cakupan sebelum aksi. */
 export async function memberCardOwnerScope(raw: string) {
   if (!/^\d{1,20}$/.test(raw)) return "invalid" as const;
   try {

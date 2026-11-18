@@ -1,5 +1,5 @@
 /**
- * Logika keanggotaan (level, wilayah, status, sandi) — dipakai route admin
+ * Logika keanggotaan (level, wilayah, status, sandi), dipakai route admin
  * dan route pengurus supaya aturannya tunggal, tidak ada dua implementasi.
  * Hasil berbentuk union `ok` supaya route cukup memetakan ke Response.
  */
@@ -129,7 +129,7 @@ export async function getMembership(id: bigint): Promise<MembershipResult> {
 }
 
 /**
- * Update keanggotaan. `patch` adalah body mentah (unknown) — seluruh validasi
+ * Update keanggotaan. `patch` adalah body mentah (unknown), seluruh validasi
  * tipe dilakukan di sini supaya route cukup meneruskan.
  * `opts.allowedLevels`: kalau diberikan (pemakaian pengurus), levelCode harus
  * ada di array itu; kalau tidak diberikan (admin) berlaku aturan lama 1..7.
@@ -291,7 +291,7 @@ export async function updateMembership(
     });
   } catch (err) {
     if (isUniqueViolation(err)) {
-      // member_number punya unique index — nilai dikunci, jadi ini tak seharusnya.
+      // member_number punya unique index, nilai dikunci, jadi ini tak seharusnya.
       return {
         ok: false,
         status: 409,

@@ -36,7 +36,7 @@ export function KtaPreviewCard() {
         >
           {/* SISI DEPAN (FRONT) */}
           <div className="absolute inset-0 overflow-hidden rounded-2xl border border-white/30 bg-kta-front p-4 sm:p-5 text-white shadow-2xl [backface-visibility:hidden]">
-            {/* Official Single Background — No tiles, no repeat */}
+            {/* Official Single Background, No tiles, no repeat */}
             <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
               <Image
                 src="/ornaments/aset_background_2_kanan_atas_1080p.png"
@@ -148,7 +148,7 @@ export function KtaPreviewCard() {
 
           {/* SISI BELAKANG (BACK) */}
           <div className="absolute inset-0 overflow-hidden rounded-2xl border border-white/30 bg-kta-back p-4 sm:p-5 text-white shadow-2xl [backface-visibility:hidden] [transform:rotateY(180deg)]">
-            {/* Official Single Background — No tiles, no repeat */}
+            {/* Official Single Background, No tiles, no repeat */}
             <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
               <Image
                 src="/ornaments/aset_background_4_kanan_bawah_1080p.png"

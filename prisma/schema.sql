@@ -1,4 +1,4 @@
--- Dump skema — Pendataan KTA IKADI
+-- Dump skema, Pendataan KTA IKADI
 -- Import: mysql -u root -p ikadi < prisma/schema.sql
 -- Padanan Prisma: prisma/schema.prisma + prisma/migrations/
 

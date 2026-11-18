@@ -38,7 +38,7 @@ export function LoginForm() {
       requestAnimationFrame(() => errorRef.current?.focus());
     } catch {
       setError(
-        "Koneksi bermasalah. Data belum terkirim — periksa internet lalu coba lagi.",
+        "Koneksi bermasalah. Data belum terkirim, periksa internet lalu coba lagi.",
       );
     } finally {
       setLoading(false);

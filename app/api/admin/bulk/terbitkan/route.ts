@@ -5,7 +5,7 @@ import { issueKta } from "@/lib/kta-issue";
 import { parseIds } from "@/lib/bulk-guard";
 
 /**
- * POST /api/admin/bulk/terbitkan — terbitkan nomor untuk banyak peserta.
+ * POST /api/admin/bulk/terbitkan, terbitkan nomor untuk banyak peserta.
  * Hanya berlaku bagi peserta yang belum punya nomor; yang sudah punya nomor
  * dilewati (nomor bersifat permanen, bukan ditimpa).
  */

@@ -15,7 +15,7 @@ import { PENGURUS_MAX_LEVEL } from "@/lib/pengurus";
 
 const LEVEL_OPTIONS = Array.from({ length: 7 }, (_, i) => ({
   value: String(i + 1),
-  label: `${i + 1} — ${LEVEL_LABELS[i + 1]}`,
+  label: `${i + 1}, ${LEVEL_LABELS[i + 1]}`,
 }));
 
 const STATUS_OPTIONS = Object.entries(MEMBERSHIP_STATUS_LABELS).map(([value, label]) => ({
@@ -238,7 +238,7 @@ export function MembershipAdmin({
           </div>
           <div>
             <dt className="text-xs text-ink-muted">Tanggal terbit</dt>
-            <dd className="mt-0.5 text-base text-ink">{d.memberNumberIssuedAt ? formatDate(d.memberNumberIssuedAt) : "—"}</dd>
+            <dd className="mt-0.5 text-base text-ink">{d.memberNumberIssuedAt ? formatDate(d.memberNumberIssuedAt) : "-"}</dd>
           </div>
         </dl>
 
@@ -367,7 +367,7 @@ export function MembershipAdmin({
             >
               {locked ? "Cetak ulang KTA" : "Cetak KTA"}
             </Link>{" "}
-            — {locked ? "nomor tetap, kartu dicetak ulang." : "menerbitkan nomor anggota permanen."}
+           , {locked ? "nomor tetap, kartu dicetak ulang." : "menerbitkan nomor anggota permanen."}
           </p>
         )}
       </div>

@@ -29,7 +29,7 @@ async function guard(
   return null;
 }
 
-/** GET /api/anggota/pengurus/anggota/:id/kartu — riwayat kartu. */
+/** GET /api/anggota/pengurus/anggota/:id/kartu, riwayat kartu. */
 export async function GET(_request: Request, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requirePengurus();
   if (!auth.ok) return auth.response;
@@ -40,7 +40,7 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
   return readMemberCards(ctx);
 }
 
-/** POST — terbitkan kartu baru (otomatis / nomor manual). */
+/** POST, terbitkan kartu baru (otomatis / nomor manual). */
 export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requirePengurus();
   if (!auth.ok) return auth.response;

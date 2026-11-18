@@ -162,7 +162,7 @@ export function AppFrame({
   );
 
   const brand = (
-    <Link href={role === "admin" ? "/admin" : "/anggota"} className="flex items-center gap-2.5 mx-auto" aria-label="IKADI — dashboard">
+    <Link href={role === "admin" ? "/admin" : "/anggota"} className="flex items-center gap-2.5 mx-auto" aria-label="IKADI, dashboard">
       <LogoMark size={120} priority />
     </Link>
   );

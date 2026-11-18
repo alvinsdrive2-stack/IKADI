@@ -4,7 +4,7 @@ import { AutoFocusH1 } from "@/components/AutoFocusH1";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 
 export const metadata: Metadata = {
-  title: "Berhasil — Pendataan KTA IKADI",
+  title: "Berhasil, Pendataan KTA IKADI",
 };
 
 export default function SuksesPage() {
@@ -36,7 +36,7 @@ export default function SuksesPage() {
           </p>
           <p className="mt-4 rounded-md bg-bg p-3 text-left text-sm text-ink-muted">
             Simpan NIK dan sandi Anda. Nomor anggota terbit setelah admin mencetak
-            KTA — sebelum itu kartu tampil tanpa nomor.
+            KTA, sebelum itu kartu tampil tanpa nomor.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link

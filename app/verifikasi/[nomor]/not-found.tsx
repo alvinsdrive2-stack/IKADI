@@ -2,7 +2,7 @@ import Link from "next/link";
 import { LogoMark } from "@/components/Logo";
 
 export const metadata = {
-  title: "Kartu tidak dikenali — IKADI",
+  title: "Kartu tidak dikenali, IKADI",
 };
 
 export default function VerifikasiNotFound() {

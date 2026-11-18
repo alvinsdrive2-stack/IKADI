@@ -1,5 +1,5 @@
 /**
- * Kartu anggota (riwayat nomor) — satu peserta boleh punya banyak kartu, tapi
+ * Kartu anggota (riwayat nomor), satu peserta boleh punya banyak kartu, tapi
  * hanya satu yang aktif. `participants.member_number` adalah cermin kartu aktif
  * dan HANYA ditulis dari file ini, supaya semua pembaca lama tetap benar.
  *
@@ -194,7 +194,7 @@ export async function activateMemberCard(
 }
 
 /**
- * Cari kartu pemilik sebuah nomor — aktif maupun sudah diganti. Dipakai halaman
+ * Cari kartu pemilik sebuah nomor, aktif maupun sudah diganti. Dipakai halaman
  * verifikasi: nomor lama harus tetap mengarah ke orangnya, bukan 404.
  */
 export async function resolveMemberCard(memberNumber: string) {

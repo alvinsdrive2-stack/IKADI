@@ -1,4 +1,4 @@
-# TEAM.md — Kontrak kerja
+# TEAM.md, Kontrak kerja
 
 ## Stack (fixed)
 Next.js 16.4.3 App Router, TypeScript strict, Tailwind CSS v4 (`@import "tailwindcss"` di app/globals.css), Prisma + MySQL 8, Zod, React Hook Form, Argon2id (`argon2`), session cookie `iron-session`.

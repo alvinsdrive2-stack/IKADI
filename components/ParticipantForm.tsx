@@ -44,7 +44,7 @@ const EMPTY = {
 } as unknown as ParticipantInput;
 
 const NETWORK =
-  "Koneksi bermasalah. Data belum terkirim — periksa internet lalu coba lagi.";
+  "Koneksi bermasalah. Data belum terkirim, periksa internet lalu coba lagi.";
 
 /** Draf disimpan tanpa gambar: base64 KTP bisa 10 MB, jauh di atas kuota localStorage. */
 const DRAFT_KEY = "ikadi:draft:v1";
@@ -252,7 +252,7 @@ export function ParticipantForm() {
     [setValue],
   );
 
-  // ponytail: baca file via FileReader (base64) — form sudah JSON; upgrade ke FormData + route terpisah kalau butuh >1 MB.
+  // ponytail: baca file via FileReader (base64), form sudah JSON; upgrade ke FormData + route terpisah kalau butuh >1 MB.
   const onPhotoChange = useCallback(
     (file: File | undefined) => {
       if (!file) {
@@ -328,7 +328,7 @@ export function ParticipantForm() {
       // Jalur tidak-upload: tidak ada OCR, foto opsional di langkah pertama.
       if (rootChoice === "manual") return;
 
-      // OCR terpisah dari pembacaan base64 — kegagalan OCR tidak membatalkan isi form.
+      // OCR terpisah dari pembacaan base64, kegagalan OCR tidak membatalkan isi form.
       setOcrLoading(true);
       setOcrError(null);
       setOcrConfidence({});
@@ -350,7 +350,7 @@ export function ParticipantForm() {
             setOcrError(String(body?.message ?? "OCR gagal. Silakan isi data secara manual."));
           }
         } catch {
-          setOcrError("Koneksi bermasalah. Data KTP tersimpan, tapi OCR tidak jalan — isi manual.");
+          setOcrError("Koneksi bermasalah. Data KTP tersimpan, tapi OCR tidak jalan, isi manual.");
         } finally {
           setOcrLoading(false);
         }
@@ -375,7 +375,7 @@ export function ParticipantForm() {
       const saved = JSON.parse(raw) as Partial<ParticipantInput>;
       reset({ ...EMPTY, ...saved } as ParticipantInput);
     } catch {
-      // localStorage diblokir/penuh — formulir tetap jalan tanpa draf.
+      // localStorage diblokir/penuh, formulir tetap jalan tanpa draf.
     }
   }, [reset]);
 
@@ -386,7 +386,7 @@ export function ParticipantForm() {
       for (const k of DRAFT_FIELDS) out[k] = values[k];
       window.localStorage.setItem(DRAFT_KEY, JSON.stringify(out));
     } catch {
-      // Kuota penuh / mode privat — abaikan, draf cuma kenyamanan.
+      // Kuota penuh / mode privat, abaikan, draf cuma kenyamanan.
     }
   }, [getValues]);
 
@@ -418,7 +418,7 @@ export function ParticipantForm() {
         );
         return;
       }
-      // Jalur upload: KTP wajib — schema sekarang opsional, cek manual di sini.
+      // Jalur upload: KTP wajib, schema sekarang opsional, cek manual di sini.
       if (rootChoice === "upload" && !getValues("ktp")) {
         setError("ktp", { type: "manual", message: "Foto KTP wajib diisi untuk jalur upload" });
         requestAnimationFrame(() => document.getElementById("ktp")?.focus());
@@ -446,7 +446,7 @@ export function ParticipantForm() {
       .map((k) => ({ field: k, message: String(errors[k]?.message ?? "") }));
     setSummary(items);
     setGlobalError(null);
-    // Lompat ke langkah yang memuat error pertama — kalau tidak, ringkasan menunjuk field di layar lain.
+    // Lompat ke langkah yang memuat error pertama, kalau tidak, ringkasan menunjuk field di layar lain.
     const first = items[0]?.field;
     if (first) {
       const idx = STEPS.findIndex((s) => s.fields.includes(first));
@@ -540,7 +540,7 @@ export function ParticipantForm() {
 
   const opt = (k: FieldKey) => (errors[k]?.message ? String(errors[k]?.message) : undefined);
 
-  /** Berapa field OCR yang benar-benar terisi — dipakai banner ringkasan di layar cek. */
+  /** Berapa field OCR yang benar-benar terisi, dipakai banner ringkasan di layar cek. */
   const ocrCount = OCR_FIELD_ORDER.filter(
     (k) => ocrConfidence[k] !== undefined && String(getValues(k as never) ?? "").trim() !== "",
   ).length;
@@ -681,7 +681,7 @@ export function ParticipantForm() {
                           : "block break-words text-base font-semibold text-ink"
                       }
                     >
-                      {value || "—"}
+                      {value || "-"}
                     </span>
                   </span>
                   <span
@@ -989,7 +989,7 @@ export function ParticipantForm() {
             <Input
               id="studyField"
               label="Bidang Studi"
-              hint="Opsional — bidang studi akademis terakhir."
+              hint="Opsional, bidang studi akademis terakhir."
               error={opt("studyField")}
               {...register("studyField")}
             />
@@ -1198,7 +1198,7 @@ function KtpField({
 
   const hint = required
     ? "Wajib. Foto dari sini membuat data terisi otomatis via OCR."
-    : "Opsional. Kalau ada foto KTP, lampirkan — tapi data tetap Anda isi manual.";
+    : "Opsional. Kalau ada foto KTP, lampirkan, tapi data tetap Anda isi manual.";
 
   return (
     <Field id="ktp" label="Foto KTP" required={required} hint={hint} error={error}>

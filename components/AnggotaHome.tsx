@@ -106,13 +106,13 @@ export function AnggotaHome({ variant = "dashboard" }: { variant?: "dashboard" |
   const displayName = formatPersonName(d.fullName);
   const firstName = displayName.split(" ")[0] ?? displayName;
   const statusLabel = MEMBERSHIP_STATUS_LABELS[d.membershipStatus] ?? d.membershipStatus;
-  const wilayah = [d.province, d.city].filter(Boolean).join(" · ") || "—";
+  const wilayah = [d.province, d.city].filter(Boolean).join(" · ") || "-";
 
   const rows: { label: string; value: React.ReactNode }[] = [
     { label: "Nama lengkap", value: displayName },
     { label: "Jenjang", value: d.levelLabel },
-    { label: "Provinsi", value: d.province ?? "—" },
-    { label: "Kabupaten/Kota", value: d.city ?? "—" },
+    { label: "Provinsi", value: d.province ?? "-" },
+    { label: "Kabupaten/Kota", value: d.city ?? "-" },
     { label: "Status keanggotaan", value: statusLabel },
     {
       label: "Nomor anggota",
@@ -152,12 +152,12 @@ export function AnggotaHome({ variant = "dashboard" }: { variant?: "dashboard" |
             </div>
             <div>
               <dt className="text-xs text-ink-muted">Nomor anggota</dt>
-              <dd className="mt-0.5 font-mono text-sm font-medium tabular-nums text-ink">{d.memberNumber ?? "—"}</dd>
+              <dd className="mt-0.5 font-mono text-sm font-medium tabular-nums text-ink">{d.memberNumber ?? "-"}</dd>
             </div>
             <div>
               <dt className="text-xs text-ink-muted">Tanggal terbit</dt>
               <dd className="mt-0.5 text-sm font-medium text-ink">
-                {d.memberNumberIssuedAt ? formatDate(d.memberNumberIssuedAt) : "—"}
+                {d.memberNumberIssuedAt ? formatDate(d.memberNumberIssuedAt) : "-"}
               </dd>
             </div>
           </dl>
@@ -242,7 +242,7 @@ export function AnggotaHome({ variant = "dashboard" }: { variant?: "dashboard" |
             {/* Markup & koordinat sama persis dengan /anggota/kartu. */}
             <div className="kta-print-reset kta-preview-shadow">
               <KtaCardView compact data={{
-                  memberNumber: d.memberNumber ?? "—",
+                  memberNumber: d.memberNumber ?? "-",
                   fullName: displayName,
                   levelLabel: d.levelLabel,
                   provinceName: d.province,

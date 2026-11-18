@@ -3,7 +3,7 @@ import { jsonError } from "@/lib/http";
 import { getBulkJob, publicJob } from "@/lib/kta-bulk";
 
 /**
- * GET /api/anggota/pengurus/bulk/kta/:id — status / unduhan ZIP.
+ * GET /api/anggota/pengurus/bulk/kta/:id, status / unduhan ZIP.
  * Job dibuat oleh pengurus yang sama pada proses PM2 yang sama, jadi tidak ada
  * cek kepemilikan terpisah: id job berupa UUID acak yang tidak bisa ditebak.
  */

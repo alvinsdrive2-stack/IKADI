@@ -6,7 +6,7 @@ export async function POST() {
     const session = await getAnggotaSession();
     session.destroy();
   } catch {
-    // Sudah logout / cookie rusak / secret berubah — tetap 200.
+    // Sudah logout / cookie rusak / secret berubah, tetap 200.
   }
   return Response.json({ ok: true, data: null });
 }

@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  /* palet project docs/DESIGN.md — satu tema terang, disengaja (DESIGN.md §7) */
+  /* palet project docs/DESIGN.md, satu tema terang, disengaja (DESIGN.md §7) */
   --primary:#166534; --primary-hover:#14532D; --primary-soft:#DCFCE7; --primary-ink:#14532D;
   --accent:#D4AF37; --accent-soft:#FBF5DE; --accent-ink:#7A5C0A;
   --ink:#1F2937; --muted:#4B5563; --line:#D1D5DB; --control:#6B7280;
@@ -186,7 +186,7 @@ td.mono{white-space:nowrap; font-size:.8125rem; font-family:ui-monospace,SFMono-
     <div class="phone">
       <div class="phone-view" id="view">
 
-        <section class="screen on" id="s-landing" aria-label="Layar 1 — beranda">
+        <section class="screen on" id="s-landing" aria-label="Layar 1, beranda">
           <div class="hero">
             <div class="mark">
               <svg width="34" height="34" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#166534"/><path d="M24 7l3.6 6.4L35 15l-4.8 5.3.9 7.2L24 24.6l-7.1 2.9.9-7.2L13 15l7.4-1.6z" fill="#D4AF37"/></svg>
@@ -209,7 +209,7 @@ td.mono{white-space:nowrap; font-size:.8125rem; font-family:ui-monospace,SFMono-
           </div>
         </section>
 
-        <section class="screen" id="s-pilih" aria-label="Layar 2 — pilih cara mengisi">
+        <section class="screen" id="s-pilih" aria-label="Layar 2, pilih cara mengisi">
           <div class="pg">
             <div>
               <h2 class="pg-h">Mau diisi bagaimana?</h2>
@@ -245,7 +245,7 @@ td.mono{white-space:nowrap; font-size:.8125rem; font-family:ui-monospace,SFMono-
           </div>
         </section>
 
-        <section class="screen" id="s-kamera" aria-label="Layar 3 — kamera KTP">
+        <section class="screen" id="s-kamera" aria-label="Layar 3, kamera KTP">
           <div class="cam">
             <div class="tbar">
               <span>Foto KTP</span>
@@ -263,7 +263,7 @@ td.mono{white-space:nowrap; font-size:.8125rem; font-family:ui-monospace,SFMono-
           </div>
         </section>
 
-        <section class="screen" id="s-cek" aria-label="Layar 4 — cek hasil baca KTP">
+        <section class="screen" id="s-cek" aria-label="Layar 4, cek hasil baca KTP">
           <div class="pg">
             <div>
               <h2 class="pg-h">Cek hasil baca KTP</h2>
@@ -289,7 +289,7 @@ td.mono{white-space:nowrap; font-size:.8125rem; font-family:ui-monospace,SFMono-
           </div>
         </section>
 
-        <section class="screen" id="s-form" aria-label="Layar 5 — langkah formulir">
+        <section class="screen" id="s-form" aria-label="Layar 5, langkah formulir">
           <div class="pg">
             <div class="progress">
               <div class="t"><span>Langkah 1 dari 4</span><span>Dokumen &amp; alamat</span></div>
@@ -308,7 +308,7 @@ td.mono{white-space:nowrap; font-size:.8125rem; font-family:ui-monospace,SFMono-
             <div class="fld">
               <label for="m-alamat">Alamat sesuai KTP</label>
               <div class="in area flag" id="m-alamat">Jl. Kaliurang KM 8, Ngaglik, Sleman</div>
-              <span class="warn">Bacaan 62% — periksa RT/RW dan kecamatan.</span>
+              <span class="warn">Bacaan 62%, periksa RT/RW dan kecamatan.</span>
             </div>
 
             <label class="chk">
@@ -328,7 +328,7 @@ td.mono{white-space:nowrap; font-size:.8125rem; font-family:ui-monospace,SFMono-
           </div>
         </section>
 
-        <section class="screen" id="s-sukses" aria-label="Layar 6 — berhasil">
+        <section class="screen" id="s-sukses" aria-label="Layar 6, berhasil">
           <div class="pg" style="justify-content:center;text-align:center">
             <div class="ok-circle">
               <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.8" aria-hidden="true"><path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -370,7 +370,7 @@ td.mono{white-space:nowrap; font-size:.8125rem; font-family:ui-monospace,SFMono-
         <li><b>Satu kelompok per layar.</b> Delapan <code>fieldset</code> ditumpuk jadi 4 langkah × 5–7 kolom. Progres "Langkah 2 dari 4" tampil di atas, jadi peserta tahu sisa jaraknya.</li>
         <li><b>Tidak ada "Kirim" sebelum semua langkah selesai.</b> Tiap langkah "Lanjut", langkah terakhir "Kirim data".</li>
         <li><b>Kamera bukan satu-satunya jalan.</b> Sekarang <code>capture="environment"</code> memaksa kamera terbuka; tambah tombol "Pilih dari galeri" yang membuka pemilih file biasa.</li>
-        <li><b>Pilihan besar, bukan radio kecil.</b> PW/PD, jenis kelamin, status, golongan darah jadi kartu yang diketuk utuh (min 48px) — radio 4px di ponsel adalah sasaran salah tekan.</li>
+        <li><b>Pilihan besar, bukan radio kecil.</b> PW/PD, jenis kelamin, status, golongan darah jadi kartu yang diketuk utuh (min 48px), radio 4px di ponsel adalah sasaran salah tekan.</li>
         <li><b>Input 16px</b> dan <code>inputmode</code> sesuai isi: <code>numeric</code> untuk NIK, <code>tel</code> untuk WA, <code>date</code> untuk tanggal lahir. iOS tidak auto-zoom kalau font 16px ke atas.</li>
         <li><b>Simpan draf otomatis</b> ke <code>localStorage</code> tiap ganti langkah. Koneksi putus di tengah jalan tidak menghapus dua puluh kolom yang sudah diketik.</li>
         <li><b>Foto dipratinjau</b> setelah diambil, dengan tombol "Ulangi". Tanpa pratinjau, kesalahan baru ketahuan setelah submit.</li>
@@ -390,11 +390,11 @@ td.mono{white-space:nowrap; font-size:.8125rem; font-family:ui-monospace,SFMono-
     <section class="block">
       <h2><span class="num">GAP</span> Yang belum ada di kode sekarang</h2>
       <div class="gap">
-        <div class="g"><b>Kamera terkunci</b> <span class="inline-code">components/ParticipantForm.tsx:479</span> — <span class="inline-code">capture="environment"</span> membuat tombol langsung membuka kamera; tidak ada jalan memilih file yang sudah ada.</div>
-        <div class="g"><b>Tidak ada layar pilihan</b> — form langsung tampil penuh; belum ada komponen pemilih cara isi.</div>
-        <div class="g"><b>Tanpa progres</b> — delapan <span class="inline-code">fieldset</span> dirender berurutan (<span class="inline-code">ParticipantForm.tsx:800</span>); tidak ada indikator langkah maupun tombol menempel.</div>
-        <div class="g"><b>Tanpa draf</b> — tidak ada penyimpanan sementara; refresh atau koneksi putus berarti isian hilang.</div>
-        <div class="g"><b>Tanda OCR per field, tanpa ringkasan</b> — peserta harus menggulir mencari field bertanda merah; belum ada satu layar "cek hasil".</div>
+        <div class="g"><b>Kamera terkunci</b> <span class="inline-code">components/ParticipantForm.tsx:479</span>, <span class="inline-code">capture="environment"</span> membuat tombol langsung membuka kamera; tidak ada jalan memilih file yang sudah ada.</div>
+        <div class="g"><b>Tidak ada layar pilihan</b>, form langsung tampil penuh; belum ada komponen pemilih cara isi.</div>
+        <div class="g"><b>Tanpa progres</b>, delapan <span class="inline-code">fieldset</span> dirender berurutan (<span class="inline-code">ParticipantForm.tsx:800</span>); tidak ada indikator langkah maupun tombol menempel.</div>
+        <div class="g"><b>Tanpa draf</b>, tidak ada penyimpanan sementara; refresh atau koneksi putus berarti isian hilang.</div>
+        <div class="g"><b>Tanda OCR per field, tanpa ringkasan</b>, peserta harus menggulir mencari field bertanda merah; belum ada satu layar "cek hasil".</div>
       </div>
     </section>
 
@@ -404,17 +404,17 @@ td.mono{white-space:nowrap; font-size:.8125rem; font-family:ui-monospace,SFMono-
         <table>
           <thead><tr><th>Baru / diubah</th><th>Isi</th><th>Sumber data</th></tr></thead>
           <tbody>
-            <tr><td class="mono">components/EntryChoice.tsx</td><td>Layar 02 — tiga kartu pilihan, meneruskan mode ke form</td><td>statis</td></tr>
-            <tr><td class="mono">components/KtpCapture.tsx</td><td>Layar 03 — kamera layar penuh plus input file galeri, pratinjau, "Ulangi"</td><td>getUserMedia atau input file</td></tr>
-            <tr><td class="mono">components/OcrReview.tsx</td><td>Layar 04 — daftar nilai hasil OCR plus chip status</td><td>POST /api/participants/ocr (sudah ada)</td></tr>
-            <tr><td class="mono">components/StepForm.tsx</td><td>Layar 05 — pembungkus 4 langkah, progres, CTA menempel</td><td>RHF control</td></tr>
-            <tr><td class="mono">components/ParticipantForm.tsx</td><td>Dipecah; isi per langkah dipindah, validasi per langkah ditambah</td><td>—</td></tr>
-            <tr><td class="mono">lib/schema.ts</td><td>participantSchema dipakai per langkah (pick); aturan KTP wajib ditinjau</td><td>—</td></tr>
-            <tr><td class="mono">app/daftar/page.tsx</td><td>Jadi kerangka: render EntryChoice lalu alur</td><td>—</td></tr>
+            <tr><td class="mono">components/EntryChoice.tsx</td><td>Layar 02, tiga kartu pilihan, meneruskan mode ke form</td><td>statis</td></tr>
+            <tr><td class="mono">components/KtpCapture.tsx</td><td>Layar 03, kamera layar penuh plus input file galeri, pratinjau, "Ulangi"</td><td>getUserMedia atau input file</td></tr>
+            <tr><td class="mono">components/OcrReview.tsx</td><td>Layar 04, daftar nilai hasil OCR plus chip status</td><td>POST /api/participants/ocr (sudah ada)</td></tr>
+            <tr><td class="mono">components/StepForm.tsx</td><td>Layar 05, pembungkus 4 langkah, progres, CTA menempel</td><td>RHF control</td></tr>
+            <tr><td class="mono">components/ParticipantForm.tsx</td><td>Dipecah; isi per langkah dipindah, validasi per langkah ditambah</td><td>-</td></tr>
+            <tr><td class="mono">lib/schema.ts</td><td>participantSchema dipakai per langkah (pick); aturan KTP wajib ditinjau</td><td>-</td></tr>
+            <tr><td class="mono">app/daftar/page.tsx</td><td>Jadi kerangka: render EntryChoice lalu alur</td><td>-</td></tr>
           </tbody>
         </table>
       </div>
-      <p style="margin-top:14px;font-size:.875rem;color:var(--muted)">Endpoint <span class="inline-code">POST /api/participants</span> dan <span class="inline-code">/api/participants/ocr</span> tidak perlu berubah — alur baru hanya mengubah cara mengumpulkan nilai sebelum dikirim.</p>
+      <p style="margin-top:14px;font-size:.875rem;color:var(--muted)">Endpoint <span class="inline-code">POST /api/participants</span> dan <span class="inline-code">/api/participants/ocr</span> tidak perlu berubah, alur baru hanya mengubah cara mengumpulkan nilai sebelum dikirim.</p>
     </section>
 
   </div>

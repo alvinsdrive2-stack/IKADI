@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { PROVINCES } from "@/lib/wilayah";
 
-/** GET /api/wilayah/provinsi — 34 item urut kode. Baca DB, fallback ke lib/wilayah.ts. */
+/** GET /api/wilayah/provinsi, 34 item urut kode. Baca DB, fallback ke lib/wilayah.ts. */
 export async function GET() {
   let rows: { code: string; name: string }[];
   try {

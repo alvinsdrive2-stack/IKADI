@@ -4,7 +4,7 @@
  *
  * Pekerjaan berjalan di latar belakang proses (peta di memori) supaya UI bisa
  * menampilkan progres; hasil akhir diambil lewat job id. Proses PM2 tunggal,
- * jadi peta ini cukup — tidak perlu tabel job.
+ * jadi peta ini cukup, tidak perlu tabel job.
  */
 import { zip } from "fflate";
 import { prisma } from "@/lib/prisma";

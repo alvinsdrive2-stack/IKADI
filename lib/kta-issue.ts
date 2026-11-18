@@ -1,5 +1,5 @@
 /**
- * Penerbitan KTA — dipakai route admin (/api/admin/participants/:id/kta)
+ * Penerbitan KTA, dipakai route admin (/api/admin/participants/:id/kta)
  * dan route pengurus supaya aturan penerbitan nomor cuma ada di satu tempat.
  * Cetak tidak dibatasi kuota.
  */
@@ -43,7 +43,7 @@ export type IssueData = {
   memberNumber: string | null;
   issued: boolean;
   fullName: string;
-  /** Level hasil akhir — bisa berubah karena levelCodeOverride saat penerbitan pertama. */
+  /** Level hasil akhir, bisa berubah karena levelCodeOverride saat penerbitan pertama. */
   levelCode: number;
   levelLabel: string;
   /** true kalau levelCodeOverride dikirim tapi diabaikan karena nomor sudah terbit. */
@@ -181,7 +181,7 @@ export async function issueKta(opts: {
   }
 
   // Riwayat cetak: baris hanya dibuat saat nomor pertama kali terbit, jadi cetak
-  // ulang tidak menambah baris. Gagal insert jangan 500 — nomor sudah permanen,
+  // ulang tidak menambah baris. Gagal insert jangan 500, nomor sudah permanen,
   // ini insiden audit saja.
   if (issued) {
     try {

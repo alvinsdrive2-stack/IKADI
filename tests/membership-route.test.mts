@@ -298,7 +298,7 @@ test("KTA: id bukan angka -> 404; peserta tak ada -> 404", async () => {
   assert.equal(res.status, 404);
 });
 
-test("KTA: GET tidak diekspor (cetak hanya POST — kontrak)", async () => {
+test("KTA: GET tidak diekspor (cetak hanya POST, kontrak)", async () => {
   const mod = await import("../app/api/admin/participants/[id]/kta/route.ts");
   assert.equal(typeof (mod as { GET?: unknown }).GET, "undefined");
 });

@@ -45,10 +45,10 @@ const optionalText = (max: number, label: string) =>
 /** Pas foto: base64 dari <input type=file>, opsional, maks 1 MB. Ekstensi divalidasi dari magic bytes server. */
 export const PHOTO_MAX_BYTES = 1024 * 1024;
 
-/** Foto KTP: base64, WAJIB hanya untuk jalur upload (OCR). Jalur manual opsional — tapi kalau diisi tetap divalidasi. Maks 10 MB. */
+/** Foto KTP: base64, WAJIB hanya untuk jalur upload (OCR). Jalur manual opsional, tapi kalau diisi tetap divalidasi. Maks 10 MB. */
 export const KTP_MAX_BYTES = 10 * 1024 * 1024;
 
-/** Validator data URL gambar — dipakai form pendaftaran dan endpoint ganti pas foto. */
+/** Validator data URL gambar, dipakai form pendaftaran dan endpoint ganti pas foto. */
 export const dataUrlImage = (label: string, maxBytes: number, maxLabel: string) =>
   z.preprocess(
     (v) => (typeof v === "string" && v.trim() !== "" ? v : undefined),
@@ -142,7 +142,7 @@ export type ParticipantInput = z.input<typeof participantSchema>;
 export type ParticipantData = z.output<typeof participantSchema>;
 
 /**
- * Body POST /api/participants — participantSchema + pilihan wilayah (kode Kemendagri) + sandi anggota.
+ * Body POST /api/participants, participantSchema + pilihan wilayah (kode Kemendagri) + sandi anggota.
  * Form kirim ini di luar resolver RHF (yang masih pakai participantSchema), jadi skema ini
  * dipakai khusus di route server sebagai validasi boundary.
  */

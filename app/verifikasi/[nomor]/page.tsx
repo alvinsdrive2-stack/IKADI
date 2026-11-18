@@ -8,7 +8,7 @@ import { getMemberCard } from "@/lib/queries";
 import { displayMemberNumber } from "@/lib/member-number";
 
 export const metadata: Metadata = {
-  title: "Verifikasi KTA — IKADI",
+  title: "Verifikasi KTA, IKADI",
 };
 
 // Nomor dibaca dari params di server; tanpa static shell.
@@ -33,7 +33,7 @@ export default async function VerifikasiPage({
   // dikenali, tapi header tidak boleh mengklaim "sah" seolah masih berlaku.
   const aktif = kartu.membershipStatus === "AKTIF";
   const statusLabel = MEMBERSHIP_STATUS_LABELS[kartu.membershipStatus] ?? kartu.membershipStatus;
-  const wilayah = [kartu.provinceName, kartu.regencyName].filter(Boolean).join(" · ") || "—";
+  const wilayah = [kartu.provinceName, kartu.regencyName].filter(Boolean).join(" · ") || "-";
 
   return (
     <main id="main" className="vpage">

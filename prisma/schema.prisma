@@ -36,7 +36,7 @@ enum MembershipStatus {
 }
 
 /// Riwayat kartu/nomor anggota. Satu peserta boleh punya banyak kartu, tapi
-/// hanya satu yang aktif — QR tiap kartu menuju halaman verifikasi yang
+/// hanya satu yang aktif, QR tiap kartu menuju halaman verifikasi yang
 /// menampilkan kartu aktif, dan nomor lama tetap dikenali sebagai milik orang
 /// yang sama.
 ///
@@ -47,7 +47,7 @@ model MemberCard {
   id            BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
   participantId BigInt   @map("participant_id") @db.UnsignedBigInt
   memberNumber  String   @unique(map: "uq_member_cards_number") @map("member_number") @db.VarChar(20)
-  /// Level dan wilayah saat nomor ini terbit — snapshot riwayat, bukan acuan akses.
+  /// Level dan wilayah saat nomor ini terbit, snapshot riwayat, bukan acuan akses.
   levelCode     Int      @map("level_code") @db.TinyInt
   provinceCode  String   @map("province_code") @db.Char(2)
   regencyCode   String   @map("regency_code") @db.Char(2)

@@ -1,6 +1,6 @@
 /**
  * Isi provinceCode/regencyCode peserta lama dari teks yang sudah ada
- * (province + city). Default DRY RUN — tidak menulis apa pun.
+ * (province + city). Default DRY RUN, tidak menulis apa pun.
  *
  *   npx tsx scripts/assign-wilayah.ts            # laporan saja
  *   npx tsx scripts/assign-wilayah.ts --apply    # tulis ke DB
@@ -212,13 +212,13 @@ async function main() {
   console.log("Sebaran target (teratas):");
   for (const [key, n] of [...perRegion.entries()].sort((a, b) => b[1] - a[1]).slice(0, 25)) {
     const prov = key.slice(0, 2);
-    console.log(`  ${prov} ${provinceName.get(prov) ?? "?"} / ${regencyName.get(key) ?? key} — ${n}`);
+    console.log(`  ${prov} ${provinceName.get(prov) ?? "?"} / ${regencyName.get(key) ?? key}, ${n}`);
   }
 
   if (unresolved.length > 0) {
     console.log("\nTidak bisa dipetakan (contoh 30):");
     for (const u of unresolved.slice(0, 30)) {
-      console.log(`  #${u.id} ${u.label} — ${u.reason}`);
+      console.log(`  #${u.id} ${u.label}, ${u.reason}`);
     }
   }
 

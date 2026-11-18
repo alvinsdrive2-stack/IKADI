@@ -2,7 +2,7 @@
  * Nomor anggota IKADI.
  *
  * Tersimpan (DB): `L.WW.DD.YY.NNNNN`
- *   L     = level 1..7 — tetap disimpan supaya hierarki tidak hilang,
+ *   L     = level 1..7, tetap disimpan supaya hierarki tidak hilang,
  *           tapi TIDAK ikut dicetak/ditampilkan.
  *   WW    = kode provinsi (2 digit)
  *   DD    = kode kabupaten/kota (2 digit)
@@ -18,7 +18,7 @@
  */
 
 /**
- * Label jenjang 1..7 — dipakai di kartu, profil, dan daftar.
+ * Label jenjang 1..7, dipakai di kartu, profil, dan daftar.
  * Level 1..5 memang jenjang kepengurusan, jadi labelnya "Pengurus ...";
  * 6 anggota biasa, 7 purnabakti/mantan pengurus.
  */
@@ -43,7 +43,7 @@ export const SERIAL_FLOOR = 100;
 /** Batas atas serial 5 digit. */
 export const SERIAL_MAX = 99999;
 
-/** Serial yang dianggap "cantik" — hanya admin yang boleh memberikannya. */
+/** Serial yang dianggap "cantik", hanya admin yang boleh memberikannya. */
 export function isPrettySerial(serial: number): boolean {
   if (serial < SERIAL_FLOOR) return true;
   const s = pad(serial, 5);

@@ -25,7 +25,7 @@ export function logRouteError(scope: string, err: unknown): void {
   });
 }
 
-/** UNIQUE constraint violation. Dicek lewat `code`, bukan `instanceof` — tahan bundler. */
+/** UNIQUE constraint violation. Dicek lewat `code`, bukan `instanceof`, tahan bundler. */
 export function isUniqueViolation(err: unknown): boolean {
   return (
     typeof err === "object" &&

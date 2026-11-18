@@ -5,7 +5,7 @@ import { jsonError } from "@/lib/http";
 
 /**
  * POST /api/admin/participants/:id/kta
- * Body opsional `{ levelCode?: number }` (1..7) — diteruskan sebagai override
+ * Body opsional `{ levelCode?: number }` (1..7), diteruskan sebagai override
  * level saat penerbitan nomor pertama. Tanpa body, perilaku sama seperti dulu.
  */
 export async function POST(
@@ -26,7 +26,7 @@ export async function POST(
   try {
     bodyText = await request.text();
   } catch {
-    // Tanpa body sama sekali — jalankan default.
+    // Tanpa body sama sekali, jalankan default.
   }
   if (bodyText.trim()) {
     let parsed: unknown;

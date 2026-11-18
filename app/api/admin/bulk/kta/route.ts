@@ -8,7 +8,7 @@ import { BULK_MAX, publicJob, startBulkJob } from "@/lib/kta-bulk";
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
- * POST /api/admin/bulk/kta — mulai ekspor massal.
+ * POST /api/admin/bulk/kta, mulai ekspor massal.
  * Body: `{ kind: "pdf" | "jpg", ids?: string[], all?: boolean, q?, education?, dateFrom?, dateTo?, sort? }`
  * `all` memakai filter tabel yang aktif, bukan hanya halaman yang tampil.
  */

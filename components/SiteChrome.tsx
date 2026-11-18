@@ -21,7 +21,7 @@ export function SiteHeader({ className = "" }: { className?: string }) {
   return (
     <header className={`sticky top-0 z-40 border-b border-border/80 bg-white/90 backdrop-blur-md ${className}`}>
       <div className="mx-auto flex h-20 max-w-[90rem] items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
-        <Link href="/" aria-label="IKADI — beranda" className="inline-flex items-center">
+        <Link href="/" aria-label="IKADI, beranda" className="inline-flex items-center">
           <LogoMark priority size={120} />
         </Link>
 

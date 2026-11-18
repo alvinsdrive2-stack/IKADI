@@ -93,7 +93,7 @@ function AdminData({
   });
 
   // Pilihan centang tabel disimpan bersama query asalnya: begitu filter atau
-  // halaman berubah, query tidak cocok lagi dan pilihan otomatis kosong —
+  // halaman berubah, query tidak cocok lagi dan pilihan otomatis kosong -
   // tanpa effect yang memicu render berantai.
   const [selection, setSelection] = useState<{ qs: string; ids: string[] }>({ qs: query, ids: [] });
   const selected = selection.qs === query ? selection.ids : [];
@@ -187,7 +187,7 @@ function AdminData({
             <div key={s.label} className="border-b border-border px-5 py-4 sm:border-b-0">
               <dt className="text-xs text-ink-muted">{s.label}</dt>
               <dd className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-ink">
-                {loading || s.value === undefined ? "—" : s.value.toLocaleString("id-ID")}
+                {loading || s.value === undefined ? "-" : s.value.toLocaleString("id-ID")}
               </dd>
             </div>
           ))}
@@ -241,7 +241,7 @@ function AdminData({
             </h2>
             {!isDashboard && (
               <p className="text-sm tabular-nums text-ink-muted">
-                {list ? `${list.total.toLocaleString("id-ID")} peserta` : "—"}
+                {list ? `${list.total.toLocaleString("id-ID")} peserta` : "-"}
               </p>
             )}
           </div>
@@ -413,7 +413,7 @@ function DashboardAside({ list, stats, loading, basePath }: { list: ListResponse
       <section className="rounded-xl border border-border bg-white p-4">
         <h2 className="text-sm font-semibold text-ink">KTA terbit</h2>
         <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-ink">
-          {totalTerbit === undefined ? "—" : totalTerbit.toLocaleString("id-ID")}
+          {totalTerbit === undefined ? "-" : totalTerbit.toLocaleString("id-ID")}
         </p>
         <p className="mt-2 text-xs leading-relaxed text-ink-muted">
           Total nomor anggota yang sudah diterbitkan. Cetak ulang tidak menambah hitungan ini.

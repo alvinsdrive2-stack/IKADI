@@ -23,7 +23,7 @@ const SELECT = {
 } as const;
 
 /**
- * GET /api/anggota/pengurus/anggota/[id] — detail peserta dalam cakupan.
+ * GET /api/anggota/pengurus/anggota/[id], detail peserta dalam cakupan.
  * Luar cakupan = 404 yang sama dengan "tidak ada" (tidak membocorkan keberadaan).
  */
 export async function GET(

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AdminParticipants, AdminSkeleton } from "@/components/AdminParticipants";
 
-export const metadata: Metadata = { title: "Anggota Wilayah — IKADI" };
+export const metadata: Metadata = { title: "Anggota Wilayah, IKADI" };
 
 export default function PengurusAnggotaPage() {
   return (

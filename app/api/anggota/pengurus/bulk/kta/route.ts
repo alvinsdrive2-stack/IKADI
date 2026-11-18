@@ -9,7 +9,7 @@ import { BULK_MAX, publicJob, startBulkJob } from "@/lib/kta-bulk";
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
- * POST /api/anggota/pengurus/bulk/kta — ekspor massal untuk wilayah pengurus.
+ * POST /api/anggota/pengurus/bulk/kta, ekspor massal untuk wilayah pengurus.
  * `scopeWhere` selalu dikirim, dan id manual disaring ulang ke cakupan itu.
  */
 export async function POST(request: Request) {

@@ -21,7 +21,7 @@ async function main() {
     });
   }
 
-  // Regencies butuh FK ke provinces — sudah di-seed di atas.
+  // Regencies butuh FK ke provinces, sudah di-seed di atas.
   for (const r of REGENCIES) {
     await prisma.regency.upsert({
       where: { provinceCode_code: { provinceCode: r.provinceCode, code: r.code } },

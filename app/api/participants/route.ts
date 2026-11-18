@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     );
   }
 
-  // consent cuma validasi UI — bukan kolom di tabel participants.
+  // consent cuma validasi UI, bukan kolom di tabel participants.
   // photo/ktp diproses terpisah; password jadi passwordHash.
   const { photo, ktp, gender, consent: _consent, password, provinceCode, regencyCode, ...rest } = d;
   const passwordHash = await hashPassword(password);

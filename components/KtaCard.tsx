@@ -77,7 +77,7 @@ export function KtaCard({
 
   const levelOptions = (allowedLevels ?? []).map((l) => ({
     value: String(l),
-    label: `${l} — ${LEVEL_LABELS[l] ?? l}`,
+    label: `${l}, ${LEVEL_LABELS[l] ?? l}`,
   }));
 
   if (state.kind === "unauthorized") return <SessionExpired />;

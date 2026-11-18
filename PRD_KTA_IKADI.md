@@ -1,6 +1,6 @@
 # Product Requirements Document (PRD)
 
-## Pendataan KTA IKADI — MVP Tahap 1
+## Pendataan KTA IKADI, MVP Tahap 1
 
 **Versi:** 1.0  
 **Status:** Draft pengembangan  

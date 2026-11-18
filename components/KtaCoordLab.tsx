@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Lab koordinat kartu KTA — global, tidak terikat peserta.
+ * Lab koordinat kartu KTA, global, tidak terikat peserta.
  * Menaruh slot (pas foto, nomor, nama, level, TTD Sekjen, TTD Ketum) di atas
  * artwork asli, lalu menyalin hasilnya sebagai JSON persen yang dibakar ke
  * komponen kartu final. Tidak memanggil API: data contoh statis, jadi tidak
@@ -184,7 +184,7 @@ export function KtaCoordLab() {
         <h1 className="mt-3 text-2xl font-bold tracking-tight text-ink sm:text-3xl">Lab koordinat kartu</h1>
         <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-ink-muted">
           Geser slot langsung di kartu atau pakai input angka. X/Y persen dari artwork, lebar &amp; ukuran font dalam
-          persen lebar kartu. Hasilnya disalin sebagai JSON untuk dibakar ke komponen kartu final — satu set
+          persen lebar kartu. Hasilnya disalin sebagai JSON untuk dibakar ke komponen kartu final, satu set
           koordinat untuk semua anggota.
         </p>
       </div>
@@ -228,7 +228,7 @@ export function KtaCoordLab() {
                   key={key}
                   role="button"
                   tabIndex={0}
-                  aria-label={`Geser ${SLOT_LABEL[key]} — X ${b.x} persen, Y ${b.y} persen`}
+                  aria-label={`Geser ${SLOT_LABEL[key]}, X ${b.x} persen, Y ${b.y} persen`}
                   onPointerDown={(e) => onPointerDown(e, key)}
                   onPointerMove={onPointerMove}
                   onPointerUp={onPointerUp}

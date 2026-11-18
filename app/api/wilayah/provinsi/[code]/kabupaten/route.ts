@@ -3,7 +3,7 @@ import { REGENCIES } from "@/lib/wilayah";
 import { jsonError } from "@/lib/http";
 
 /**
- * GET /api/wilayah/provinsi/:code/kabupaten — urut kode.
+ * GET /api/wilayah/provinsi/:code/kabupaten, urut kode.
  * 404 kalau kode provinsi tidak ada di master.
  */
 export async function GET(

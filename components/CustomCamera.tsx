@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /**
- * Custom camera KTP — getUserMedia + crop frame 1.586:1, canvas capture.
+ * Custom camera KTP, getUserMedia + crop frame 1.586:1, canvas capture.
  * Fallback: pilih dari galeri kalau getUserMedia ditolak / tidak tersedia / desktop.
  * File hasil: JPEG File yang siap masuk pipeline onKtpChange (OCR + validasi).
  */
@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 type Facing = "environment" | "user";
 type Phase = "starting" | "live" | "error";
 
-// `torch` belum ada di lib.dom untuk semua target TS — dibaca lewat cast terisolasi di sini.
+// `torch` belum ada di lib.dom untuk semua target TS, dibaca lewat cast terisolasi di sini.
 type TorchCapabilities = MediaTrackCapabilities & { torch?: boolean };
 type TorchConstraint = MediaTrackConstraintSet & { torch?: boolean };
 
@@ -91,7 +91,7 @@ export function CustomCamera({
   const retry = () => setRetryKey((k) => k + 1);
 
   // Siklus hidup stream. Re-run saat facing berubah, saat foto diulang, dan saat
-  // masuk/keluar pratinjau — kamera dimatikan selama pratinjau untuk hemat baterai.
+  // masuk/keluar pratinjau, kamera dimatikan selama pratinjau untuk hemat baterai.
   useEffect(() => {
     if (mode !== "foto" || previewUrl) return;
 
@@ -319,7 +319,7 @@ export function CustomCamera({
           </div>
         )}
 
-        {/* Bingkai KTP — tepi bingkai = area yang dipotong saat memotret */}
+        {/* Bingkai KTP, tepi bingkai = area yang dipotong saat memotret */}
         {!previewUrl && phase !== "error" && (
           <>
             <div aria-hidden className="absolute inset-0 border border-white/25" />

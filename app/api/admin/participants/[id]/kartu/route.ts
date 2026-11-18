@@ -2,7 +2,7 @@ import { requireAdmin } from "@/lib/auth";
 import { createMemberCard, readMemberCards } from "@/lib/member-cards-route";
 import { jsonError } from "@/lib/http";
 
-/** GET /api/admin/participants/:id/kartu — riwayat kartu + nomor aktif. */
+/** GET /api/admin/participants/:id/kartu, riwayat kartu + nomor aktif. */
 export async function GET(_request: Request, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin();
   if (!auth.ok) return auth.response;
@@ -10,7 +10,7 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
 }
 
 /**
- * POST /api/admin/participants/:id/kartu — terbitkan kartu baru.
+ * POST /api/admin/participants/:id/kartu, terbitkan kartu baru.
  * Body opsional `{ memberNumber }` untuk nomor manual; tanpa body nomor
  * diterbitkan otomatis dari sequence.
  */

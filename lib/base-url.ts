@@ -1,7 +1,7 @@
 /**
  * Base URL publik untuk tautan verifikasi QR.
  *
- * Sumbernya env `PUBLIC_BASE_URL` saja — bukan host request. Aplikasi jalan
+ * Sumbernya env `PUBLIC_BASE_URL` saja, bukan host request. Aplikasi jalan
  * di belakang Nginx/PM2, jadi `request.url` bisa berisi 127.0.0.1 dan QR
  * hasilnya menunjuk localhost.
  *

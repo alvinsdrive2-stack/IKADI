@@ -18,7 +18,7 @@ import { LogoMark } from "@/components/Logo";
 
 type Phase = "star-intro" | "star-open" | "star-close" | "map" | "dissolve";
 
-/** Titik wilayah — koordinat di dalam viewBox peta 1000 × 450. */
+/** Titik wilayah, koordinat di dalam viewBox peta 1000 × 450. */
 const PINS: { id: string; x: number; y: number; scale: number }[] = [
   { id: "medan", x: 135, y: 152, scale: 0.88 },
   { id: "palembang", x: 225, y: 262, scale: 0.94 },

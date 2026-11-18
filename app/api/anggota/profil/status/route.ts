@@ -4,7 +4,7 @@ import { jsonError } from "@/lib/http";
 import { logRouteError } from "@/lib/route-log";
 
 /**
- * GET /api/anggota/profil/status — dipakai gate di area anggota untuk tahu
+ * GET /api/anggota/profil/status, dipakai gate di area anggota untuk tahu
  * apakah peserta hasil impor masih wajib melengkapi profil.
  */
 export async function GET() {

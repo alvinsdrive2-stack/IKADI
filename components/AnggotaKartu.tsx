@@ -87,7 +87,7 @@ function readAsDataUrl(file: File): Promise<string> {
 
 /**
  * Unggah / ganti pas foto. Muncul sebagai ajakan saat foto belum ada, dan
- * sebagai tombol "Ganti foto" saat sudah ada — supaya anggota bisa
+ * sebagai tombol "Ganti foto" saat sudah ada, supaya anggota bisa
  * memperbaiki foto yang terpotong tanpa menghubungi admin.
  */
 function PhotoUploader({
@@ -205,7 +205,7 @@ export function AnggotaKartu() {
   const router = useRouter();
   const [state, setState] = useState<State>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
-  /** Foto hasil unggahan terbaru — dipakai langsung tanpa menunggu refetch. */
+  /** Foto hasil unggahan terbaru, dipakai langsung tanpa menunggu refetch. */
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const [photoVersion, setPhotoVersion] = useState(0);
 
@@ -278,7 +278,7 @@ export function AnggotaKartu() {
     path && photoVersion > 0 ? `${path}${path.includes("?") ? "&" : "?"}v=${photoVersion}` : path;
 
   const placeholder = {
-    memberNumber: "—",
+    memberNumber: "-",
     fullName: p.fullName,
     levelLabel: p.levelLabel,
     provinceName: p.province,
@@ -334,7 +334,7 @@ export function AnggotaKartu() {
   }
 
   const data = {
-    memberNumber: p.memberNumber ?? "—",
+    memberNumber: p.memberNumber ?? "-",
     fullName: p.fullName,
     levelLabel: p.levelLabel,
     provinceName: p.province,

@@ -5,7 +5,7 @@ import path from "node:path";
 export const PHOTO_DIR = path.join(process.cwd(), "public", "uploads", "participants");
 
 /**
- * Foto KTP menyimpan NIK & alamat — tidak boleh di `public/`.
+ * Foto KTP menyimpan NIK & alamat, tidak boleh di `public/`.
  * Hanya di-serve lewat route admin yang butuh session.
  */
 export const KTP_DIR = path.join(process.cwd(), "storage", "ktp");
@@ -16,7 +16,7 @@ const EXT_BY_MAGIC: { magic: number[]; ext: string }[] = [
   { magic: [0x52, 0x49, 0x46, 0x46], ext: "webp" }, // RIFF (WebP)
 ];
 
-/** Ekstensi dari magic bytes — nama file dari user tidak pernah dipercaya. */
+/** Ekstensi dari magic bytes, nama file dari user tidak pernah dipercaya. */
 export function detectImageExt(buf: Buffer): string | null {
   for (const { magic, ext } of EXT_BY_MAGIC) {
     if (magic.every((b, i) => buf[i] === b)) return ext;
@@ -27,7 +27,7 @@ export function detectImageExt(buf: Buffer): string | null {
 /**
  * Simpan pas foto sebagai `public/uploads/participants/<id>.<ext>`.
  * `photo` boleh data URL penuh ("data:image/png;base64,...") atau base64 mentah.
- * Id dipakai sebagai nama file — mencegah traversal & tabrakan antar peserta.
+ * Id dipakai sebagai nama file, mencegah traversal & tabrakan antar peserta.
  * Mengembalikan path relatif yang disimpan ke kolom `photo_path`.
  */
 export async function saveParticipantPhoto(photo: string, participantId: string): Promise<string> {

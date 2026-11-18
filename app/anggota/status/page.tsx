@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { AnggotaHome } from "@/components/AnggotaHome";
 
-export const metadata: Metadata = { title: "Status Pengajuan — IKADI" };
+export const metadata: Metadata = { title: "Status Pengajuan, IKADI" };
 
 export default function AnggotaStatusPage() {
   return (

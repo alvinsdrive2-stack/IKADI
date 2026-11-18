@@ -3,7 +3,7 @@ import { inScope } from "@/lib/pengurus";
 import { activateCard, memberCardOwnerScope } from "@/lib/member-cards-route";
 import { jsonError } from "@/lib/http";
 
-/** POST /api/anggota/pengurus/anggota/:id/kartu/aktifkan — body `{ cardId }`. */
+/** POST /api/anggota/pengurus/anggota/:id/kartu/aktifkan, body `{ cardId }`. */
 export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requirePengurus();
   if (!auth.ok) return auth.response;

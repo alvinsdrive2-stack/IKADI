@@ -6,7 +6,7 @@ import { logRouteError } from "@/lib/route-log";
 import { dataUrlImage, PHOTO_MAX_BYTES } from "@/lib/schema";
 
 /**
- * POST /api/anggota/foto — anggota mengganti pas foto miliknya sendiri.
+ * POST /api/anggota/foto, anggota mengganti pas foto miliknya sendiri.
  * Dipakai untuk dua kasus: pas foto belum ada, atau foto lama terpotong
  * saat dicetak di kartu.
  *

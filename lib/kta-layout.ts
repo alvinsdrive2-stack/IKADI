@@ -1,5 +1,5 @@
 /**
- * Koordinat slot kartu KTA — satu sumber kebenaran.
+ * Koordinat slot kartu KTA, satu sumber kebenaran.
  * Dipakai lab koordinat (`components/KtaCoordLab.tsx`) dan kartu final
  * (`components/KtaCardView.tsx`) supaya preview == hasil cetak.
  *
@@ -75,7 +75,7 @@ export const KTA_LAYOUT: KtaLayout = {
  * Style posisi + lebar untuk WRAPPER slot.
  * `width` memakai `em`, dan em di sini dibaca dari font-size warisan
  * (`.kta-card { font-size: 85.6mm }` / container preview), BUKAN font-size
- * slot itu sendiri. Karena itu wrapper tidak boleh diberi `font-size` —
+ * slot itu sendiri. Karena itu wrapper tidak boleh diberi `font-size` -
  * ukuran teks selalu di elemen anak (`fontStyle`).
  */
 export function boxStyle(b: KtaBox): { left: string; top: string; width: string; transform?: string } {
@@ -87,7 +87,7 @@ export function boxStyle(b: KtaBox): { left: string; top: string; width: string;
   };
 }
 
-/** Ukuran font slot — dipasang di elemen ANAK, bukan wrapper. 0 = tanpa teks. */
+/** Ukuran font slot, dipasang di elemen ANAK, bukan wrapper. 0 = tanpa teks. */
 export function fontStyle(b: KtaBox, scale = 1): { fontSize: string } {
   return { fontSize: `${(b.size / 100) * scale}em` };
 }

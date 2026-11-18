@@ -1,5 +1,5 @@
 /**
- * Validasi masukan bersama untuk endpoint ekspor/penerbitan massal —
+ * Validasi masukan bersama untuk endpoint ekspor/penerbitan massal -
  * dipakai area admin dan area pengurus supaya aturan id sama.
  */
 import { listParticipantIds } from "@/lib/queries";

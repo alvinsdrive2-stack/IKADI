@@ -1,14 +1,14 @@
 import type { Prisma } from "@prisma/client";
 
 /**
- * Aturan peran pengurus — satu sumber untuk area /admin dan /anggota.
+ * Aturan peran pengurus, satu sumber untuk area /admin dan /anggota.
  *
  * Peran TIDAK ditentukan `levelCode` (level cuma jenis kepengurusan, banyak
  * anggota level 6). Yang memberi akses menu pengurus adalah `isPengurus`.
  * Level 1..3 menentukan cakupan wilayah dan siapa yang boleh diangkat.
  */
 
-/** Id yang tidak pernah ada — filter "tidak boleh lihat apa pun". */
+/** Id yang tidak pernah ada, filter "tidak boleh lihat apa pun". */
 const NO_MATCH_ID = BigInt(-1);
 
 export const PENGURUS_MIN_LEVEL = 1;
@@ -121,7 +121,7 @@ export function canManage(actor: Actor, target: Target): Decision {
 
 /**
  * Alasan peserta tidak bisa dilantik, atau null kalau bisa.
- * Nomor anggota yang sudah terbit mengunci level — pelantikan tidak akan
+ * Nomor anggota yang sudah terbit mengunci level, pelantikan tidak akan
  * memunculkan menu pengurus, jadi lebih baik ditolak dengan jelas.
  */
 export function appointBlocker(target: {

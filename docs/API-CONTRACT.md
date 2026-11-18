@@ -1,4 +1,4 @@
-# Kontrak API — Sistem Keanggotaan IKADI
+# Kontrak API, Sistem Keanggotaan IKADI
 
 Dokumen ini **mengikat**. Backend mengimplementasikan persis bentuk di bawah; frontend
 memanggil persis bentuk di bawah. Kalau salah satu pihak butuh ubah kontrak, ubah file ini
@@ -22,7 +22,7 @@ Body: `{ "nik": "16 digit", "password": "..." }`
 - `200`: `{ ok: true, data: { fullName, memberNumber: string | null, levelCode, originType, originName } }`
   Set cookie sesi `ikadi_anggota` (httpOnly, 30 hari).
 - `400 VALIDATION`: NIK bukan 16 digit / password kosong.
-- `401 UNAUTHORIZED`: `message: "NIK atau sandi salah."` — **pesan sama** untuk NIK tidak ada
+- `401 UNAUTHORIZED`: `message: "NIK atau sandi salah."`, **pesan sama** untuk NIK tidak ada
   maupun sandi salah.
 - `429 RATE_LIMIT`: 5 percobaan / 10 menit per IP.
 
@@ -45,7 +45,7 @@ type AnggotaProfile = {
   membershipStatus: "AKTIF" | "NONAKTIF" | "PURNABAKTI";
   province: string | null;        // nama wilayah (hasil join), bukan kode
   city: string | null;            // nama kabupaten/kota
-  memberNumber: string | null;    // "6.16.01.26.0001" — null = belum terbit
+  memberNumber: string | null;    // "6.16.01.26.0001", null = belum terbit
   memberNumberIssuedAt: string | null; // ISO
   memberSince: string;            // ISO, created_at
   photoPath: string | null;       // path relatif, prepend "/" untuk src
@@ -64,7 +64,7 @@ Catatan: `AnggotaProfile` **tidak memuat** alamat, nomor WhatsApp, path KTP, ata
 
 ### `GET /api/wilayah/provinsi`
 Publik, cache-able.
-- `200`: `{ ok: true, data: [{ code: "16", name: "Sumatera Selatan" }, ...] }` — 34 item urut kode.
+- `200`: `{ ok: true, data: [{ code: "16", name: "Sumatera Selatan" }, ...] }`, 34 item urut kode.
 
 ### `GET /api/wilayah/provinsi/:code/kabupaten`
 - `200`: `{ ok: true, data: [{ code: "01", name: "Ogan Komering Ulu" }, ...] }` urut `code`.
@@ -72,7 +72,7 @@ Publik, cache-able.
 
 ---
 
-## C. Admin — kelola keanggotaan
+## C. Admin, kelola keanggotaan
 
 Semua butuh sesi admin (`ikadi_admin`). `401 UNAUTHORIZED` kalau tidak.
 
@@ -106,7 +106,7 @@ Body (semua opsional, kirim yang berubah saja):
   provinceCode?: string | null;   // 2 digit
   regencyCode?: string | null;    // 2 digit
   membershipStatus?: "AKTIF" | "NONAKTIF" | "PURNABAKTI";
-  newPassword?: string;           // min 8 karakter — reset sandi anggota
+  newPassword?: string;           // min 8 karakter, reset sandi anggota
 }
 ```
 - `200`: `{ ok: true, data: MembershipAdmin }` (bentuk sama dengan GET)
@@ -192,8 +192,8 @@ Nomor tidak ada / format salah → tampil "Kartu tidak dikenali", **status HTTP 
 
 ## F. Yang sudah tersedia untuk frontend
 
-- `lib/wilayah.ts` — `PROVINCES` (34) + `REGENCIES` (514), tipe `ProvinceRow`/`RegencyRow`.
+- `lib/wilayah.ts`, `PROVINCES` (34) + `REGENCIES` (514), tipe `ProvinceRow`/`RegencyRow`.
   Frontend **boleh** impor langsung untuk dropdown, tapi server tetap validasi.
 - Pola UI yang ada: `components/AdminNav.tsx` (`SessionExpired`), `components/ui/*`,
   token warna di `app/globals.css` `@theme`. Ikuti, jangan bikin sistem baru.
-- `docs/DESIGN.md` — token warna, komponen, target WCAG 2.2 AA.
+- `docs/DESIGN.md`, token warna, komponen, target WCAG 2.2 AA.

@@ -26,7 +26,7 @@ assert.equal(isValidLevel(0), false);
 assert.equal(isValidLevel(8), false);
 assert.equal(isValidLevel(6.5), false);
 
-// issueMemberNumber: mock tx client — simulasi increment serial 0001, 0002, dst.
+// issueMemberNumber: mock tx client, simulasi increment serial 0001, 0002, dst.
 function makeMockTx() {
   const store = new Map<string, number>();
   return {

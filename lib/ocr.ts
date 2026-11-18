@@ -1,4 +1,4 @@
-/** Client OCR KTP — panggil microservice Python (ocr-service/). */
+/** Client OCR KTP, panggil microservice Python (ocr-service/). */
 
 export type OcrField = { value: string | null; confidence: number };
 
@@ -11,7 +11,7 @@ export type OcrResult = {
 };
 
 /**
- * Deteksi via `.name`, bukan `instanceof` — modul ini di-load lewat
+ * Deteksi via `.name`, bukan `instanceof`, modul ini di-load lewat
  * `--experimental-transform-types` (QA mock loader) sehingga kelas Error
  * bisa berasal dari realm/module instance berbeda.
  */
@@ -37,7 +37,7 @@ export async function extractKtp(buf: Buffer, filename = "ktp.jpg"): Promise<Ocr
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (err) {
-    // Timeout/fetch gagal — log penyebabnya biar 503 di client gak jadi misteri.
+    // Timeout/fetch gagal, log penyebabnya biar 503 di client gak jadi misteri.
     console.error("[ocr] fetch ke service gagal:", err);
     throw new OcrUnavailableError("OCR service tidak terjangkau");
   }

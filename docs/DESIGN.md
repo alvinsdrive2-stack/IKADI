@@ -1,4 +1,4 @@
-# DESIGN.md — Pendataan KTA IKADI
+# DESIGN.md, Pendataan KTA IKADI
 
 Sumber kebenaran token desain. Mockup: `docs/mockup/*.html` (referensi statis, bukan kode produksi). Target aksesibilitas **WCAG 2.2 AA**.
 
@@ -6,9 +6,9 @@ Sumber kebenaran token desain. Mockup: `docs/mockup/*.html` (referensi statis, b
 
 ## 0. Siapa penggunanya
 
-**Peserta** — ustaz/ustazah mubaligh yang mendaftar pelatihan KTA/Dai. Banyak yang membuka lewat ponsel, sebagian tidak terbiasa formulir web, sering mengisi sambil memegang KTP (menyalin NIK 16 digit). Yang mereka butuh: tidak ada kejutan, tidak ada data hilang, tombol besar, label jelas. Hindari istilah teknis ("field", "input", "submit") di UI.
+**Peserta**, ustaz/ustazah mubaligh yang mendaftar pelatihan KTA/Dai. Banyak yang membuka lewat ponsel, sebagian tidak terbiasa formulir web, sering mengisi sambil memegang KTP (menyalin NIK 16 digit). Yang mereka butuh: tidak ada kejutan, tidak ada data hilang, tombol besar, label jelas. Hindari istilah teknis ("field", "input", "submit") di UI.
 
-**Admin** — 1–3 pengurus IKADI. Kerja di laptop, memeriksa data bertahap, butuh cari cepat, menyalin nomor WA, melihat detail satu klik.
+**Admin**, 1–3 pengurus IKADI. Kerja di laptop, memeriksa data bertahap, butuh cari cepat, menyalin nomor WA, melihat detail satu klik.
 
 ---
 
@@ -30,7 +30,7 @@ Sumber kebenaran token desain. Mockup: `docs/mockup/*.html` (referensi statis, b
   --color-ink:            #1F2937;
   --color-ink-muted:      #4B5563; /* 8.6:1 di putih */
   --color-border:         #D1D5DB; /* garis pemisah dekoratif saja */
-  --color-control-border: #6B7280; /* border input/radio/checkbox, 4.6:1 — WCAG 1.4.11 */
+  --color-control-border: #6B7280; /* border input/radio/checkbox, 4.6:1, WCAG 1.4.11 */
   --color-danger:         #B91C1C;
   --color-danger-soft:    #FEF2F2;
   --color-danger-border:  #FCA5A5;
@@ -62,7 +62,7 @@ Sumber kebenaran token desain. Mockup: `docs/mockup/*.html` (referensi statis, b
 | Caption | `text-xs font-semibold` | 12/1.4 | Hanya badge; teks terpanjang di UI tidak boleh 12px |
 | Mono | `font-mono text-sm tabular-nums tracking-wide` | 14 | NIK, tanggal, WA |
 
-Semua input `text-base` (16px) — input <16px memicu zoom otomatis iOS saat fokus.
+Semua input `text-base` (16px), input <16px memicu zoom otomatis iOS saat fokus.
 
 ### 1.3 Spacing & layout
 
@@ -146,7 +146,7 @@ Basis: `inline-flex items-center justify-center gap-2 rounded-md font-semibold t
 | secondary | `bg-white text-primary border border-primary hover:bg-bg` | Reset, Batal |
 | ghost | `text-ink-muted hover:text-primary hover:bg-bg` | link kecil, tombol ikon |
 
-- Kecil (di tabel): tambah `h-9 px-3 text-sm` — hanya di area admin desktop, `min-h-11` tetap di mobile.
+- Kecil (di tabel): tambah `h-9 px-3 text-sm`, hanya di area admin desktop, `min-h-11` tetap di mobile.
 - Loading: `disabled` + `aria-busy="true"`, spinner `size-4 animate-spin`, label berubah ("Mengirim…"/"Memproses…"), `min-w-40` agar lebar tidak melompat. Label lama hilang, bukan ditumpuk.
 - Ponsel: `w-full sm:w-auto`.
 
@@ -169,7 +169,7 @@ Basis: `inline-flex items-center justify-center gap-2 rounded-md font-semibold t
 ```
 
 - Normal: `border-control-border bg-white hover:border-ink-muted focus:border-primary`.
-- Error: `border-danger bg-danger-soft/40` — border tetap ada, layout tidak bergeser.
+- Error: `border-danger bg-danger-soft/40`, border tetap ada, layout tidak bergeser.
 - `aria-describedby` merujuk hint **dan** error sekaligus; elemen error baru dirender saat ada error.
 - Nilai yang sudah diketik tidak boleh hilang saat submit gagal.
 - Bintang wajib selalu disertai kalimat di atas form: "Kolom bertanda `*` wajib diisi."
@@ -225,7 +225,7 @@ Header kartu: `flex flex-wrap items-center justify-between gap-3 border-b border
 
 ### 3.9 Table
 
-- Wrapper `overflow-x-auto rounded-lg border border-border bg-surface`, `role="region" aria-label="Tabel data peserta" tabindex="0"` — region fokus agar bisa digulir dengan keyboard (2.1.1).
+- Wrapper `overflow-x-auto rounded-lg border border-border bg-surface`, `role="region" aria-label="Tabel data peserta" tabindex="0"`, region fokus agar bisa digulir dengan keyboard (2.1.1).
 - `<table class="w-full min-w-[1000px] text-left text-sm">`
 - `<thead class="bg-gray-50">` `<th scope="col" class="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">`
 - `<tr class="border-t border-border hover:bg-bg/60">`, `<td class="px-4 py-3">`
@@ -260,7 +260,7 @@ Nonaktif = `<span aria-disabled="true" aria-label="Halaman sebelumnya, tidak ter
 
 ### 3.13 StatCard
 
-`Card p-5`; label `text-sm text-ink-muted`; angka `text-3xl font-bold tabular-nums text-ink`. Grid `grid-cols-2 lg:grid-cols-4 gap-4`. Nilai 0 tetap tampil "0", bukan "—".
+`Card p-5`; label `text-sm text-ink-muted`; angka `text-3xl font-bold tabular-nums text-ink`. Grid `grid-cols-2 lg:grid-cols-4 gap-4`. Nilai 0 tetap tampil "0", bukan "-".
 
 ### 3.14 ErrorSummary
 
@@ -277,12 +277,12 @@ Footer: kontak pengelola (placeholder) + "Data NIK Anda tidak ditampilkan kepada
 
 ### 4.2 `/daftar`
 Kelompok (fieldset + legend):
-1. **Identitas** — Asal IKADI, Nama PW/PD IKADI, Nama Lengkap & Gelar, NIK
-2. **Data Pribadi** — Tempat Lahir, Tanggal Lahir, Alamat, No. WhatsApp
-3. **Latar Belakang** — Pendidikan Terakhir, Pekerjaan, Bidang Keahlian
-4. **Pengalaman** — Pengalaman Khutbah, Organisasi (jabatan), Kemampuan Al-Qur'an
-5. **Motivasi** — Alasan Mengikuti Pelatihan, Harapan Setelah Pelatihan
-6. **Persetujuan** — checkbox privasi
+1. **Identitas**, Asal IKADI, Nama PW/PD IKADI, Nama Lengkap & Gelar, NIK
+2. **Data Pribadi**, Tempat Lahir, Tanggal Lahir, Alamat, No. WhatsApp
+3. **Latar Belakang**, Pendidikan Terakhir, Pekerjaan, Bidang Keahlian
+4. **Pengalaman**, Pengalaman Khutbah, Organisasi (jabatan), Kemampuan Al-Qur'an
+5. **Motivasi**, Alasan Mengikuti Pelatihan, Harapan Setelah Pelatihan
+6. **Persetujuan**, checkbox privasi
 
 | State | Tampilan |
 |---|---|
@@ -294,7 +294,7 @@ Kelompok (fieldset + legend):
 | sukses | redirect `/daftar/sukses` (bukan modal) |
 | jaringan gagal | Alert error; semua isian tetap |
 
-Validasi saat submit, lalu re-validasi field yang sudah error saat diubah. Jangan validasi saat menaip di field bersih (mengganggu pengguna lambat — pola GOV.UK).
+Validasi saat submit, lalu re-validasi field yang sudah error saat diubah. Jangan validasi saat menaip di field bersih (mengganggu pengguna lambat, pola GOV.UK).
 
 ### 4.3 `/daftar/sukses`
 Ikon centang besar di lingkaran `bg-primary-soft`, H1 "Data berhasil dikirim.", paragraf "Terima kasih. Data Anda sudah kami terima dan akan diperiksa admin IKADI.", tombol secondary "Kembali ke beranda". h1 `tabIndex={-1}` difokus saat mount.
@@ -303,7 +303,7 @@ Ikon centang besar di lingkaran `bg-primary-soft`, H1 "Data berhasil dikirim.", 
 Kartu `max-w-md mx-auto`. H1 "Masuk Admin". Field "Username" (`autocomplete="username"`) + "Sandi" (`type="password"`, `autocomplete="current-password"`). Tombol primary full-width "Masuk". Error `role="alert"` "Email/Username atau sandi salah." (pesan sama untuk kedua penyebab). Loading: "Memproses...".
 
 ### 4.5 `/admin` Dashboard
-Topbar: logo + "Pendataan KTA IKADI" + badge "Admin" + tombol ghost "Keluar". Topbar, bukan sidebar — tabel lebar butuh ruang.
+Topbar: logo + "Pendataan KTA IKADI" + badge "Admin" + tombol ghost "Keluar". Topbar, bukan sidebar, tabel lebar butuh ruang.
 Lalu: 4 StatCard, lalu Card filter, lalu Card tabel + pagination.
 - Search `input type="search"`, label "Cari peserta", placeholder "Nama, NIK, atau No. WA".
 - Filter: Asal IKADI, Nama PW/PD, Pendidikan, Pengalaman Khutbah, Tanggal (dari–sampai). Grid `md:grid-cols-2 lg:grid-cols-4`.
@@ -327,18 +327,18 @@ Tautan "← Kembali ke daftar" di atas (target ≥44px). H1 = nama peserta. Bann
 | Asal IKADI | Pilih PW atau PD. |
 | Nama PW/PD IKADI | Nama PW/PD IKADI wajib diisi. |
 | Nama Lengkap | Nama lengkap wajib diisi. |
-| NIK — kosong | NIK wajib diisi. |
-| NIK — format | NIK harus 16 digit angka. |
-| NIK — duplikat | NIK ini sudah terdaftar. Silakan hubungi admin jika membutuhkan bantuan. |
+| NIK, kosong | NIK wajib diisi. |
+| NIK, format | NIK harus 16 digit angka. |
+| NIK, duplikat | NIK ini sudah terdaftar. Silakan hubungi admin jika membutuhkan bantuan. |
 | Tempat Lahir | Tempat lahir wajib diisi. |
-| Tanggal Lahir — kosong | Tanggal lahir wajib diisi. |
-| Tanggal Lahir — masa depan | Tanggal lahir tidak boleh melewati hari ini. |
+| Tanggal Lahir, kosong | Tanggal lahir wajib diisi. |
+| Tanggal Lahir, masa depan | Tanggal lahir tidak boleh melewati hari ini. |
 | Alamat | Alamat wajib diisi. |
-| No. WA — kosong | Nomor WhatsApp wajib diisi. |
-| No. WA — format | Nomor WhatsApp tidak valid. Contoh: 085987654321. |
+| No. WA, kosong | Nomor WhatsApp wajib diisi. |
+| No. WA, format | Nomor WhatsApp tidak valid. Contoh: 085987654321. |
 | Pekerjaan | Pekerjaan wajib diisi. |
 | Pengalaman Khutbah | Pilih pengalaman khutbah Anda. |
-| Pengalaman Khutbah — Lainnya kosong | Jelaskan pengalaman khutbah Anda. |
+| Pengalaman Khutbah, Lainnya kosong | Jelaskan pengalaman khutbah Anda. |
 | Kemampuan Al-Qur'an | Pilih kemampuan membaca Al-Qur'an Anda. |
 | Alasan Mengikuti Pelatihan | Alasan mengikuti pelatihan wajib diisi. |
 | Harapan Setelah Pelatihan | Harapan setelah pelatihan wajib diisi. |
@@ -349,7 +349,7 @@ Pendidikan, Bidang Keahlian, Pengalaman Organisasi opsional, tanpa pesan. Jangan
 ### 5.2 Status global
 - Sukses: **"Data berhasil dikirim."**
 - Rate limit: "Terlalu banyak percobaan. Tunggu satu menit lalu coba lagi."
-- Jaringan: "Koneksi bermasalah. Data belum terkirim — periksa internet lalu coba lagi."
+- Jaringan: "Koneksi bermasalah. Data belum terkirim, periksa internet lalu coba lagi."
 - Server 500: "Maaf, terjadi kendala di server. Coba lagi beberapa saat."
 - Login gagal: "Email/Username atau sandi salah."
 - Sesi habis: "Sesi Anda berakhir. Silakan masuk kembali."
@@ -373,7 +373,7 @@ Hint WA: "Contoh: 085987654321 atau +6285987654321."
 
 ---
 
-## 6. Aksesibilitas — checklist
+## 6. Aksesibilitas, checklist
 
 - **2.4.7 / 2.4.13** focus ring global 2px biru, offset 2px, tidak terpotong `overflow-hidden`; tidak ada `outline-none`.
 - **1.4.11** border kontrol `control-border` 4.6:1; border dekoratif bukan batas kontrol.
@@ -400,18 +400,18 @@ Dark mode (biaya QA kontras, belum diminta) · drawer/modal detail (halaman penu
 ## 8. Daftar komponen untuk frontend-dev
 
 `components/ui/`:
-1. `Button` — primary/secondary/ghost, `loading`
-2. `Field` — label + hint + error + wiring aria, props `{id,label,hint?,error?,required?,children}`
-3. `Input`, `Textarea`, `Select` — dibungkus `Field`
-4. `RadioGroup` — `{legend,hint?,error?,name,options,reveal?}`
-5. `Checkbox` — varian kartu consent
+1. `Button`, primary/secondary/ghost, `loading`
+2. `Field`, label + hint + error + wiring aria, props `{id,label,hint?,error?,required?,children}`
+3. `Input`, `Textarea`, `Select`, dibungkus `Field`
+4. `RadioGroup`, `{legend,hint?,error?,name,options,reveal?}`
+5. `Checkbox`, varian kartu consent
 6. `Card`, `StatCard`
-7. `Badge` — netral/pw/pd/sukses
-8. `Alert` — `{variant:'success'|'error'}`
-9. `ErrorSummary` — `{errors:{id,message}[]}`
-10. `DataTable` — region scroll + `aria-sort` + slot kolom
+7. `Badge`, netral/pw/pd/sukses
+8. `Alert`, `{variant:'success'|'error'}`
+9. `ErrorSummary`, `{errors:{id,message}[]}`
+10. `DataTable`, region scroll + `aria-sort` + slot kolom
 11. `Pagination`
-12. `EmptyState` — `{variant:'filtered'|'empty'}`
+12. `EmptyState`, `{variant:'filtered'|'empty'}`
 13. `Logo`
 
 `components/` (layout & fitur):
@@ -425,7 +425,7 @@ Dark mode (biaya QA kontras, belum diminta) · drawer/modal detail (halaman penu
 
 ## 9. Mockup statis
 
-`docs/mockup/` — HTML self-contained (Tailwind CDN + token inline), bukan kode produksi:
+`docs/mockup/`, HTML self-contained (Tailwind CDN + token inline), bukan kode produksi:
 
 | File | Isi |
 |---|---|

@@ -23,7 +23,7 @@ async function wilayahNames(actor: Actor) {
   return { provinceName: prov?.name ?? null, regencyName: reg?.name ?? null };
 }
 
-/** GET /api/anggota/pengurus/me — profil peran + jumlah anggota dalam cakupan. */
+/** GET /api/anggota/pengurus/me, profil peran + jumlah anggota dalam cakupan. */
 export async function GET() {
   const auth = await requirePengurus();
   if (!auth.ok) return auth.response;

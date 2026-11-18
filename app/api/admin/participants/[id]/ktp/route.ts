@@ -11,7 +11,7 @@ const MIME_BY_EXT: Record<string, string> = {
   webp: "image/webp",
 };
 
-/** Serve foto KTP — hanya admin. File di luar `public/`, tidak pernah statis. */
+/** Serve foto KTP, hanya admin. File di luar `public/`, tidak pernah statis. */
 export async function GET(
   _request: Request,
   ctx: { params: Promise<{ id: string }> },

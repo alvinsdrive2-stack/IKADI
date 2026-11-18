@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   }
 
   const buf = Buffer.from(await file.arrayBuffer());
-  // Magic bytes — nama file/Content-Type dari client tidak pernah dipercaya.
+  // Magic bytes, nama file/Content-Type dari client tidak pernah dipercaya.
   if (!detectImageExt(buf)) {
     return jsonError(400, "VALIDATION", "Foto KTP harus JPEG, PNG, atau WebP");
   }
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     const result = await extractKtp(buf, file.name || "ktp.jpg");
     return Response.json(result);
   } catch (err) {
-    // `.name`, bukan `instanceof` — lihat catatan di lib/ocr.ts.
+    // `.name`, bukan `instanceof`, lihat catatan di lib/ocr.ts.
     if ((err as { name?: string }).name === "OcrUnavailableError") {
       return jsonError(503, "OCR_UNAVAILABLE", "Layanan OCR sedang tidak tersedia. Isi data secara manual.");
     }

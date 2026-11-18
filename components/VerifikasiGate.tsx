@@ -5,7 +5,7 @@ import { VerifikasiIntro } from "@/components/VerifikasiIntro";
 
 /**
  * Bungkus halaman verifikasi: animasi pembuka dulu, lalu isi kartu.
- * Konten tetap dirender server dan sudah ada di HTML — animasi hanya
+ * Konten tetap dirender server dan sudah ada di HTML, animasi hanya
  * menutupinya, jadi tetap terbaca pengguna tanpa JS.
  */
 export function VerifikasiGate({ children }: { children: React.ReactNode }) {

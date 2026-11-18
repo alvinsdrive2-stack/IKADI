@@ -1,5 +1,5 @@
 /**
- * Renderer kartu KTA di server — dipakai ekspor massal (JPG/PDF).
+ * Renderer kartu KTA di server, dipakai ekspor massal (JPG/PDF).
  *
  * Sumber kebenaran tetap `lib/kta-layout.ts`, sumber yang sama dengan pratinjau
  * di layar. Bedanya di sini satuannya piksel: kartu dirender 1050 × 600 px
@@ -206,7 +206,7 @@ export async function renderCardFace(
     if (number) children.push(number);
 
     // Padding sebagai piksel, bukan persen: satori menghitung padding persen
-    // terhadap lebar induk (kartu), bukan kotak QR — hasilnya QR mengecil
+    // terhadap lebar induk (kartu), bukan kotak QR, hasilnya QR mengecil
     // jauh dibanding pratinjau. Pratinjau memakai 6% dari sisi kotak QR.
     children.push(
       h("div", {
@@ -231,7 +231,7 @@ export async function renderCardFace(
   return { png, verifyUrl: `${publicBaseUrl(card.request)}${verifyPath(card.memberNumber)}` };
 }
 
-/** JPEG dari satu sisi kartu — dipakai ekspor JPG (nama file di route). */
+/** JPEG dari satu sisi kartu, dipakai ekspor JPG (nama file di route). */
 export async function renderCardJpeg(card: CardInput, face: "depan" | "belakang"): Promise<Buffer> {
   const { png } = await renderCardFace(card, face);
   return sharp(png).jpeg({ quality: 92, chromaSubsampling: "4:4:4" }).toBuffer();

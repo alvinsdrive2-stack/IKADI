@@ -23,7 +23,7 @@ const SELECT = {
 } as const;
 
 /**
- * PATCH /api/anggota/pengurus/pengurus/[id] — lantik / cabut peran pengurus.
+ * PATCH /api/anggota/pengurus/pengurus/[id], lantik / cabut peran pengurus.
  * Body: `{ isPengurus: boolean, levelCode?: number }`.
  *
  * Melantik: levelCode wajib 1..3 dan dalam `appointableLevels(actor)`; target
@@ -121,7 +121,7 @@ export async function PATCH(
   try {
     const updated = await prisma.participant.update({
       where: { id: target.id },
-      // Mencabut tidak mengubah level — level hanya berubah saat melantik.
+      // Mencabut tidak mengubah level, level hanya berubah saat melantik.
       data: b.isPengurus ? { isPengurus: true, levelCode: levelCode! } : { isPengurus: false },
       select: SELECT,
     });

@@ -2,7 +2,7 @@ import { requireAdmin } from "@/lib/auth";
 import { getMembership, updateMembership, type MembershipResult } from "@/lib/membership";
 import { jsonError } from "@/lib/http";
 
-/** Petakan hasil lib ke Response — bentuk body identik dengan implementasi lama. */
+/** Petakan hasil lib ke Response, bentuk body identik dengan implementasi lama. */
 function respond(result: MembershipResult): Response {
   if (result.ok) return Response.json({ ok: true, data: result.data });
   if (result.errors) {

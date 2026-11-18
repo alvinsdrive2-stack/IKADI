@@ -33,7 +33,7 @@ async function loadRows(): Promise<Row[]> {
   return rows as Row[];
 }
 
-/** GET /api/admin/kta/pejabat — nama Ketua Umum & Sekjen untuk blok TTD KTA. */
+/** GET /api/admin/kta/pejabat, nama Ketua Umum & Sekjen untuk blok TTD KTA. */
 export async function GET() {
   const auth = await requireAdmin();
   if (!auth.ok) return auth.response;
@@ -50,7 +50,7 @@ export async function GET() {
 /**
  * PATCH /api/admin/kta/pejabat
  * Body: { ketuaUmum?: { nama, jabatan? }, sekjen?: { nama, jabatan? } }
- * Upsert per kunci — hanya kunci yang dikirim yang berubah.
+ * Upsert per kunci, hanya kunci yang dikirim yang berubah.
  */
 export async function PATCH(request: Request) {
   const auth = await requireAdmin();

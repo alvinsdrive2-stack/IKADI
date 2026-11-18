@@ -9,7 +9,7 @@ import { logRouteError } from "@/lib/route-log";
 const SCOPE_SELECT = { levelCode: true, provinceCode: true, regencyCode: true } as const;
 
 /**
- * POST /api/anggota/pengurus/anggota/[id]/kta — pengurus mencetak KTA anggota.
+ * POST /api/anggota/pengurus/anggota/[id]/kta, pengurus mencetak KTA anggota.
  * Hanya untuk peserta di BAWAH level aktor dan di dalam wilayah kerjanya.
  * Body opsional `{ levelCode }`: menetapkan level sekaligus saat cetak.
  * Level yang boleh diberikan dibatasi `appointableLevels` (level 3 hanya bisa
@@ -26,7 +26,7 @@ export async function POST(
   const { id: raw } = await ctx.params;
   if (!/^\d{1,20}$/.test(raw)) return jsonError(404, "NOT_FOUND", "Data peserta tidak ditemukan");
 
-  // Cakupan dulu — peserta luar wilayah diperlakukan seperti tidak ada.
+  // Cakupan dulu, peserta luar wilayah diperlakukan seperti tidak ada.
   let scopeRow;
   try {
     scopeRow = await prisma.participant.findUnique({

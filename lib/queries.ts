@@ -32,7 +32,7 @@ function where(p: FilterParams): Prisma.ParticipantWhereInput {
   const q = p.q?.trim();
   if (q) {
     // Numeric-looking queries can match NIK/WA. Dotted digit strings ("6.16.01",
-    // "6.16.01.26.0001") search member_number — admin copy-pastes the number.
+    // "6.16.01.26.0001") search member_number, admin copy-pastes the number.
     const numeric = /^[0-9+]+$/.test(q);
     const memberLike = /^[1-7](\.[0-9]{1,4}){1,4}$/.test(q);
     and.push({
@@ -97,7 +97,7 @@ export async function listParticipants(p: ListParams) {
 }
 
 /**
- * Detail peserta untuk halaman admin. `passwordHash` sengaja dibuang —
+ * Detail peserta untuk halaman admin. `passwordHash` sengaja dibuang -
  * tidak ada UI admin yang membutuhkannya, dan mengirimkannya ke browser
  * berarti hash argon2id ikut ke devtools/log proxy.
  */
@@ -128,7 +128,7 @@ export async function getParticipantKtpPath(id: bigint) {
 }
 
 /**
- * Semua id peserta yang cocok dengan filter — dipakai ekspor massal supaya
+ * Semua id peserta yang cocok dengan filter, dipakai ekspor massal supaya
  * "semua hasil filter" tidak dibatasi paginasi tabel. Urutan sama dengan tabel.
  */
 export async function listParticipantIds(p: FilterParams): Promise<string[]> {
@@ -154,7 +154,7 @@ export async function getStats() {
 /**
  * Data yang boleh tampil di halaman verifikasi publik (`/verifikasi/:nomor`).
  * Proyeksi sengaja sempit: NIK, alamat, WhatsApp, path KTP, hash sandi, dan id
- * internal tidak pernah ikut terambil — bukan cuma disembunyikan di render.
+ * internal tidak pernah ikut terambil, bukan cuma disembunyikan di render.
  *
  * Nomor lama (kartu yang sudah diganti) tetap mengembalikan pemiliknya, plus
  * `activeMemberNumber` supaya halaman bisa menyebut nomor yang berlaku.
@@ -196,7 +196,7 @@ export async function getMemberCard(memberNumber: string) {
       : null,
   ]);
 
-  // Nomor aktif dibaca dari cermin peserta — di halaman ini kartu lama dan baru
+  // Nomor aktif dibaca dari cermin peserta, di halaman ini kartu lama dan baru
   // memakai sumber yang sama, jadi hasilnya selalu nomor yang berlaku.
   return {
     fullName: r.fullName,

@@ -13,7 +13,7 @@ const MIME_BY_EXT: Record<string, string> = {
 };
 
 /**
- * Serve foto KTP untuk pengurus — hanya peserta di dalam cakupan wilayahnya.
+ * Serve foto KTP untuk pengurus, hanya peserta di dalam cakupan wilayahnya.
  * File di luar `public/`, tidak pernah statis.
  */
 export async function GET(

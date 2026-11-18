@@ -6,7 +6,7 @@ import { jsonError } from "@/lib/http";
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
- * GET /api/anggota/pengurus/anggota — daftar anggota dalam cakupan wilayah aktor.
+ * GET /api/anggota/pengurus/anggota, daftar anggota dalam cakupan wilayah aktor.
  * `scopeWhere` SELALU dikirim: tidak ada query param yang bisa melewatkannya.
  */
 export async function GET(request: Request) {

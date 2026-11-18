@@ -64,7 +64,7 @@ SESSION_SECRET="hasil-dari-perintah-di-bawah"
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD="PASSWORD_ADMIN_KUAT"
 NODE_ENV="production"
-# Opsional — OCR KTP (default sudah sesuai):
+# Opsional, OCR KTP (default sudah sesuai):
 # OCR_SERVICE_URL="http://127.0.0.1:8001"
 # OCR_TIMEOUT_MS="20000"
 ```
@@ -151,7 +151,7 @@ sudo ufw allow 3000/tcp
 ## 8b. Layanan OCR KTP (opsional, untuk autofill form)
 
 Microservice Python (FastAPI + RapidOCR/onnxruntime) di `ocr-service/`. Jalan di
-`127.0.0.1:8001`, hanya dipanggil aplikasi Next.js — tidak diekspos ke luar.
+`127.0.0.1:8001`, hanya dipanggil aplikasi Next.js, tidak diekspos ke luar.
 
 ```bash
 cd /var/www/ikadi/ocr-service
@@ -159,7 +159,7 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
 
-OpenCV dipakai versi `opencv-python-headless` — tidak butuh `libGL`. Kalau
+OpenCV dipakai versi `opencv-python-headless`, tidak butuh `libGL`. Kalau
 `/extract` tetap gagal dengan error `libGL.so.1`, pasang:
 
 ```bash
@@ -187,11 +187,11 @@ pm2 logs ikadi-ocr --lines 20
 curl http://127.0.0.1:8001/health   # {"ok":true}
 ```
 
-Model RapidOCR diunduh saat request pertama — request pertama lambat, itu normal.
+Model RapidOCR diunduh saat request pertama, request pertama lambat, itu normal.
 Kalau OCR tidak jalan, form tetap bisa dipakai: upload KTP hanya gagal autofill,
 peserta isi manual (route balas 503 `OCR_UNAVAILABLE`).
 
-Opsional — VLM sebagai jalur utama (akurat di foto miring/gelap), RapidOCR
+Opsional, VLM sebagai jalur utama (akurat di foto miring/gelap), RapidOCR
 jadi fallback otomatis. Provider OpenAI-compatible apa pun (default OpenRouter).
 Set env lalu restart:
 
@@ -209,12 +209,12 @@ VLM_API_KEY=<key provider>
 # VLM_TIMEOUT_S=20
 ```
 
-Jebakan key, sudah terverifikasi: OpenRouter — API key biasa dari
+Jebakan key, sudah terverifikasi: OpenRouter, API key biasa dari
 openrouter.ai/keys; management/provisioning key (`is_management_key: true`)
-cuma ngatur akun, chat completions balas `401 "User not found"`. Z.ai — key
+cuma ngatur akun, chat completions balas `401 "User not found"`. Z.ai, key
 coding plan text-only, image di-drop, model MENGARANG isi KTP; vision wajib
 key platform (open.bigmodel.cn / z.ai `paas/v4`). Model `:free` kena rate
-limit harian — kena limit = fallback RapidOCR lokal, form tetap jalan.
+limit harian, kena limit = fallback RapidOCR lokal, form tetap jalan.
 
 Update rilis: `cd ocr-service && .venv/bin/pip install -r requirements.txt && pm2 restart ikadi-ocr`.
 
@@ -298,16 +298,16 @@ crontab -e
 
 ## Kalau bermasalah
 
-**`DATABASE_URL belum diatur`** — `.env.local` tidak terbaca. Pastikan file ada di root
+**`DATABASE_URL belum diatur`**, `.env.local` tidak terbaca. Pastikan file ada di root
 proyek dan `pm2` dijalankan dari folder yang sama.
 
-**`PrismaClientInitializationError`** — user MySQL salah, password salah, atau database
+**`PrismaClientInitializationError`**, user MySQL salah, password salah, atau database
 belum dibuat. Tes manual: `mysql -u ikadi_app -p ikadi -e "SHOW TABLES;"`.
 
-**Login selalu gagal** — admin belum di-seed. Jalankan `npm run db:seed`.
+**Login selalu gagal**, admin belum di-seed. Jalankan `npm run db:seed`.
 
-**Cookie tidak tersimpan** — akses lewat HTTPS. Dengan `NODE_ENV=production` cookie
+**Cookie tidak tersimpan**, akses lewat HTTPS. Dengan `NODE_ENV=production` cookie
 bertanda `Secure`, jadi tidak dikirim lewat HTTP biasa.
 
-**`/admin` balik ke login terus** — `SESSION_SECRET` berubah setelah sesi dibuat.
+**`/admin` balik ke login terus**, `SESSION_SECRET` berubah setelah sesi dibuat.
 Login ulang.

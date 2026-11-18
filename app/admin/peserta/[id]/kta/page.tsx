@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { KtaCard } from "@/components/KtaCard";
 
 export const metadata: Metadata = {
-  title: "Cetak KTA — Admin IKADI",
+  title: "Cetak KTA, Admin IKADI",
 };
 
 // `id` dibaca di client component; otorisasi tetap di API.

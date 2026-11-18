@@ -270,7 +270,7 @@ export function BulkActions({
                 <ul className="mt-2 space-y-1 text-xs text-ink-muted">
                   {job.skipped.slice(0, 30).map((s) => (
                     <li key={s.label}>
-                      <span className="font-mono">{s.label}</span> — {s.reason}
+                      <span className="font-mono">{s.label}</span>, {s.reason}
                     </li>
                   ))}
                   {job.skipped.length > 30 && <li>…dan {job.skipped.length - 30} lainnya.</li>}

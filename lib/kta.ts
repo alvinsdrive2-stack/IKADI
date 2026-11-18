@@ -6,7 +6,7 @@ export type KtaPejabatMap = { ketuaUmum: KtaPejabat; sekjen: KtaPejabat };
 
 /**
  * Warna QR: modul hijau (primary #04A94B digelapkan sedikit → #037A37),
- * latar transparan supaya artwork kartu tembus — bukan kotak putih.
+ * latar transparan supaya artwork kartu tembus, bukan kotak putih.
  * Format #RRGGBBAA; `qrcode` menerima alpha di dua digit terakhir.
  */
 export const KTA_QR_COLOR = { dark: "#037A37FF", light: "#00000000" } as const;
@@ -58,7 +58,7 @@ export async function getPejabat(): Promise<KtaPejabatMap> {
   }
 }
 
-/** Versi murni tanpa DB — dipakai tes & saat render server tanpa koneksi. */
+/** Versi murni tanpa DB, dipakai tes & saat render server tanpa koneksi. */
 export function getPejabatFallback(): KtaPejabatMap {
   return fromRows(null);
 }

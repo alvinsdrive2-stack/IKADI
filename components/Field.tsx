@@ -24,7 +24,7 @@ export function OcrHint({ id, confidence }: { id: string; confidence: number }) 
   return (
     <p id={id} className="flex items-start gap-1.5 text-sm font-medium text-danger">
       <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0" strokeWidth={2} />
-      Hasil OCR {Math.round(confidence * 100)}% — periksa kembali data ini.
+      Hasil OCR {Math.round(confidence * 100)}%, periksa kembali data ini.
     </p>
   )
 }

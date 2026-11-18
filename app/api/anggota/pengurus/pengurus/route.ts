@@ -5,7 +5,7 @@ import { appointableLevels, scopeWhere } from "@/lib/pengurus";
 import { jsonError } from "@/lib/http";
 import { logRouteError } from "@/lib/route-log";
 
-/** GET /api/anggota/pengurus/pengurus — daftar pengurus dalam cakupan aktor. */
+/** GET /api/anggota/pengurus/pengurus, daftar pengurus dalam cakupan aktor. */
 export async function GET() {
   const auth = await requirePengurus();
   if (!auth.ok) return auth.response;

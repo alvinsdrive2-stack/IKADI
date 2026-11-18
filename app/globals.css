@@ -71,7 +71,7 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* IKADI brand — dari referensi KTA (kta ikadi muka/belakang.png + logo.png) */
+  /* IKADI brand, dari referensi KTA (kta ikadi muka/belakang.png + logo.png) */
   --color-ikadi-emerald: #04A94B;
   --color-ikadi-emerald-deep: #037A37;
   --color-ikadi-lime: #A8D80A;
@@ -167,7 +167,7 @@ body {
   padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
 }
 
-/* Overlay banner halaman — satu sumber untuk semua PageBanner. */
+/* Overlay banner halaman, satu sumber untuk semua PageBanner. */
 .banner-veil {
   background-image: var(--banner-veil);
 }
@@ -176,7 +176,7 @@ body {
   outline-color: #fff;
 }
 
-/* Ornamen lama (diamond) — deprecated, dipertahankan untuk kompatibilitas */
+/* Ornamen lama (diamond), deprecated, dipertahankan untuk kompatibilitas */
 .ornament {
   background-image: url("/ornaments/khatam-tile.svg");
   background-size: 60px 60px;
@@ -339,7 +339,7 @@ body {
 /* ---------- Flip pratinjau (layar saja) ----------
    Dua sisi menempati ruang yang sama; `is-flipped` memutar 180°.
    Ditulis di top-level supaya tidak bentrok dengan aturan print di bawah.
-   Skala 200% hanya di layar — ukuran cetak tetap 85,6 mm. */
+   Skala 200% hanya di layar, ukuran cetak tetap 85,6 mm. */
 .kta-flip {
   perspective: 2800px;
   cursor: pointer;
@@ -352,7 +352,7 @@ body {
     zoom: 2;
   }
 }
-/* Di dashboard kartu tampil di dalam kolom sempit — jangan sampai meluber. */
+/* Di dashboard kartu tampil di dalam kolom sempit, jangan sampai meluber. */
 .kta-flip.kta-flip-compact {
   zoom: 0.9;
 }
@@ -362,7 +362,7 @@ body {
   }
 }
 /* Halaman /anggota/kartu memakai zoom dinamis (dihitung di KtaCardView dari
-   lebar kontainer) — `zoom` tidak menerima calc()/panjang, jadi tidak di CSS. */
+   lebar kontainer), `zoom` tidak menerima calc()/panjang, jadi tidak di CSS. */
 /* Bayangan pratinjau kartu di dashboard. Dipasang di `.kta-card`, bukan di
    wadah: box-shadow luar tidak terpotong `overflow: hidden` kartu, dan kedua
    sisi flip dapat bayangannya sendiri. Print selalu tanpa bayangan. */
@@ -439,7 +439,7 @@ body {
 
   /* Isolasi: buang kotak semua wadah di atas kartu, sehingga kartu mulai di
      0,0 pada halaman. `display: contents` menghapus box-nya tanpa memutus
-     rantai DOM/container — lebih aman untuk page-break daripada absolute. */
+     rantai DOM/container, lebih aman untuk page-break daripada absolute. */
   .min-h-screen,
   .lg\:pl-64,
   main,

@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { parseIds } from "@/lib/bulk-guard";
 
 /**
- * POST /api/anggota/pengurus/bulk/terbitkan — pengurus menerbitkan nomor
+ * POST /api/anggota/pengurus/bulk/terbitkan, pengurus menerbitkan nomor
  * untuk banyak anggota sekaligus, tetap dibatasi cakupan wilayah dan aturan
  * level (`canIssueKta`) yang sama dengan penerbitan satuan.
  */

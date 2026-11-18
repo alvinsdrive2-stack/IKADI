@@ -4,7 +4,7 @@ export { LEVEL_LABELS } from "@/lib/member-number";
 
 export type Option = { value: string; label: string; disabled?: boolean };
 
-/** Opsi provinsi — placeholder di index 0 (value ""), value = kode 2 digit. */
+/** Opsi provinsi, placeholder di index 0 (value ""), value = kode 2 digit. */
 export const PROVINCE_OPTIONS: Option[] = [
   { value: "", label: "Pilih provinsi", disabled: true },
   ...PROVINCES.map((p) => ({ value: p.code, label: p.name })),

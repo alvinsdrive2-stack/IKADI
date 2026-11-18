@@ -1,5 +1,5 @@
 /**
- * Master wilayah Indonesia — 34 provinsi + 514 kabupaten/kota.
+ * Master wilayah Indonesia, 34 provinsi + 514 kabupaten/kota.
  * Kode = kode Kemendagri 2 digit, dipakai langsung sebagai segmen WW (provinsi)
  * dan DD (kabupaten/kota) pada nomor anggota. Di-seed sekali oleh
  * `scripts/seed-wilayah.ts`; jangan diubah tanpa migrasi nomor anggota.

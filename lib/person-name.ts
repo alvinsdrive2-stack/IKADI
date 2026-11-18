@@ -1,5 +1,5 @@
 /**
- * Pemadatan nama untuk kartu KTA — ruang cetak terbatas, nama panjang
+ * Pemadatan nama untuk kartu KTA, ruang cetak terbatas, nama panjang
  * terpotong. Aturan:
  *
  * 1. Gelar (depan: H., Dr., KH., Prof. … / belakang: S.Pd., M.A., Lc.) TIDAK
@@ -44,7 +44,7 @@ function isGelarDepan(token: string): boolean {
 function isGelarBelakang(token: string): boolean {
   const t = token.replace(/,$/, "");
   if (!t) return false;
-  // "S.Pd." / "M.A." / "Ph.D." — titik di tengah/akhir = gelar.
+  // "S.Pd." / "M.A." / "Ph.D.", titik di tengah/akhir = gelar.
   if (t.includes(".")) return !isGelarDepan(t);
   return GELAR_BELAKANG_TANPA_TITIK.has(bersih(t));
 }

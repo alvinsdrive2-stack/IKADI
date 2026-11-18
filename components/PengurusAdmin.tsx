@@ -213,7 +213,7 @@ export function PengurusAdmin() {
 
   const levelOptions = state.appointable.map((l) => ({
     value: String(l),
-    label: `${l} — ${LEVEL_LABELS[l] ?? l}`,
+    label: `${l}, ${LEVEL_LABELS[l] ?? l}`,
   }));
 
   return (
@@ -305,7 +305,7 @@ export function PengurusAdmin() {
           <ul className="divide-y divide-border">
             {state.list.map((row) => {
               const diri = row.id === state.selfId;
-              const wilayah = [row.provinceName, row.regencyName].filter(Boolean).join(" · ") || "—";
+              const wilayah = [row.provinceName, row.regencyName].filter(Boolean).join(" · ") || "-";
               return (
                 <li key={row.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                   <div className="min-w-0">

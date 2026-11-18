@@ -1,4 +1,4 @@
-# UX-MEMBERSHIP.md — Riset UX Alur Keanggotaan IKADI
+# UX-MEMBERSHIP.md, Riset UX Alur Keanggotaan IKADI
 
 Dokumen riset, bukan spesifikasi final. Frontend-dev dan backend-dev pakai ini sebagai landasan keputusan UI. Target WCAG 2.2 AA. Bahasa UI: Indonesia santai-formal, tanpa istilah teknis.
 
@@ -22,28 +22,28 @@ Tidak ada field password di mana pun. `lib/schema.ts` belum punya kolom password
 ### Kekuatan
 
 - OCR KTP + layar review (baris 613 ke bawah) memangkas pengetikan di ponsel.
-- Progress bar + aria-live (baris 724-737) — pengguna selalu tahu di langkah mana.
-- Draf localStorage tanpa gambar (baris 71-72, 397-411) — data teks selamat dari refresh.
-- ErrorSummary dengan anchor ke field (baris 700-722) — pola 2.4.3/3.3.1 sudah benar.
+- Progress bar + aria-live (baris 724-737), pengguna selalu tahu di langkah mana.
+- Draf localStorage tanpa gambar (baris 71-72, 397-411), data teks selamat dari refresh.
+- ErrorSummary dengan anchor ke field (baris 700-722), pola 2.4.3/3.3.1 sudah benar.
 
 ### Friksi terbesar di ponsel + koneksi lambat
 
-1. **Langkah 1 = upload foto KTP sebelum ada bukti nilai.** Pengguna koneksi 3G menunggu base64 (bisa lebih dari 2 MB) naik ke OCR service sebelum merasakan progres apa pun. Kalau OCR timeout (baris 629 menampilkan ocrError), pengguna sudah bayar data + waktu tapi belum punya apa-apa. Mitigasi: tampilkan indikator progres upload (bukan cuma "Sedang membaca KTP..." di baris 624), dan biarkan jalur manual tetap bisa lanjut walau OCR gagal total — sekarang tombol "Ketik manual" sudah ada di layar review, pastikan tetap tampil saat ocrError.
+1. **Langkah 1 = upload foto KTP sebelum ada bukti nilai.** Pengguna koneksi 3G menunggu base64 (bisa lebih dari 2 MB) naik ke OCR service sebelum merasakan progres apa pun. Kalau OCR timeout (baris 629 menampilkan ocrError), pengguna sudah bayar data + waktu tapi belum punya apa-apa. Mitigasi: tampilkan indikator progres upload (bukan cuma "Sedang membaca KTP..." di baris 624), dan biarkan jalur manual tetap bisa lanjut walau OCR gagal total, sekarang tombol "Ketik manual" sudah ada di layar review, pastikan tetap tampil saat ocrError.
 2. **Foto KTP bisa hilang saat refresh.** DRAFT_FIELDS (baris 109-111) sengaja menyaring ktp dan photo dari draf. Setelah OCR sukses tapi pengguna menutup browser sebelum submit, foto KTP (yang paling susah diambil ulang karena butuh pencahayaan) hilang. Mitigasi: setelah OCR sukses, simpan blob foto di IndexedDB (bukan localStorage) dan restore saat kembali.
-3. **Provinsi/Kabupaten di langkah 1 masih input teks bebas** (baris 779-795), padahal lib/wilayah.ts sudah punya 34 provinsi + 514 kab/kota. Ketik "Sumut" vs "Sumatera Utara" bikin data kotor dan admin mesti rapihkan manual sebelum bisa cetak KTA. Ini friksi tersembunyi yang baru terasa di langkah admin, bukan di langkah pengguna. Wajib: ganti ke Select berantai memakai /api/wilayah/provinsi + /api/wilayah/provinsi/:code/kabupaten sebelum fitur keanggotaan rilis — API-CONTRACT.md baris 70 sudah janjikan endpoint-nya.
+3. **Provinsi/Kabupaten di langkah 1 masih input teks bebas** (baris 779-795), padahal lib/wilayah.ts sudah punya 34 provinsi + 514 kab/kota. Ketik "Sumut" vs "Sumatera Utara" bikin data kotor dan admin mesti rapihkan manual sebelum bisa cetak KTA. Ini friksi tersembunyi yang baru terasa di langkah admin, bukan di langkah pengguna. Wajib: ganti ke Select berantai memakai /api/wilayah/provinsi + /api/wilayah/provinsi/:code/kabupaten sebelum fitur keanggotaan rilis, API-CONTRACT.md baris 70 sudah janjikan endpoint-nya.
 
 ### Di mana password paling tepat
 
 Bukan langkah 4. Dua alasan:
 
-1. Langkah 4 adalah motivasi + consent — momen reflektif, bukan momen kredensial. Menempelkan password di situ bikin pengguna menganggap password itu formalitas consent, bukan kunci akun permanen. Hasilnya sandi lemah ("12345678" karena cuma mau selesai).
-2. Kalau diletakkan setelah "Kirim Data" (di halaman sukses), pengguna mental-model-nya sudah selesai — tambahan langkah setelah sukses = friksi paling mahal secara psikologis, banyak yang tutup browser di halaman sukses.
+1. Langkah 4 adalah motivasi + consent, momen reflektif, bukan momen kredensial. Menempelkan password di situ bikin pengguna menganggap password itu formalitas consent, bukan kunci akun permanen. Hasilnya sandi lemah ("12345678" karena cuma mau selesai).
+2. Kalau diletakkan setelah "Kirim Data" (di halaman sukses), pengguna mental-model-nya sudah selesai, tambahan langkah setelah sukses = friksi paling mahal secara psikologis, banyak yang tutup browser di halaman sukses.
 
 **Rekomendasi: akhir langkah 2 (Identitas), setelah NIK terisi.** Alasan:
 
 - NIK adalah login id (kontrak API POST /api/anggota/login menerima nik + password). Menaruh password di langkah yang sama dengan NIK membangun asosiasi kredensial: "NIK saya + sandi saya = akun saya".
-- Pengguna di titik ini sudah berinvestasi 2 langkah — cukup untuk menerima satu langkah kredensial, belum cukup lelah untuk mengisi asal-asalan.
-- Kalau OCR sudah mengisi NIK + nama, field password muncul bersama data yang sudah milik pengguna — terasa seperti mengunci data sendiri, bukan mendaftar layanan asing.
+- Pengguna di titik ini sudah berinvestasi 2 langkah, cukup untuk menerima satu langkah kredensial, belum cukup lelah untuk mengisi asal-asalan.
+- Kalau OCR sudah mengisi NIK + nama, field password muncul bersama data yang sudah milik pengguna, terasa seperti mengunci data sendiri, bukan mendaftar layanan asing.
 
 Implementasi UI: satu blok fieldset dengan legend "Buat sandi" berisi:
 
@@ -69,10 +69,10 @@ Tiga pola nyata di konteks Indonesia:
 
 Sumber riset:
 
-- [PeduliLindungi — NIK-first flow](https://www.pedulilindungi.id/) — pola NIK + OTP untuk layanan publik.
-- [DJP Online — registrasi pakai NIK/NPWP](https://www.djp-online.kemenkeu.go.id/) — NIK sebagai kunci identitas di layanan pemerintah.
+- [PeduliLindungi, NIK-first flow](https://www.pedulilindungi.id/), pola NIK + OTP untuk layanan publik.
+- [DJP Online, registrasi pakai NIK/NPWP](https://www.djp-online.kemenkeu.go.id/), NIK sebagai kunci identitas di layanan pemerintah.
 
-Batas: riset di atas dari pencarian web umum, bukan audit UI langsung. Angka konversi spesifik tidak tersedia untuk konteks organisasi keagamaan — belum ada data untuk IKADI sendiri.
+Batas: riset di atas dari pencarian web umum, bukan audit UI langsung. Angka konversi spesifik tidak tersedia untuk konteks organisasi keagamaan, belum ada data untuk IKADI sendiri.
 
 ---
 
@@ -82,8 +82,8 @@ Batas: riset di atas dari pencarian web umum, bukan audit UI langsung. Angka kon
 
 Dua field:
 
-- **NIK** — 16 digit. inputMode="numeric", pattern="[0-9]*", autocomplete="off" (jangan "username" — password manager akan menawarkan NIK sebagai username, itu bagus, tapi autocomplete="username" di input numeric memicu autofill format aneh di beberapa browser Android).
-- **Sandi** — type="password", autocomplete="current-password".
+- **NIK**, 16 digit. inputMode="numeric", pattern="[0-9]*", autocomplete="off" (jangan "username", password manager akan menawarkan NIK sebagai username, itu bagus, tapi autocomplete="username" di input numeric memicu autofill format aneh di beberapa browser Android).
+- **Sandi**, type="password", autocomplete="current-password".
 
 Tombol: **Masuk** (primary, full-width, min-h-11).
 
@@ -93,21 +93,21 @@ Di bawah tombol: link sekunder **Lupa sandi?**.
 
 Ikuti pola ParticipantForm.tsx baris 700-722:
 
-- **Error per field** — NIK kosong: "NIK wajib diisi." NIK bukan 16 digit: "NIK harus 16 digit angka." Sandi kosong: "Sandi wajib diisi."
-- **Error login gagal** — dari kontrak API 401 UNAUTHORIZED pesan selalu "NIK atau sandi salah." (tidak membedakan NIK tidak terdaftar vs sandi salah — keputusan keamanan yang benar, pertahankan). Tampilkan sebagai ErrorSummary di atas form + role="alert" + fokus pindah ke summary.
-- **Rate limit** — 429 RATE_LIMIT pesan dari API: "Terlalu banyak percobaan. Coba lagi dalam beberapa menit." Tampilkan apa adanya.
-- **Koneksi gagal** — sama dengan NETWORK di ParticipantForm.tsx baris 68-69: "Koneksi bermasalah. Coba lagi."
+- **Error per field**, NIK kosong: "NIK wajib diisi." NIK bukan 16 digit: "NIK harus 16 digit angka." Sandi kosong: "Sandi wajib diisi."
+- **Error login gagal**, dari kontrak API 401 UNAUTHORIZED pesan selalu "NIK atau sandi salah." (tidak membedakan NIK tidak terdaftar vs sandi salah, keputusan keamanan yang benar, pertahankan). Tampilkan sebagai ErrorSummary di atas form + role="alert" + fokus pindah ke summary.
+- **Rate limit**, 429 RATE_LIMIT pesan dari API: "Terlalu banyak percobaan. Coba lagi dalam beberapa menit." Tampilkan apa adanya.
+- **Koneksi gagal**, sama dengan NETWORK di ParticipantForm.tsx baris 68-69: "Koneksi bermasalah. Coba lagi."
 
 ### NIK 16 digit: masalah nyata di input numeric
 
-1. **Paste dari WhatsApp/notes** sering menyertakan spasi, tanda hubung, atau baris baru. Wajib: sanitasi di onChange — value.replace non-digit lalu slice(0, 16). Tampilkan hint counter X/16 digit.
+1. **Paste dari WhatsApp/notes** sering menyertakan spasi, tanda hubung, atau baris baru. Wajib: sanitasi di onChange, value.replace non-digit lalu slice(0, 16). Tampilkan hint counter X/16 digit.
 2. **Autofill password manager** kadang mengisi NIK di field sandi karena autocomplete salah. Pastikan field sandi autocomplete="current-password", bukan "off".
 3. **Keyboard numeric Android** punya tombol spasi + emoji; pengguna tak sadar sudah memasukkan spasi. Solusi: sanitasi otomatis (poin 1) + counter X/16 digit berwarna text-primary saat 16, text-ink-muted saat kurang.
-4. **iOS Safari zoom** — input kurang dari 16px memicu zoom. Semua input harus text-base (DESIGN.md 1.2). Jangan turunkan.
+4. **iOS Safari zoom**, input kurang dari 16px memicu zoom. Semua input harus text-base (DESIGN.md 1.2). Jangan turunkan.
 
 ### Lupa sandi (di luar scope MVP)
 
-Jangan buat halaman reset via email — tidak ada infra email di MVP. Cukup:
+Jangan buat halaman reset via email, tidak ada infra email di MVP. Cukup:
 
 - Link **Lupa sandi?** mengarah ke halaman statis /anggota/lupa-sandi.
 - Isi halaman:
@@ -116,22 +116,22 @@ Jangan buat halaman reset via email — tidak ada infra email di MVP. Cukup:
 
 - Tombol sekunder "Kembali ke Masuk".
 
-Ini mencegah pengguna buntu: mereka tahu langkah konkret. Admin punya PATCH membership dengan newPassword (kontrak API baris 109) — alur konsisten dengan kapabilitas admin yang sudah dirancang.
+Ini mencegah pengguna buntu: mereka tahu langkah konkret. Admin punya PATCH membership dengan newPassword (kontrak API baris 109), alur konsisten dengan kapabilitas admin yang sudah dirancang.
 
 ---
 
 ## 4. Alur "Kartu Saya" untuk anggota
 
-Halaman /anggota/kartu — hanya bisa diakses setelah login.
+Halaman /anggota/kartu, hanya bisa diakses setelah login.
 
-### State A — nomor belum terbit (memberNumber null)
+### State A, nomor belum terbit (memberNumber null)
 
 Layout:
 
 ```
 Kartu Tanda Anggota IKADI   (H1)
 
-[ Ilustrasi kartu kosong — abu-abu, tanpa QR ]
+[ Ilustrasi kartu kosong, abu-abu, tanpa QR ]
 
 Nomor anggota Anda belum terbit.
 
@@ -147,11 +147,11 @@ admin mencetak kartu Anda.
 
 Copy ini sengaja:
 
-- Tidak menyalahkan pengguna ("Anda belum terverifikasi", "Menunggu persetujuan" — dua-duanya mengisyaratkan penolakan).
+- Tidak menyalahkan pengguna ("Anda belum terverifikasi", "Menunggu persetujuan", dua-duanya mengisyaratkan penolakan).
 - Menjelaskan mengapa menunggu: nomor terbit saat admin cetak, bukan saat daftar. Ini fakta teknis dari kontrak API POST /kta yang menerbitkan nomor plus memakai kuota.
 - Menyediakan CTA kedua ke WhatsApp (nomor dari SiteFooter) untuk kasus menunggu terlalu lama.
 
-### State B — nomor sudah terbit
+### State B, nomor sudah terbit
 
 Tampilkan kartu digital mirip KtaCard.tsx versi anggota:
 
@@ -165,7 +165,7 @@ Tampilkan kartu digital mirip KtaCard.tsx versi anggota:
 Tidak di MVP. Konsekuensi kuota 10:
 
 - Kuota cetak 10 adalah batas trial untuk menguji alur cetak. Kalau anggota bisa cetak sendiri, satu anggota = satu cetak = kuota habis dalam 10 anggota pertama. Kuota jadi tidak berarti.
-- POST /kta hanya bisa dipanggil sesi admin (kontrak API baris 120). Keputusan desain yang benar — pertahankan.
+- POST /kta hanya bisa dipanggil sesi admin (kontrak API baris 120). Keputusan desain yang benar, pertahankan.
 - Solusi anggota yang butuh kartu fisik: hubungi admin via WhatsApp. Admin yang memutuskan kapan mencetak.
 
 Batas desain: kalau kelak kuota dinaikkan atau dihapus, tambahkan tombol "Unduh PDF kartu saya" di sini. Ponytail, jangan dibangun sekarang.
@@ -176,33 +176,33 @@ Batas desain: kalau kelak kuota dinaikkan atau dihapus, tambahkan tombol "Unduh 
 
 ### Masalah halaman detail sekarang
 
-ParticipantDetail.tsx menampilkan semua field datar dalam dl dua kolom. Data keanggotaan baru (nomor anggota, level, wilayah, status, hasPassword, eligible) kalau ditambahkan apa adanya akan jadi 40+ baris datar — admin kehilangan hierarki.
+ParticipantDetail.tsx menampilkan semua field datar dalam dl dua kolom. Data keanggotaan baru (nomor anggota, level, wilayah, status, hasPassword, eligible) kalau ditambahkan apa adanya akan jadi 40+ baris datar, admin kehilangan hierarki.
 
 ### Hierarki yang diusulkan
 
 Susun menjadi 4 blok, urutan = frekuensi akses admin:
 
-1. **Status keanggotaan** — paling sering dicek.
+1. **Status keanggotaan**, paling sering dicek.
    - Badge status: AKTIF / NONAKTIF / PURNA BAKTI.
    - Nomor anggota (mono besar) + tanggal terbit, atau tombol **Cetak KTA** kalau belum terbit dan eligible=true.
-   - Banner NOT_ELIGIBLE kalau eligible=false — tampilkan ineligibleReason apa adanya.
+   - Banner NOT_ELIGIBLE kalau eligible=false, tampilkan ineligibleReason apa adanya.
    - Sisa kuota cetak dari /api/admin/stats kta.remaining.
 
-2. **Level & wilayah** — sering diubah sebelum cetak.
+2. **Level & wilayah**, sering diubah sebelum cetak.
    - Level (1-7), provinsi, kab/kota. Edit via inline Select.
    - Kalau memberNumber tidak null: tampil mode baca + ikon kunci (lihat bawah).
 
-3. **Kredensial login** — jarang, tapi penting saat ada keluhan.
+3. **Kredensial login**, jarang, tapi penting saat ada keluhan.
    - hasPassword true: "Sandi sudah diatur" + tombol sekunder "Atur ulang sandi".
-   - hasPassword false: "Belum ada sandi — anggota belum bisa login" + tombol primary "Buat sandi awal".
+   - hasPassword false: "Belum ada sandi, anggota belum bisa login" + tombol primary "Buat sandi awal".
 
-4. **Data pendaftaran** — data lama yang sudah ada di ParticipantDetail.tsx.
+4. **Data pendaftaran**, data lama yang sudah ada di ParticipantDetail.tsx.
 
 Blok 1-3 di atas blok 4. Admin melihat status keanggotaan dalam 2 detik tanpa scroll.
 
 ### Interaksi "nomor sudah terbit = level/wilayah terkunci"
 
-Kontrak API baris 115 mengembalikan 409 FORBIDDEN dengan pesan "Nomor anggota sudah terbit. Level dan wilayah tidak bisa diubah." Kalau frontend cuma mengandalkan error ini, admin akan mencoba edit, submit, baru ditolak — friksi tidak perlu.
+Kontrak API baris 115 mengembalikan 409 FORBIDDEN dengan pesan "Nomor anggota sudah terbit. Level dan wilayah tidak bisa diubah." Kalau frontend cuma mengandalkan error ini, admin akan mencoba edit, submit, baru ditolak, friksi tidak perlu.
 
 Lakukan di frontend:
 
@@ -211,11 +211,11 @@ Lakukan di frontend:
 
     > Nomor anggota sudah terbit. Level dan wilayah tidak bisa diubah karena nomor memuat kode level + wilayah + tahun. Kalau ada kesalahan data, hubungi Ketua Divisi IT.
 
-  - Ikon kunci bukan satu-satunya penanda — teks menjelaskan mengapa terkunci. Memenuhi WCAG 1.4.1 (Use of Color) dan 3.3.2 (Labels or Instructions).
-  - **Jangan** pakai disabled pada elemen form — screen reader skip elemen disabled. Pakai teks statis + aria-describedby yang menjelaskan.
+  - Ikon kunci bukan satu-satunya penanda, teks menjelaskan mengapa terkunci. Memenuhi WCAG 1.4.1 (Use of Color) dan 3.3.2 (Labels or Instructions).
+  - **Jangan** pakai disabled pada elemen form, screen reader skip elemen disabled. Pakai teks statis + aria-describedby yang menjelaskan.
 - membershipStatus dan newPassword tetap bisa diedit walau nomor terbit (kontrak API baris 117). Pastikan UI tidak mengunci itu juga.
 
-### Reset sandi — konfirmasi
+### Reset sandi, konfirmasi
 
 Reset sandi mengubah akses orang lain. Konfirmasi dua langkah:
 
@@ -225,13 +225,13 @@ Reset sandi mengubah akses orang lain. Konfirmasi dua langkah:
    >
    > Sandi lama tidak akan berfungsi lagi. Berikan sandi baru kepada anggota melalui WhatsApp.
    >
-   > [Input sandi baru — min 8 karakter]
+   > [Input sandi baru, min 8 karakter]
    >
    > [Batal] [Simpan sandi baru]
 
 2. Setelah sukses: role="status" alert hijau "Sandi baru tersimpan." di atas blok kredensial. Tampilkan sandi baru satu kali dalam teks mono + tombol Salin (pola CopyButton di ParticipantDetail.tsx baris 308-332) supaya admin bisa langsung kirim via WA.
 
-Jangan pakai window.confirm — tidak bisa diakses keyboard dengan baik di beberapa browser, tidak bisa di-styling, dan tidak bisa menampung input sandi baru.
+Jangan pakai window.confirm, tidak bisa diakses keyboard dengan baik di beberapa browser, tidak bisa di-styling, dan tidak bisa menampung input sandi baru.
 
 ---
 
@@ -248,31 +248,31 @@ Route: /verifikasi/:nomor (server component, baca DB, tanpa sesi). Kontrak API b
 - Asal PW/PD + nama.
 - Provinsi, kab/kota.
 - Tanggal terbit nomor.
-- Status keanggotaan — badge berwarna + teks (bukan warna saja).
+- Status keanggotaan, badge berwarna + teks (bukan warna saja).
 - Nama Ketua Umum dan Sekjen (dari getPejabat() di lib/kta.ts baris 12).
 
 ### Wajib TIDAK tampil
 
 Kontrak API baris 166-167 sudah mengikat. Larangan:
 
-- NIK — meski ter-masked, jangan tampilkan sama sekali.
+- NIK, meski ter-masked, jangan tampilkan sama sekali.
 - Alamat (KTP maupun tinggal).
 - Nomor WhatsApp.
 - Path file KTP / foto KTP.
 - passwordHash.
 - ID internal (participantId, id dari DB).
 
-Pemindai QR harus percaya halaman ini karena datanya spesifik — kalau ada NIK, halaman jadi target doxxing. Tampilkan cukup data untuk membedakan satu anggota dari anggota lain, tanpa membuka data pribadi.
+Pemindai QR harus percaya halaman ini karena datanya spesifik, kalau ada NIK, halaman jadi target doxxing. Tampilkan cukup data untuk membedakan satu anggota dari anggota lain, tanpa membuka data pribadi.
 
 ### Meyakinkan dalam kurang dari 3 detik
 
 Orang yang scan QR di kartu fisik butuh jawaban instan: ini kartu asli atau palsu. Tiga elemen yang harus terlihat dalam satu layar ponsel tanpa scroll:
 
-1. **Banner atas hijau penuh** — pakai --color-primary, teks putih, ikon centang: "Kartu Tanda Anggota IKADI — TERVERIFIKASI". Kalau nomor tidak ditemukan atau format salah, banner berubah merah --color-danger: "Kartu Tidak Dikenali" (status HTTP tetap 404 sesuai kontrak API baris 169).
-2. **Foto pas anggota** — kalau photoPath tidak null, tampilkan. Wajah adalah verifikator paling cepat: pemindai membandingkan wajah di kartu fisik dengan foto di halaman. Ini bukan data pribadi sensitif — foto ini memang dipakai di kartu fisik.
-3. **Nama + nomor dalam font besar** — text-2xl font-bold untuk nama, font-mono text-lg untuk nomor. Dua data ini yang dicocokkan pemindai dengan kartu fisik.
+1. **Banner atas hijau penuh**, pakai --color-primary, teks putih, ikon centang: "Kartu Tanda Anggota IKADI, TERVERIFIKASI". Kalau nomor tidak ditemukan atau format salah, banner berubah merah --color-danger: "Kartu Tidak Dikenali" (status HTTP tetap 404 sesuai kontrak API baris 169).
+2. **Foto pas anggota**, kalau photoPath tidak null, tampilkan. Wajah adalah verifikator paling cepat: pemindai membandingkan wajah di kartu fisik dengan foto di halaman. Ini bukan data pribadi sensitif, foto ini memang dipakai di kartu fisik.
+3. **Nama + nomor dalam font besar**, text-2xl font-bold untuk nama, font-mono text-lg untuk nomor. Dua data ini yang dicocokkan pemindai dengan kartu fisik.
 
-Sisanya (level, asal, tanggal, status, pejabat) di bawah lipatan pertama — penting untuk audit manual, tidak untuk keputusan 3 detik.
+Sisanya (level, asal, tanggal, status, pejabat) di bawah lipatan pertama, penting untuk audit manual, tidak untuk keputusan 3 detik.
 
 ### Copy konkret (Bahasa Indonesia)
 
@@ -280,9 +280,9 @@ Sisanya (level, asal, tanggal, status, pejabat) di bawah lipatan pertama — pen
 
 ```
 [Hijau banner + ikon centang]
-Kartu Tanda Anggota IKADI — TERVERIFIKASI
+Kartu Tanda Anggota IKADI, TERVERIFIKASI
 
-[Foto pas — bulat, 96px]
+[Foto pas, bulat, 96px]
 
 Ust. Ahmad Fauzi, S.Pd.I.
 
@@ -312,17 +312,17 @@ Kartu Tidak Dikenali
 Nomor X.XX.XX.XX.XXXX tidak terdaftar dalam sistem keanggotaan IKADI.
 
 Kemungkinan penyebab:
-- Nomor salah ketik — periksa kembali angka di kartu.
+- Nomor salah ketik, periksa kembali angka di kartu.
 - Kartu palsu atau dipalsukan.
 - Kartu sudah dicabut oleh IKADI.
 
 Jika Anda yakin nomor ini valid, laporkan ke admin IKADI
 melalui WhatsApp resmi IKADI.
 
-[Nomor WhatsApp resmi — dari SiteFooter]
+[Nomor WhatsApp resmi, dari SiteFooter]
 ```
 
-Jangan sebut "kartu palsu" sebagai satu-satunya kemungkinan — bisa jadi salah ketik. Tapi jangan juga menghapus kemungkinan itu — pemindai perlu tahu bahwa sistem ini bisa mendeteksi pemalsuan.
+Jangan sebut "kartu palsu" sebagai satu-satunya kemungkinan, bisa jadi salah ketik. Tapi jangan juga menghapus kemungkinan itu, pemindai perlu tahu bahwa sistem ini bisa mendeteksi pemalsuan.
 
 ---
 
@@ -333,35 +333,35 @@ Khusus layar-layar baru (login, kartu, verifikasi, blok keanggotaan di admin).
 ### Kontras (1.4.3, 1.4.11)
 
 - [ ] Semua teks di atas --color-surface pakai --color-ink atau --color-ink-muted (8.6:1 di putih, aman).
-- [ ] Teks di atas --color-primary (#166534) selalu putih — kontras sekitar 8:1. Jangan pakai --color-accent (#D4AF37) di atas hijau (gagal 1.4.3).
-- [ ] Teks di atas --color-primary-soft pakai --color-primary-ink (8.8:1) — untuk badge AKTIF.
-- [ ] Border input selalu --color-control-border (4.6:1, WCAG 1.4.11), bukan --color-border (1.5:1 — hanya dekoratif). Token di globals.css baris 17-22.
+- [ ] Teks di atas --color-primary (#166534) selalu putih, kontras sekitar 8:1. Jangan pakai --color-accent (#D4AF37) di atas hijau (gagal 1.4.3).
+- [ ] Teks di atas --color-primary-soft pakai --color-primary-ink (8.8:1), untuk badge AKTIF.
+- [ ] Border input selalu --color-control-border (4.6:1, WCAG 1.4.11), bukan --color-border (1.5:1, hanya dekoratif). Token di globals.css baris 17-22.
 - [ ] Banner verifikasi hijau: teks putih di atas #166534, bukan emas.
 - [ ] Banner verifikasi merah: teks putih di atas #B91C1C, kontras sekitar 7:1.
 
 ### Target sentuh (2.5.8)
 
-- [ ] Semua tombol dan link interaktif min-h-11 (44px) — di ponsel. Sudah jadi standar di ParticipantForm.tsx. Terapkan di login, kartu, admin blok keanggotaan.
+- [ ] Semua tombol dan link interaktif min-h-11 (44px), di ponsel. Sudah jadi standar di ParticipantForm.tsx. Terapkan di login, kartu, admin blok keanggotaan.
 - [ ] Tombol Salin nomor anggota min-h-11 di mobile, boleh md:h-9 di desktop (pola CopyButton baris 324).
-- [ ] Link anchor di ErrorSummary punya padding cukup — jangan cuma teks underline tipis.
+- [ ] Link anchor di ErrorSummary punya padding cukup, jangan cuma teks underline tipis.
 
 ### Label dan nama aksesibel (1.1.1, 3.3.2, 4.1.2)
 
-- [ ] Setiap input punya label dengan for. Bungkus dengan Field (DESIGN.md bagian 8 item 3) — jangan raw input.
+- [ ] Setiap input punya label dengan for. Bungkus dengan Field (DESIGN.md bagian 8 item 3), jangan raw input.
 - [ ] Ikon kunci di field level/wilayah admin: aria-hidden="true", makna disampaikan teks di bawahnya.
-- [ ] Foto pas di halaman verifikasi: alt="[Nama lengkap]" — bukan alt="foto".
-- [ ] Logo IKADI: role="img" aria-label="Logo IKADI" — sudah di Logo.tsx, pertahankan.
+- [ ] Foto pas di halaman verifikasi: alt="[Nama lengkap]", bukan alt="foto".
+- [ ] Logo IKADI: role="img" aria-label="Logo IKADI", sudah di Logo.tsx, pertahankan.
 - [ ] QR di kartu anggota: alt="Kode QR verifikasi keanggotaan".
 
 ### Fokus (2.4.7, 2.4.11, 2.4.13)
 
-- [ ] :focus-visible global di globals.css baris 54-58 sudah benar (outline biru 2px offset 2px) — jangan timpa.
+- [ ] :focus-visible global di globals.css baris 54-58 sudah benar (outline biru 2px offset 2px), jangan timpa.
 - [ ] Di atas banner hijau/merah: focus-visible:outline-white focus-visible:outline-offset-2 (sudah diatur di mockup admin-detail.html baris 25).
 - [ ] Tidak ada outline: none atau focus:outline-none di mana pun.
 - [ ] Urutan DOM = urutan visual di semua halaman baru (2.4.3).
 - [ ] Setelah login gagal, fokus pindah ke ErrorSummary (pola focusOnMount di ParticipantForm.tsx baris 702).
 - [ ] Setelah simpan sandi baru di admin, fokus pindah ke alert sukses.
-- [ ] Tidak ada focus trap — semua dialog inline (bukan modal), Tab bebas keluar.
+- [ ] Tidak ada focus trap, semua dialog inline (bukan modal), Tab bebas keluar.
 
 ### Error dan status announcement (3.3.1, 3.3.3, 4.1.3)
 
@@ -389,8 +389,8 @@ Khusus layar-layar baru (login, kartu, verifikasi, blok keanggotaan di admin).
 
 - [ ] NIK login: inputMode="numeric", sanitasi non-digit di onChange, hint counter X/16 digit.
 - [ ] Password login: autocomplete="current-password". Password baru: autocomplete="new-password".
-- [ ] Tidak ada validasi saat mengetik (mode onSubmit di RHF, reValidateMode onChange — sudah di ParticipantForm.tsx baris 211-212). Pertahankan di login dan reset sandi.
-- [ ] Filter admin tidak auto-submit (3.2.2) — sudah diatur di AdminParticipants.tsx pola lama.
+- [ ] Tidak ada validasi saat mengetik (mode onSubmit di RHF, reValidateMode onChange, sudah di ParticipantForm.tsx baris 211-212). Pertahankan di login dan reset sandi.
+- [ ] Filter admin tidak auto-submit (3.2.2), sudah diatur di AdminParticipants.tsx pola lama.
 
 ---
 
@@ -402,7 +402,7 @@ Khusus layar-layar baru (login, kartu, verifikasi, blok keanggotaan di admin).
 
 **Kenapa:** Tanpa ini, login anggota tidak punya sumber kredensial. PATCH newPassword dari admin hanya bisa mengatur ulang, tidak bisa mendaftarkan sandi pertama.
 
-**Dampak kalau diabaikan:** Fitur login anggota tidak bisa rilis. Atau lebih buruk — frontend memaksa admin mengisi sandi untuk semua anggota satu per satu secara manual, membunuh nilai fitur "anggota bisa register sendiri".
+**Dampak kalau diabaikan:** Fitur login anggota tidak bisa rilis. Atau lebih buruk, frontend memaksa admin mengisi sandi untuk semua anggota satu per satu secara manual, membunuh nilai fitur "anggota bisa register sendiri".
 
 ### 2. Ganti input bebas provinsi/kabupaten di langkah 1 dengan dropdown berantai
 
@@ -410,13 +410,13 @@ Khusus layar-layar baru (login, kartu, verifikasi, blok keanggotaan di admin).
 
 **Kenapa:** Nomor anggota (L.WW.DD.YY.NNNN) memakai provinceCode + regencyCode dari master wilayah (kontrak API baris 188). Data bebas dari form sekarang tidak bisa dipakai untuk menerbitkan nomor tanpa admin merapikan manual satu per satu.
 
-**Dampak kalau diabaikan:** Admin jadi bottleneck — setiap pendaftar baru mesti dirapikan wilayahnya sebelum bisa dicetak. Pada 100 pendaftar, ini 100 sesi edit manual. Trial kuota 10 masih terlihat aman tapi begitu naik kuota, alur jadi macet.
+**Dampak kalau diabaikan:** Admin jadi bottleneck, setiap pendaftar baru mesti dirapikan wilayahnya sebelum bisa dicetak. Pada 100 pendaftar, ini 100 sesi edit manual. Trial kuota 10 masih terlihat aman tapi begitu naik kuota, alur jadi macet.
 
 ### 3. Selesaikan halaman verifikasi QR publik sebagai satu unit utuh
 
-**Apa:** Route /verifikasi/:nomor — server component, layout banner + foto + nama + nomor + detail + pejabat, sesuai spesifikasi bagian 6 di atas.
+**Apa:** Route /verifikasi/:nomor, server component, layout banner + foto + nama + nomor + detail + pejabat, sesuai spesifikasi bagian 6 di atas.
 
-**Kenapa:** QR di KTA fisik menunjuk ke sini. Kartu fisik dicetak tanpa halaman ini berarti QR mati. Anggota pertama yang menerima kartu akan scan QR-nya sendiri dan menemukan 404 — momen kredibilitas hancur di depan pengguna paling termotivasi.
+**Kenapa:** QR di KTA fisik menunjuk ke sini. Kartu fisik dicetak tanpa halaman ini berarti QR mati. Anggota pertama yang menerima kartu akan scan QR-nya sendiri dan menemukan 404, momen kredibilitas hancur di depan pengguna paling termotivasi.
 
 **Dampak kalau diabaikan:** Kartu tercetak (dari 10 kuota trial) tidak bisa diverifikasi publik. Kesannya IKADI menerbitkan kartu tanpa sistem, padahal sistemnya sudah setengah jadi.
 
@@ -424,7 +424,7 @@ Khusus layar-layar baru (login, kartu, verifikasi, blok keanggotaan di admin).
 
 **Apa:** Di halaman "Kartu Saya" anggota, tampilkan kartu digital + QR, tanpa tombol "Unduh PDF" atau "Cetak".
 
-**Kenapa:** Kuota cetak 10 adalah batas trial. Setiap cetak memakai kuota. Kalau anggota bisa memicu cetak, kuota habis dalam 10 anggota pertama — tidak terasa seperti trial, jadi kekacauan.
+**Kenapa:** Kuota cetak 10 adalah batas trial. Setiap cetak memakai kuota. Kalau anggota bisa memicu cetak, kuota habis dalam 10 anggota pertama, tidak terasa seperti trial, jadi kekacauan.
 
 **Dampak kalau diabaikan:** Kuota habis dalam hitungan hari setelah rilis. Admin tidak bisa mencetak kartu untuk anggota prioritas. Trial gagal menunjukkan alur end-to-end.
 
@@ -434,16 +434,16 @@ Khusus layar-layar baru (login, kartu, verifikasi, blok keanggotaan di admin).
 
 **Kenapa:** Untuk mengedit level/wilayah di blok keanggotaan admin, frontend butuh kode (untuk pre-select Select), bukan nama. Tanpa kode, admin melihat "PW IKADI DIY" tapi dropdown butuh kode 16 untuk memilih provinsi.
 
-**Dampak kalau diabaikan:** Edit level/wilayah di admin tidak bisa di-pre-select. Admin mesti pilih ulang dari nol setiap kali buka halaman — friksi kecil tapi 100 kali sehari.
+**Dampak kalau diabaikan:** Edit level/wilayah di admin tidak bisa di-pre-select. Admin mesti pilih ulang dari nol setiap kali buka halaman, friksi kecil tapi 100 kali sehari.
 
 ---
 
 ## Catatan riset
 
-Pencarian web dilakukan untuk bagian 2 (pola registrasi) dan bagian 6 (verifikasi publik). Tidak ditemukan studi konversi spesifik untuk konteks organisasi keagamaan Indonesia — belum ada data kuantitatif untuk IKADI sendiri. Rekomendasi didasarkan pada:
+Pencarian web dilakukan untuk bagian 2 (pola registrasi) dan bagian 6 (verifikasi publik). Tidak ditemukan studi konversi spesifik untuk konteks organisasi keagamaan Indonesia, belum ada data kuantitatif untuk IKADI sendiri. Rekomendasi didasarkan pada:
 
 - Pola umum aplikasi kependudukan dan keanggotaan Indonesia (PeduliLindungi, BPJS, DJP Online).
 - Kontrak API dan kode existing di repo ini.
 - WCAG 2.2 AA dan DESIGN.md.
 
-Semua keputusan copy konkret (bagian 3, 4, 6) adalah usulan — perlu review Ketua Divisi IT dan Sekjen sebelum dirilis, terutama pesan "kartu palsu" di halaman verifikasi yang berdampak reputasi.
+Semua keputusan copy konkret (bagian 3, 4, 6) adalah usulan, perlu review Ketua Divisi IT dan Sekjen sebelum dirilis, terutama pesan "kartu palsu" di halaman verifikasi yang berdampak reputasi.

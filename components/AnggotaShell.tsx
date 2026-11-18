@@ -1,11 +1,12 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { AppFrame, AnggotaItems } from "@/components/AppFrame"
 
 export function AnggotaShell({ children }: { children: React.ReactNode }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [busy, setBusy] = useState(false)
   const [name, setName] = useState<string | undefined>(undefined)
   // null = belum tahu. Menu pengurus baru dirender setelah status pasti,
@@ -19,6 +20,12 @@ export function AnggotaShell({ children }: { children: React.ReactNode }) {
         else if (r.ok) {
           const b = await r.json().catch(() => null)
           if (b?.data?.fullName) setName(b.data.fullName)
+          // Peserta hasil impor wajib melengkapi profil dulu. Gate di sini, bukan
+          // per halaman, supaya semua menu ikut terkunci.
+          if (b?.data?.needsProfileCompletion === true && !pathname.startsWith("/anggota/lengkapi")) {
+            router.replace("/anggota/lengkapi")
+            return
+          }
           const levelLabel = String(b?.data?.levelLabel ?? "")
           setPengurus({
             aktif: b?.data?.isPengurus === true,
@@ -30,7 +37,7 @@ export function AnggotaShell({ children }: { children: React.ReactNode }) {
         }
       })
       .catch(() => setPengurus({ aktif: false, label: "Akun anggota" }))
-  }, [router])
+  }, [router, pathname])
 
   const logout = async () => {
     setBusy(true)

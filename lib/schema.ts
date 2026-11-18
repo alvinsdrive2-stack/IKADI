@@ -166,3 +166,36 @@ export const loginSchema = z.object({
   username: z.string().trim().min(1, "Username wajib diisi").max(100),
   password: z.string().min(1, "Password wajib diisi").max(200),
 });
+
+/**
+ * Pelengkapan profil untuk peserta hasil impor (`needsProfileCompletion`).
+ * Field yang wajib di sini sengaja hanya yang tidak ada di sumber impor:
+ * tempat lahir, alamat, pekerjaan. Wilayah dan tanggal lahir sudah terisi.
+ */
+export const profileCompletionSchema = z.object({
+  birthPlace: requiredText("Tempat lahir", 120),
+  addressKtp: requiredText("Alamat sesuai KTP", 5000),
+  addressCurrent: optionalText(5000, "Alamat tinggal saat ini"),
+  addressSameAsKtp: z.preprocess((v) => (typeof v === "boolean" ? v : false), z.boolean()),
+  occupation: requiredText("Pekerjaan", 150),
+  /** Sandi baru; wajib karena sandi impor bersifat sementara. */
+  password: z
+    .string({ error: "Sandi baru wajib diisi" })
+    .min(8, "Sandi baru minimal 8 karakter")
+    .max(200, "Sandi baru maksimal 200 karakter"),
+}).superRefine((v, ctx) => {
+  if (!v.addressSameAsKtp && !v.addressCurrent) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["addressCurrent"],
+      message: "Alamat tinggal wajib diisi jika berbeda dengan alamat KTP",
+    });
+  }
+}).transform((v) => ({
+  ...v,
+  addressCurrent: v.addressSameAsKtp ? v.addressKtp : v.addressCurrent,
+  // Kolom lama ikut diisi seperti alur pendaftaran.
+  address: v.addressSameAsKtp ? v.addressKtp : (v.addressCurrent ?? v.addressKtp),
+}));
+
+export type ProfileCompletionData = z.output<typeof profileCompletionSchema>;

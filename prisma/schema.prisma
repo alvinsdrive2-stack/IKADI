@@ -105,6 +105,11 @@ model Participant {
   memberNumberIssuedAt    DateTime?        @map("member_number_issued_at")
   membershipStatus        MembershipStatus @default(AKTIF) @map("membership_status")
 
+  /// Import dari sistem lain tanpa data lengkap (mis. MUNAS): true berarti
+  /// anggota wajib melengkapi profil dan membuat sandi baru sebelum memakai
+  /// layanan. Kolom wajib lain diisi string kosong, bukan data karangan.
+  needsProfileCompletion Boolean          @default(false) @map("needs_profile_completion")
+
   /// Riwayat kartu. Kolom `memberNumber` di atas = cermin kartu yang isActive.
   memberCards             MemberCard[]
 

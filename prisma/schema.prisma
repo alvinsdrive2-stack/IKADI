@@ -118,6 +118,9 @@ model Participant {
   /// Riwayat kartu. Kolom `memberNumber` di atas = cermin kartu yang isActive.
   memberCards             MemberCard[]
 
+  /// Riwayat perubahan level, wilayah, status, dan peran pengurus.
+  membershipHistory       MembershipHistory[]
+
   @@index([createdAt], map: "idx_participants_created_at")
   @@index([fullName], map: "idx_participants_full_name")
   @@index([provinceCode, regencyCode], map: "idx_participants_region")
@@ -145,6 +148,27 @@ model DataSource {
   participants Participant[]
 
   @@map("data_sources")
+}
+
+/// Riwayat perubahan keanggotaan: level, wilayah, status, dan peran pengurus.
+/// Nomor anggota sengaja tidak dicatat di sini karena sudah punya riwayat
+/// sendiri di `member_cards`.
+model MembershipHistory {
+  id            BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  participantId BigInt   @map("participant_id") @db.UnsignedBigInt
+  /// Jenis perubahan: "level", "wilayah", "status", "pengurus".
+  field         String   @db.VarChar(20)
+  oldValue      String?  @map("old_value") @db.VarChar(120)
+  newValue      String?  @map("new_value") @db.VarChar(120)
+  /// Siapa yang mengubah: admin atau pengurus, beserta id-nya.
+  actorKind     String   @map("actor_kind") @db.VarChar(20)
+  actorId       String?  @map("actor_id") @db.VarChar(20)
+  changedAt     DateTime @default(now()) @map("changed_at")
+
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@index([participantId, changedAt], map: "idx_membership_history_participant")
+  @@map("membership_histories")
 }
 
 model Admin {

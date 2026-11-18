@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requirePengurus } from "@/lib/auth";
 import { inScope, appointableLevels } from "@/lib/pengurus";
-import { getMembership, updateMembership } from "@/lib/membership";
+import { getMembership, getMembershipHistory, updateMembership } from "@/lib/membership";
 import { jsonError } from "@/lib/http";
 import { logRouteError } from "@/lib/route-log";
 
@@ -49,7 +49,8 @@ export async function GET(
 
   const r = await getMembership(BigInt(raw));
   if (!r.ok) return jsonError(r.status, r.code, r.message);
-  return Response.json({ ok: true, data: r.data });
+  const history = await getMembershipHistory(BigInt(raw));
+  return Response.json({ ok: true, data: { ...r.data, history } });
 }
 
 /** PATCH /api/anggota/pengurus/anggota/[id]/membership, ubah keanggotaan. */
@@ -78,6 +79,7 @@ export async function PATCH(
 
   const r = await updateMembership(BigInt(raw), body, {
     allowedLevels: appointableLevels(auth.actor),
+    actor: { kind: "pengurus", id: auth.actor.participantId },
   });
   if (!r.ok) {
     return jsonError(

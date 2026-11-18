@@ -39,6 +39,18 @@ type Membership = {
   isPengurus: boolean;
   eligible: boolean;
   ineligibleReason: string | null;
+  /** Jejak perubahan level, wilayah, status, dan peran pengurus. */
+  history?: MembershipHistoryEntry[];
+};
+
+type MembershipHistoryEntry = {
+  id: string;
+  field: string;
+  oldValue: string | null;
+  newValue: string | null;
+  actorKind: string;
+  actorId: string | null;
+  changedAt: string;
 };
 
 type State =
@@ -144,7 +156,9 @@ export function MembershipAdmin({
   const numberIssued = !!d.memberNumber;
   // Peran pengurus hanya berlaku untuk level 1..3.
   const bolehPengurus = form.levelCode >= 1 && form.levelCode <= PENGURUS_MAX_LEVEL;
-  const locked = numberIssued; // nomor terbit -> level & wilayah tak bisa diubah
+  // Level dan wilayah tetap bisa diubah walau nomor sudah terbit. Perubahan
+  // dicatat ke riwayat, dan nomor anggota sendiri tidak ikut berubah.
+  const locked = false;
 
   const save = async (patch: Record<string, unknown>, successText: string) => {
     setSaving(true);
@@ -250,7 +264,7 @@ export function MembershipAdmin({
 
         <form onSubmit={submitCore} noValidate className="space-y-6">
           <div className="grid gap-5 md:grid-cols-2">
-            <Field id="m-level" label="Jenjang" required hint={locked ? "Terpaku karena nomor sudah terbit." : undefined}>
+            <Field id="m-level" label="Jenjang" required hint={numberIssued ? "Nomor anggota sudah terbit; perubahan jenjang akan tercatat di riwayat." : undefined}>
               <SearchSelect
                 id="m-level"
                 options={levelOptions}
@@ -270,7 +284,7 @@ export function MembershipAdmin({
               />
             </Field>
 
-            <Field id="m-province" label="Provinsi" hint={locked ? "Terpaku karena nomor sudah terbit." : undefined}>
+            <Field id="m-province" label="Provinsi" hint={numberIssued ? "Perubahan wilayah akan tercatat di riwayat." : undefined}>
               <SearchSelect
                 id="m-province"
                 options={PROVINCE_OPTIONS}
@@ -283,7 +297,7 @@ export function MembershipAdmin({
               />
             </Field>
 
-            <Field id="m-regency" label="Kabupaten/Kota" hint={locked ? "Terpaku karena nomor sudah terbit." : undefined}>
+            <Field id="m-regency" label="Kabupaten/Kota" hint={numberIssued ? "Perubahan wilayah akan tercatat di riwayat." : undefined}>
               <SearchSelect
                 id="m-regency"
                 options={regencyOptions(form.provinceCode)}
@@ -308,11 +322,9 @@ export function MembershipAdmin({
               <span className="min-w-0">
                 <span className="block text-sm font-medium text-ink">Jadikan pengurus</span>
                 <span className="mt-0.5 block text-xs leading-relaxed text-ink-muted">
-                  {locked
-                    ? "Terkunci karena nomor anggota sudah terbit. Peserta tetap anggota biasa."
-                    : bolehPengurus
-                      ? "Aktif hanya untuk level Pusat, Wilayah, atau Daerah. Level lain tetap anggota biasa."
-                      : "Pilih level Pusat, Wilayah, atau Daerah dulu untuk mengaktifkan."}
+                  {bolehPengurus
+                    ? "Aktif hanya untuk level Pusat, Wilayah, atau Daerah. Level lain tetap anggota biasa."
+                    : "Pilih level Pusat, Wilayah, atau Daerah dulu untuk mengaktifkan."}
                 </span>
               </span>
             </label>
@@ -359,6 +371,25 @@ export function MembershipAdmin({
           </div>
         </div>
 
+        {d.history && d.history.length > 0 && (
+          <div className="border-t border-border pt-5">
+            <h3 className="text-sm font-semibold text-ink">Riwayat perubahan</h3>
+            <ul className="mt-3 space-y-2 text-sm">
+              {d.history.map((h) => (
+                <li key={h.id} className="flex flex-wrap items-baseline gap-x-2 text-ink-muted">
+                  <span className="font-medium text-ink">{historyLabel(h.field)}</span>
+                  <span>
+                    {h.oldValue ?? "-"} menjadi {h.newValue ?? "-"}
+                  </span>
+                  <span className="text-xs">
+                    oleh {h.actorKind === "admin" ? "admin" : "pengurus"} · {formatDate(h.changedAt)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {d.eligible && (
           <p className="text-sm leading-relaxed text-ink-muted">
             <Link
@@ -373,6 +404,22 @@ export function MembershipAdmin({
       </div>
     </section>
   );
+}
+
+/** Nama field riwayat dalam bahasa yang dibaca admin. */
+function historyLabel(field: string): string {
+  switch (field) {
+    case "level":
+      return "Jenjang";
+    case "wilayah":
+      return "Wilayah";
+    case "status":
+      return "Status";
+    case "pengurus":
+      return "Peran pengurus";
+    default:
+      return field;
+  }
 }
 
 function Field({

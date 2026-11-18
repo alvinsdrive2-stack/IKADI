@@ -1,5 +1,10 @@
 import { requireAdmin } from "@/lib/auth";
-import { getMembership, updateMembership, type MembershipResult } from "@/lib/membership";
+import {
+  getMembership,
+  getMembershipHistory,
+  updateMembership,
+  type MembershipResult,
+} from "@/lib/membership";
 import { jsonError } from "@/lib/http";
 
 /** Petakan hasil lib ke Response, bentuk body identik dengan implementasi lama. */
@@ -26,7 +31,10 @@ export async function GET(
     return jsonError(404, "NOT_FOUND", "Data peserta tidak ditemukan");
   }
 
-  return respond(await getMembership(BigInt(raw)));
+  const result = await getMembership(BigInt(raw));
+  if (!result.ok) return respond(result);
+  const history = await getMembershipHistory(BigInt(raw));
+  return Response.json({ ok: true, data: { ...result.data, history } });
 }
 
 export async function PATCH(
@@ -48,5 +56,9 @@ export async function PATCH(
     return jsonError(400, "VALIDATION", "Body harus JSON valid");
   }
 
-  return respond(await updateMembership(BigInt(raw), body));
+  return respond(
+    await updateMembership(BigInt(raw), body, {
+      actor: { kind: "admin", id: auth.session.adminId ?? null },
+    }),
+  );
 }

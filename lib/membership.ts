@@ -3,6 +3,7 @@
  * dan route pengurus supaya aturannya tunggal, tidak ada dua implementasi.
  * Hasil berbentuk union `ok` supaya route cukup memetakan ke Response.
  */
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { LEVEL_LABELS, isValidLevel } from "@/lib/member-number";
@@ -108,6 +109,38 @@ export type MembershipResult =
 
 export type UpdateResult = MembershipResult;
 
+/** Riwayat perubahan keanggotaan, terbaru dulu. */
+export async function getMembershipHistory(id: bigint, take = 30) {
+  try {
+    const rows = await prisma.membershipHistory.findMany({
+      where: { participantId: id },
+      orderBy: { changedAt: "desc" },
+      take,
+      select: {
+        id: true,
+        field: true,
+        oldValue: true,
+        newValue: true,
+        actorKind: true,
+        actorId: true,
+        changedAt: true,
+      },
+    });
+    return rows.map((r) => ({
+      id: String(r.id),
+      field: r.field,
+      oldValue: r.oldValue,
+      newValue: r.newValue,
+      actorKind: r.actorKind,
+      actorId: r.actorId,
+      changedAt: r.changedAt.toISOString(),
+    }));
+  } catch (err) {
+    logRouteError("membership history read", err);
+    return [];
+  }
+}
+
 export async function getMembership(id: bigint): Promise<MembershipResult> {
   let p: MembershipRow | null;
   try {
@@ -137,7 +170,11 @@ export async function getMembership(id: bigint): Promise<MembershipResult> {
 export async function updateMembership(
   id: bigint,
   patch: unknown,
-  opts?: { allowedLevels?: number[] },
+  opts?: {
+    allowedLevels?: number[];
+    /** Siapa yang mengubah; dipakai untuk riwayat keanggotaan. */
+    actor?: { kind: "admin" | "pengurus"; id: string | null };
+  },
 ): Promise<UpdateResult> {
   const b = (patch ?? {}) as Record<string, unknown>;
 
@@ -226,16 +263,9 @@ export async function updateMembership(
     return { ok: false, status: 404, code: "NOT_FOUND", message: "Data peserta tidak ditemukan" };
   }
 
-  // Nomor terbit: level & wilayah dikunci permanen.
-  const changesWilayah = wantsLevel || wantsProvince || wantsRegency;
-  if (current.memberNumber && changesWilayah) {
-    return {
-      ok: false,
-      status: 409,
-      code: "FORBIDDEN",
-      message: "Nomor anggota sudah terbit. Level dan wilayah tidak bisa diubah.",
-    };
-  }
+  // Level & wilayah boleh diubah walau nomor sudah terbit. Perubahan dicatat
+  // ke `membership_histories` supaya jejaknya tidak hilang; nomor anggota
+  // sendiri tidak ikut berubah.
 
   // --- Validasi wilayah di master (baru kalau pasangan diubah) ---
   let provinceCode = current.provinceCode;
@@ -306,6 +336,44 @@ export async function updateMembership(
       code: "SERVER_ERROR",
       message: "Layanan sedang tidak tersedia. Coba lagi nanti.",
     };
+  }
+
+  // Jejak audit: satu baris per field yang benar-benar berubah nilainya.
+  const history: Prisma.MembershipHistoryCreateManyInput[] = [];
+  const actorKind = opts?.actor?.kind ?? "admin";
+  const actorId = opts?.actor?.id ?? null;
+  const pushHistory = (field: string, before: string | null, after: string | null) => {
+    if (before === after) return;
+    history.push({
+      participantId: id,
+      field,
+      oldValue: before,
+      newValue: after,
+      actorKind,
+      actorId,
+    });
+  };
+  if (wantsLevel) pushHistory("level", String(current.levelCode), String(updated.levelCode));
+  if (wantsProvince && wantsRegency) {
+    pushHistory(
+      "wilayah",
+      `${current.provinceCode ?? "-"}.${current.regencyCode ?? "-"}`,
+      `${updated.provinceCode ?? "-"}.${updated.regencyCode ?? "-"}`,
+    );
+  }
+  if ("membershipStatus" in b && b.membershipStatus) {
+    pushHistory("status", current.membershipStatus, updated.membershipStatus);
+  }
+  if ("isPengurus" in b && typeof b.isPengurus === "boolean") {
+    pushHistory("pengurus", String(current.isPengurus), String(updated.isPengurus));
+  }
+  if (history.length > 0) {
+    try {
+      await prisma.membershipHistory.createMany({ data: history });
+    } catch (err) {
+      // Riwayat gagal dicatat tidak boleh membatalkan perubahan yang sudah sah.
+      logRouteError("membership history", err);
+    }
   }
 
   const wilayah = await loadWilayah(updated);

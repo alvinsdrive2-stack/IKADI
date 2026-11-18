@@ -4,7 +4,7 @@ import { AdminShell } from "@/components/AdminShell";
 import { readAdminSession } from "@/lib/auth";
 
 export const metadata = {
-  title: "Admin, Pendataan KTA IKADI",
+  title: "Admin | Pendataan KTA IKADI",
 };
 
 export const instant = false;

@@ -3,7 +3,7 @@ import { KtaOfficialsAdmin } from "@/components/KtaOfficialsAdmin";
 import { PageBanner } from "@/components/PageBanner";
 
 export const metadata: Metadata = {
-  title: "Nama pejabat KTA, Admin IKADI",
+  title: "Nama pejabat KTA | Admin IKADI",
 };
 
 export default function KtaPejabatPage() {

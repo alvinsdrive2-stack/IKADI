@@ -8,7 +8,7 @@ import { getMemberCard } from "@/lib/queries";
 import { displayMemberNumber } from "@/lib/member-number";
 
 export const metadata: Metadata = {
-  title: "Verifikasi KTA, IKADI",
+  title: "Verifikasi KTA | IKADI",
 };
 
 // Nomor dibaca dari params di server; tanpa static shell.

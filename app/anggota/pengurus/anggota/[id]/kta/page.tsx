@@ -4,7 +4,7 @@ import { readPengurus } from "@/lib/auth";
 import { appointableLevels } from "@/lib/pengurus";
 import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Cetak KTA, Pengurus IKADI" };
+export const metadata: Metadata = { title: "Cetak KTA | Pengurus IKADI" };
 
 export default async function PengurusKtaPage({
   params,

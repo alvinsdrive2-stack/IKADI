@@ -4,7 +4,7 @@ import { ParticipantForm } from "@/components/ParticipantForm";
 import { AuthShell } from "@/components/layout/AuthShell";
 
 export const metadata: Metadata = {
-  title: "Daftar Anggota, Pendataan KTA IKADI",
+  title: "Daftar Anggota | Pendataan KTA IKADI",
   description: "Formulir pendataan data peserta KTA IKADI.",
 };
 

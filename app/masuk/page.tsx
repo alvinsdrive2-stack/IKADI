@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { AuthShell } from "@/components/layout/AuthShell";
 import { MasukForm } from "@/components/MasukForm";
 
-export const metadata: Metadata = { title: "Masuk, Pendataan KTA IKADI" };
+export const metadata: Metadata = { title: "Masuk | Pendataan KTA IKADI" };
 
 export default function MasukPage() {
   return (

@@ -17,7 +17,7 @@ import { LogoMark } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "Pendataan KTA IKADI, Portal Layanan Keanggotaan",
+  title: "Pendataan KTA IKADI | Portal Layanan Keanggotaan",
   description:
     "Portal resmi pendataan, verifikasi, dan penerbitan Kartu Tanda Anggota IKADI. Satu akun untuk anggota dan pengurus, dengan kartu digital ber-QR.",
 };

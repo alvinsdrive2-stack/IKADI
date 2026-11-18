@@ -4,7 +4,7 @@ import { AutoFocusH1 } from "@/components/AutoFocusH1";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 
 export const metadata: Metadata = {
-  title: "Berhasil, Pendataan KTA IKADI",
+  title: "Berhasil | Pendataan KTA IKADI",
 };
 
 export default function SuksesPage() {

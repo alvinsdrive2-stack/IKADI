@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ParticipantDetail } from "@/components/ParticipantDetail";
 
 export const metadata: Metadata = {
-  title: "Detail Peserta, Admin KTA IKADI",
+  title: "Detail Peserta | Admin KTA IKADI",
 };
 
 // `id` dibaca di client component lewat prop ini (bukan di page) supaya page tidak

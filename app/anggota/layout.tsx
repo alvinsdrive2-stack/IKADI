@@ -1,7 +1,7 @@
 import { AnggotaShell } from "@/components/AnggotaShell";
 
 export const metadata = {
-  title: "Anggota, Dashboard IKADI",
+  title: "Anggota | Dashboard IKADI",
 };
 
 // Area ini butuh sesi (cookie) di guard pengurus, jadi tidak bisa dirender

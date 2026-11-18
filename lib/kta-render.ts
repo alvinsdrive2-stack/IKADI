@@ -131,9 +131,12 @@ function textSlot(
 
 async function photoDataUri(photoPath: string | null): Promise<string | null> {
   if (!photoPath) return null;
-  const abs = path.join(process.cwd(), "public", photoPath.replace(/^\//, ""));
   try {
-    const buf = await readFile(abs);
+    // Foto impor memakai URL absolut ke sistem sumber; foto lokal tetap dibaca
+    // dari `public/`.
+    const buf = /^https?:\/\//i.test(photoPath)
+      ? Buffer.from(await (await fetch(photoPath, { signal: AbortSignal.timeout(10_000) })).arrayBuffer())
+      : await readFile(path.join(process.cwd(), "public", photoPath.replace(/^\//, "")));
     // Foto apa pun di-resize supaya satori tidak menyeret gambar 5 MB.
     const jpg = await sharp(buf).resize(600, 785, { fit: "cover" }).jpeg({ quality: 88 }).toBuffer();
     return `data:image/jpeg;base64,${jpg.toString("base64")}`;

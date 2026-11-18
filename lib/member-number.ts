@@ -80,6 +80,11 @@ export function displayMemberNumber(stored: string): string {
 }
 
 export type IssueNumberInput = {
+  /**
+   * Level peserta. Tetap dipakai untuk digit pertama nomor, tapi TIDAK ikut
+   * menentukan serial: serial berjalan per wilayah + tahun supaya nomor yang
+   * sudah terbit tidak berubah ketika level peserta naik.
+   */
   levelCode: number;
   provinceCode: string;
   regencyCode: string;
@@ -102,23 +107,22 @@ export async function issueMemberNumber<Tx>(
   const client = tx as {
     memberNumberSequence: {
       upsert(args: {
-        where: { levelCode_provinceCode_regencyCode_year: IssueNumberInput };
-        create: IssueNumberInput & { lastSerial: number };
+        where: { provinceCode_regencyCode_year: Omit<IssueNumberInput, "levelCode"> };
+        create: Omit<IssueNumberInput, "levelCode"> & { lastSerial: number };
         update: { lastSerial: { increment: number } };
       }): Promise<{ lastSerial: number }>;
     };
   };
 
+  // Kunci sequence sengaja tanpa level: satu seri untuk satu wilayah + tahun.
+  const scope = {
+    provinceCode: input.provinceCode,
+    regencyCode: input.regencyCode,
+    year: input.year,
+  };
   const row = await client.memberNumberSequence.upsert({
-    where: {
-      levelCode_provinceCode_regencyCode_year: {
-        levelCode: input.levelCode,
-        provinceCode: input.provinceCode,
-        regencyCode: input.regencyCode,
-        year: input.year,
-      },
-    },
-    create: { ...input, lastSerial: SERIAL_FLOOR },
+    where: { provinceCode_regencyCode_year: scope },
+    create: { ...scope, lastSerial: SERIAL_FLOOR },
     update: { lastSerial: { increment: 1 } },
   });
 

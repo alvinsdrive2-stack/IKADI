@@ -181,13 +181,15 @@ model Regency {
 /// supaya NNNN berurutan tanpa bentrok saat dua admin mencetak bersamaan.
 model MemberNumberSequence {
   id           BigInt @id @default(autoincrement()) @db.UnsignedBigInt
-  levelCode    Int    @map("level_code") @db.TinyInt
   provinceCode String @map("province_code") @db.Char(2)
   regencyCode  String @map("regency_code") @db.Char(2)
   year         Int    @db.SmallInt
   lastSerial   Int    @default(0) @map("last_serial") @db.UnsignedSmallInt
 
-  @@unique([levelCode, provinceCode, regencyCode, year], map: "uq_member_number_sequence")
+  /// Serial berjalan per wilayah + tahun, BUKAN per level. Nomor yang sudah
+  /// terbit tidak boleh berubah saat level peserta naik (mis. anggota menjadi
+  /// pengurus daerah), jadi level tidak boleh jadi bagian kunci.
+  @@unique([provinceCode, regencyCode, year], map: "uq_member_number_sequence")
   @@map("member_number_sequences")
 }
 

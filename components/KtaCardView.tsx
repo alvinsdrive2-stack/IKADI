@@ -38,7 +38,12 @@ function levelWilayah(d: KtaCardData): string {
   return [d.levelLabel, d.provinceName, d.regencyName].filter(Boolean).join(" | ");
 }
 
+/**
+ * Foto bisa berupa path lokal ("uploads/...") atau URL absolut hasil impor
+ * dari sistem lain ("https://..."). URL dipakai apa adanya.
+ */
 function photoSrc(p: string): string {
+  if (/^https?:\/\//i.test(p)) return p;
   return p.startsWith("/") ? p : `/${p}`;
 }
 

@@ -15,6 +15,8 @@
  *   `needs_profile_completion = true` supaya anggota melengkapi sendiri.
  * - Sandi awal `Munas` + DDMMYY dari NIK; kalau tanggal mustahil dipakai
  *   sandi default. Semua wajib diganti saat melengkapi profil.
+ * - Hanya peserta dengan jabatan mengandung "PW" (pengurus wilayah).
+ * - Pas foto tidak disalin: `photoPath` diisi URL absolut ke sistem sumber.
  *
  * Skrip idempoten: baris yang sudah masuk (berdasarkan NIK) dilewati, jadi aman
  * dijalankan ulang.
@@ -35,9 +37,28 @@ type MunasRow = {
   nik: string;
   full_name: string;
   phone: string | null;
+  photo_url: string | null;
+  position: string | null;
   province: string | null;
   region_name: string | null;
 };
+
+/**
+ * Basis publik sistem sumber, untuk mengubah `photoUrl` relatif menjadi URL
+ * absolut. Foto tidak disalin ke storage IKADI, jadi kartu membacanya langsung
+ * dari sistem asal.
+ */
+const MUNAS_PUBLIC_BASE = (process.env.MUNAS_PUBLIC_BASE ?? "https://munas.ikadi.or.id").replace(/\/+$/, "");
+
+/** Hanya pengurus wilayah yang diimpor, sesuai keputusan pemilik proyek. */
+const POSITION_FILTER = "%PW%";
+
+function absolutePhotoPath(photoUrl: string | null): string | null {
+  const raw = (photoUrl ?? "").trim();
+  if (!raw) return null;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  return `${MUNAS_PUBLIC_BASE}/${raw.replace(/^\/+/, "")}`;
+}
 
 /** Provinsi MUNAS yang namanya beda dari master IKADI. */
 const PROVINCE_ALIAS: Record<string, string> = {
@@ -67,9 +88,11 @@ async function main() {
 
   try {
     const rows = await munas.$queryRawUnsafe<MunasRow[]>(
-      `SELECT p.nik, p.fullName AS full_name, p.phone, r.province, r.name AS region_name
+      `SELECT p.nik, p.fullName AS full_name, p.phone, p.photoUrl AS photo_url, p.position,
+              r.province, r.name AS region_name
          FROM participants p
          JOIN regions r ON r.id = p.regionId
+        WHERE p.position LIKE '${POSITION_FILTER}'
         ORDER BY p.id ASC`,
     );
 
@@ -102,6 +125,7 @@ async function main() {
       fullName: string;
       whatsapp: string;
       birthDate: Date;
+      photoPath: string | null;
       provinceCode: string;
       password: string;
     }[] = [];
@@ -148,6 +172,7 @@ async function main() {
         fullName: name.slice(0, 200),
         whatsapp: (row.phone ?? "").trim().slice(0, 20),
         birthDate,
+        photoPath: absolutePhotoPath(row.photo_url),
         provinceCode,
         password: derived.ok ? derived.password : MUNAS_DEFAULT_PASSWORD,
       });
@@ -206,6 +231,7 @@ async function main() {
             addressSameAsKtp: true,
             occupation: "",
             provinceCode: r.provinceCode,
+            photoPath: r.photoPath,
             passwordHash,
             needsProfileCompletion: true,
             sourceId: munasSourceId,

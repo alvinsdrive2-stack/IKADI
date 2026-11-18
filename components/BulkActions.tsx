@@ -51,6 +51,12 @@ export function BulkActions({
   const [busy, setBusy] = useState<null | "issue" | "export">(null);
   const [notice, setNotice] = useState<{ tone: "success" | "error" | "info"; text: React.ReactNode } | null>(null);
   const [job, setJob] = useState<JobState | null>(null);
+  // Hasil penerbitan nomor: alasan tiap peserta yang dilewati harus terlihat,
+  // bukan cuma jumlahnya.
+  const [issuedResult, setIssuedResult] = useState<{
+    issued: number;
+    skipped: { label: string; reason: string }[];
+  } | null>(null);
   const timer = useRef<number | null>(null);
 
   const stopPolling = useCallback(() => {
@@ -120,6 +126,7 @@ export function BulkActions({
     }
     setBusy("issue");
     setNotice(null);
+    setIssuedResult(null);
     try {
       const res = await fetch(issueUrl, {
         method: "POST",
@@ -133,6 +140,7 @@ export function BulkActions({
         return;
       }
       const d = body?.data as { issued: number; skipped: { label: string; reason: string }[] };
+      setIssuedResult(d);
       setNotice({
         tone: d.skipped.length ? "info" : "success",
         text: `${d.issued} nomor diterbitkan${d.skipped.length ? `, ${d.skipped.length} dilewati` : ""}.`,
@@ -168,6 +176,20 @@ export function BulkActions({
 
       <div className="space-y-4 p-5">
         {notice && <Alert tone={notice.tone}>{notice.text}</Alert>}
+
+        {issuedResult && issuedResult.skipped.length > 0 && (
+          <div className="rounded-lg border border-border bg-bg/60 p-4">
+            <p className="text-sm font-medium text-ink">Alasan dilewati</p>
+            <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-ink-muted">
+              {issuedResult.skipped.map((s) => (
+                <li key={s.label} className="flex gap-2">
+                  <span className="shrink-0 font-mono text-ink">{s.label}</span>
+                  <span>{s.reason}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="flex flex-wrap items-center gap-3">
           <div role="group" aria-label="Jenis berkas" className="inline-flex rounded-lg border border-border p-0.5">

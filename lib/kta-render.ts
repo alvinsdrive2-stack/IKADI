@@ -75,6 +75,16 @@ function box(b: KtaBox): Record<string, string> {
   };
 }
 
+/** Sisi kotak QR dalam piksel render; 1% lebar kartu = 10,5 px. */
+const QR_BOX_PX = Math.round((KTA_LAYOUT.qrVerifikasi.w / 100) * CARD_W);
+/** 6% padding seperti pratinjau, tapi dihitung dari sisi kotak QR. */
+const QR_PADDING_PX = Math.round(QR_BOX_PX * 0.06);
+/** Sisi gambar QR setelah dikurangi padding. */
+const QR_INNER_PX = QR_BOX_PX - QR_PADDING_PX * 2;
+
+/** Sudut membulat 1 mm pada kartu. */
+const QR_RADIUS_PX = Math.round(CARD_W / 85.6);
+
 /** Tinggi kotak foto = lebar × 17/13 (rasio pas foto 3×4). */
 const PHOTO_H = ((KTA_LAYOUT.photo.w / 100) * CARD_W * 17) / 13;
 
@@ -83,7 +93,20 @@ function fontSize(b: KtaBox): string {
   return `${(b.size / 100) * CARD_W}px`;
 }
 
-function textSlot(b: KtaBox, text: string, color: string, weight: 400 | 700 = 400, key?: string): ReactElement | null {
+type TextSlotExtra = {
+  weight?: 400 | 500 | 800;
+  lineHeight?: number;
+  /** Em, mengikuti `tracking-*` Tailwind di pratinjau. */
+  letterSpacing?: string;
+};
+
+function textSlot(
+  b: KtaBox,
+  text: string,
+  color: string,
+  { weight = 400, lineHeight = 1.15, letterSpacing }: TextSlotExtra = {},
+  key?: string,
+): ReactElement | null {
   if (b.size === 0 || !text) return null;
   return h(
     "div",
@@ -96,7 +119,8 @@ function textSlot(b: KtaBox, text: string, color: string, weight: 400 | 700 = 40
         fontSize: fontSize(b),
         fontWeight: weight,
         color,
-        lineHeight: 1.15,
+        lineHeight,
+        ...(letterSpacing ? { letterSpacing } : {}),
         overflow: "hidden",
         whiteSpace: "nowrap",
       },
@@ -162,29 +186,40 @@ export async function renderCardFace(
       L.fullName,
       compactPersonName(card.fullName),
       "#ffffff",
-      700,
+      // Pratinjau: font-extrabold leading-tight.
+      { weight: 800, lineHeight: 1.25 },
       "name",
     );
     if (name) children.push(name);
 
-    const wilayahEl = textSlot(L.levelLabel, wilayah, "rgba(255,255,255,0.9)", 400, "wilayah");
+    const wilayahEl = textSlot(L.levelLabel, wilayah, "rgba(255,255,255,0.9)", {}, "wilayah");
     if (wilayahEl) children.push(wilayahEl);
 
-    const number = textSlot(L.memberNumber, displayMemberNumber(card.memberNumber), "#ffffff", 400, "num");
+    const number = textSlot(
+      L.memberNumber,
+      displayMemberNumber(card.memberNumber),
+      "#ffffff",
+      // Pratinjau: font-medium tracking-wider leading-none.
+      { weight: 500, lineHeight: 1, letterSpacing: "0.05em" },
+      "num",
+    );
     if (number) children.push(number);
 
+    // Padding sebagai piksel, bukan persen: satori menghitung padding persen
+    // terhadap lebar induk (kartu), bukan kotak QR — hasilnya QR mengecil
+    // jauh dibanding pratinjau. Pratinjau memakai 6% dari sisi kotak QR.
     children.push(
       h("div", {
         key: "qr",
         style: {
           ...box(L.qrVerifikasi),
-          height: `${(L.qrVerifikasi.w / 100) * CARD_W}px`,
+          height: `${QR_BOX_PX}px`,
           display: "flex",
           backgroundColor: "#ffffff",
-          borderRadius: "6px",
-          padding: "6%",
+          borderRadius: `${QR_RADIUS_PX}px`,
+          padding: `${QR_PADDING_PX}px`,
         },
-      }, h("img", { src: qr, width: "100%", height: "100%" })),
+      }, h("img", { src: qr, width: QR_INNER_PX, height: QR_INNER_PX })),
     );
   }
 

@@ -2,8 +2,8 @@
  * Renderer kartu KTA di server, dipakai ekspor massal (JPG/PDF).
  *
  * Sumber kebenaran tetap `lib/kta-layout.ts`, sumber yang sama dengan pratinjau
- * di layar. Bedanya di sini satuannya piksel: kartu dirender 1050 × 600 px
- * (artwork asli 1016 × 638 di-resize ke rasio kartu), jadi 1% lebar = 10,5 px
+ * di layar. Bedanya di sini satuannya piksel: kartu dirender 1050 × 659 px,
+ * rasio yang sama dengan artwork asli (1016 × 638), jadi 1% lebar = 10,5 px
  * dan ukuran huruf `size` (%) = `size × 10,5` px.
  *
  * Memakai satori lewat `next/og` (sudah jadi dependensi Next) + sharp untuk
@@ -22,9 +22,17 @@ import { compactPersonName } from "@/lib/person-name";
 import { displayMemberNumber } from "@/lib/member-number";
 import { publicBaseUrl, verifyPath } from "@/lib/base-url";
 
-/** Ukuran kanvas kartu. Rasio 1,75 sama dengan `aspect-ratio` di CSS. */
+/**
+ * Ukuran kanvas kartu.
+ *
+ * Rasio mengikuti artwork, bukan angka bulat: artwork depan 1016 × 638
+ * (1,5925) dan SVG belakang 8600 × 5400 (1,5926). Kalau kanvas dipaksa 1,75,
+ * artwork harus di-stretch (`fit: fill`) atau dipotong (`object-cover`) dan
+ * sisi belakang jadi terlihat kepotong saat ekspor massal.
+ */
 export const CARD_W = 1050;
-export const CARD_H = 600;
+/** 1050 × 638 / 1016 = 659,35 → 659 (selisih 0,05%, tidak terlihat). */
+export const CARD_H = 659;
 
 const FONT_PATH = path.join(process.cwd(), "public", "fonts", "Eurostar", "eurostar.ttf");
 /** Nama pemegang kartu memakai Exo 2 Bold, sama seperti pratinjau di layar. */
@@ -49,9 +57,13 @@ async function artworkUri(face: "depan" | "belakang"): Promise<string> {
   const cached = artCache.get(face);
   if (cached) return cached;
   const abs = path.join(process.cwd(), "public", KTA_FACE_SRC[face].replace(/^\//, ""));
-  // Artwork asli tidak persis 1050×600; resize dulu supaya satori tidak
-  // menskalakan sendiri dan posisi slot tetap presisi.
-  const png = await sharp(await readFile(abs)).resize(CARD_W, CARD_H, { fit: "fill" }).png().toBuffer();
+  // Kanvas sudah serasio dengan artwork (lihat CARD_H), jadi `fill` tidak
+  // mengubah bentuk apa pun. Rasterisasi SVG dilakukan di densitas cukup
+  // supaya tidak pecah saat 1050 px.
+  const png = await sharp(await readFile(abs), { density: 200 })
+    .resize(CARD_W, CARD_H, { fit: "fill" })
+    .png()
+    .toBuffer();
   const uri = `data:image/png;base64,${png.toString("base64")}`;
   artCache.set(face, uri);
   return uri;
@@ -158,7 +170,7 @@ async function qrDataUri(memberNumber: string, request: Request): Promise<string
   return QRCode.toDataURL(url, { width: 600, margin: 1, errorCorrectionLevel: "M", color: KTA_QR_COLOR });
 }
 
-/** Satu sisi kartu sebagai PNG 1050 × 600. */
+/** Satu sisi kartu sebagai PNG 1050 × 659 (rasio artwork). */
 export async function renderCardFace(
   card: CardInput,
   face: "depan" | "belakang",

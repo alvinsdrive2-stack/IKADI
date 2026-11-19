@@ -322,11 +322,12 @@ body {
 }
 
 .kta-card {
-  /* Rasio mengikuti artwork (1050 × 600 px). Tinggi ditulis eksplisit (bukan
-     aspect-ratio) supaya renderer print tidak menghitungnya beda.
+  /* Rasio mengikuti artwork (1016 × 638, yaitu 1,5925 — bukan 1,75). Tinggi
+     ditulis eksplisit (bukan aspect-ratio) supaya renderer print tidak
+     menghitungnya beda.
      font-size = lebar kartu, sehingga semua slot bisa memakai satuan em. */
   width: 85.6mm;
-  height: 48.914mm; /* 85.6 × 600 / 1050 */
+  height: 53.724mm; /* 85.6 × 659 / 1050 */
   font-size: 85.6mm;
   line-height: 1.2;
   position: relative;
@@ -340,11 +341,11 @@ body {
   print-color-adjust: exact;
 }
 
-/* Ukuran halaman cetak = ukuran kartu (landscape 85,6 × 48,914 mm).
+/* Ukuran halaman cetak = ukuran kartu (landscape 85,6 × 53,724 mm).
    Ditulis di top-level (bukan hanya di dalam @media print) supaya tidak
    kalah oleh deklarasi bawaan renderer. */
 @page {
-  size: 85.6mm 48.914mm;
+  size: 85.6mm 53.724mm;
   margin: 0;
 }
 
@@ -388,7 +389,7 @@ body {
 .kta-flip-inner {
   position: relative;
   width: 85.6mm;
-  height: 48.914mm;
+  height: 53.724mm;
   transform-style: preserve-3d;
   transition: transform 600ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
@@ -442,7 +443,7 @@ body {
 @media print {
   html, body {
     width: 85.6mm;
-    height: 48.914mm;
+    height: 53.724mm;
     margin: 0 !important;
     padding: 0 !important;
     background: #fff;

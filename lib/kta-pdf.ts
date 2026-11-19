@@ -10,7 +10,12 @@
 /** 1 pt = 1/72 inci. Kartu 85,6 mm → 242,65 pt. */
 const MM_TO_PT = 72 / 25.4;
 export const CARD_PT_W = +(85.6 * MM_TO_PT).toFixed(2);
-export const CARD_PT_H = +((85.6 * 600) / 1050 * MM_TO_PT).toFixed(2);
+/**
+ * Tinggi kartu = lebar × tinggi artwork / lebar artwork.
+ * Artwork 1016 × 638, jadi rasionya 1,5925 (bukan 1,75). Lihat CARD_H di
+ * `lib/kta-render.ts`; keduanya harus sama supaya gambar tidak di-stretch.
+ */
+export const CARD_PT_H = +((85.6 * 659) / 1050 * MM_TO_PT).toFixed(2);
 
 type PdfPage = { jpeg: Buffer; width: number; height: number };
 
@@ -83,7 +88,7 @@ export function buildCardsPdf(pages: PdfPage[]): Buffer {
 /** PDF satu peserta: halaman depan lalu belakang. */
 export function buildParticipantPdf(front: Buffer, back: Buffer): Buffer {
   return buildCardsPdf([
-    { jpeg: front, width: 1050, height: 600 },
-    { jpeg: back, width: 1050, height: 600 },
+    { jpeg: front, width: 1050, height: 659 },
+    { jpeg: back, width: 1050, height: 659 },
   ]);
 }

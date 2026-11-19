@@ -4,7 +4,8 @@
  * (`components/KtaCardView.tsx`) supaya preview == hasil cetak.
  *
  * Satuan:
- * - x, y = persen dari kotak artwork (1050 × 600 px, rasio 1.75).
+ * - x, y = persen dari kotak artwork (1050 × 659 px, rasio 1,5925 =
+ *   artwork asli 1016 × 638).
  * - w    = lebar blok dalam persen lebar kartu (1 = 1%).
  * - size = ukuran font dalam persen lebar kartu (1 = 1%).
  * - align "center": x adalah titik tengah blok (translateX(-50%)).

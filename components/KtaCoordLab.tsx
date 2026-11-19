@@ -194,7 +194,7 @@ export function KtaCoordLab() {
           <div
             ref={boxRef}
             className="relative w-full select-none overflow-hidden rounded-lg"
-            style={{ aspectRatio: "1050 / 600", fontSize: boxWidth > 0 ? `${boxWidth}px` : undefined }}
+            style={{ aspectRatio: "1050 / 659", fontSize: boxWidth > 0 ? `${boxWidth}px` : undefined }}
           >
             <Image
               src={KTA_FACE_SRC[face]}

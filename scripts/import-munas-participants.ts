@@ -204,11 +204,11 @@ async function main() {
 
     // Sumber data dicatat sekali per impor; peserta hanya menyimpan id-nya.
     const munasSource = await ikadi.dataSource.upsert({
-      where: { key: "munas-iv-2026" },
+      where: { key: "munas-2026" },
       create: {
-        key: "munas-iv-2026",
-        label: "MUNAS IV IKADI 2026",
-        origin: "Database munas_ikadi, tabel participants",
+        key: "munas-2026",
+        label: "MUNAS 2026",
+        origin: "Database munas_ikadi + sheet cetak KTA MUNAS IV 2026",
         note: "Data tempat lahir, alamat, dan pekerjaan belum ada di sumber.",
       },
       update: {},

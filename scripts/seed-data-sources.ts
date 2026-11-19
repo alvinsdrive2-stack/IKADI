@@ -12,10 +12,10 @@ import { prisma } from "../lib/prisma";
 /** Definisi sumber. Tambah baris di sini kalau ada impor baru. */
 const SOURCES = [
   {
-    key: "munas-iv-2026",
-    label: "MUNAS IV IKADI 2026",
-    origin: "Database munas_ikadi, tabel participants",
-    note: "Diimpor 18 November 2026 dari pendataan MUNAS. Data tempat lahir, alamat, dan pekerjaan belum ada di sumber.",
+    key: "munas-2026",
+    label: "MUNAS 2026",
+    origin: "Database munas_ikadi + sheet cetak KTA MUNAS IV 2026",
+    note: "Diimpor dari pendataan MUNAS dan sheet cetak KTA. Data tempat lahir, alamat, dan pekerjaan belum ada di sumber.",
   },
 ] as const;
 
@@ -29,8 +29,8 @@ async function main() {
     console.log(`sumber ${row.key} id=${row.id}`);
   }
 
-  const munas = await prisma.dataSource.findUnique({ where: { key: "munas-iv-2026" } });
-  if (!munas) throw new Error("sumber munas-iv-2026 tidak ditemukan");
+  const munas = await prisma.dataSource.findUnique({ where: { key: "munas-2026" } });
+  if (!munas) throw new Error("sumber munas-2026 tidak ditemukan");
 
   // Peserta impor = penanda pelengkapan profil masih aktif dan belum punya sumber.
   const res = await prisma.participant.updateMany({

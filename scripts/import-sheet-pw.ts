@@ -74,7 +74,7 @@ const PW_PROVINCE: Record<string, string> = {
 };
 
 /** Sumber data sheet cetak KTA, terpisah dari impor MUNAS sebelumnya. */
-const SOURCE_KEY = "munas-iv-2026-sheet";
+const SOURCE_KEY = "munas-2026";
 const LEVEL_PENGURUS_WILAYAH = 2;
 
 type SheetRow = { nik: string; nama: string; jab: string; pw: string };
@@ -206,8 +206,8 @@ async function main() {
     where: { key: SOURCE_KEY },
     create: {
       key: SOURCE_KEY,
-      label: "Sheet cetak KTA MUNAS IV 2026",
-      origin: "Google Sheets cetak KTA, dipakai untuk menetapkan Pengurus Wilayah",
+      label: "MUNAS 2026",
+      origin: "Database munas_ikadi + sheet cetak KTA MUNAS IV 2026",
       note: "Jenjang dinaikkan ke Pengurus Wilayah; sandi awal Munas + DDMMYY dari NIK.",
     },
     update: {},

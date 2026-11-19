@@ -25,10 +25,10 @@ import { publicBaseUrl, verifyPath } from "@/lib/base-url";
 /**
  * Ukuran kanvas kartu.
  *
- * Rasio mengikuti artwork, bukan angka bulat: artwork depan 1016 × 638
- * (1,5925) dan SVG belakang 8600 × 5400 (1,5926). Kalau kanvas dipaksa 1,75,
- * artwork harus di-stretch (`fit: fill`) atau dipotong (`object-cover`) dan
- * sisi belakang jadi terlihat kepotong saat ekspor massal.
+ * Rasio mengikuti artwork, bukan angka bulat: artwork depan dan belakang
+ * sama-sama 1016 × 638 (1,5925). Kalau kanvas dipaksa 1,75, artwork harus
+ * di-stretch (`fit: fill`) atau dipotong (`object-cover`) dan sisi belakang
+ * jadi terlihat kepotong saat ekspor massal.
  */
 export const CARD_W = 1050;
 /** 1050 × 638 / 1016 = 659,35 → 659 (selisih 0,05%, tidak terlihat). */

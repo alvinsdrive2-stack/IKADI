@@ -27,15 +27,20 @@ export const CARD_W = 1050;
 export const CARD_H = 600;
 
 const FONT_PATH = path.join(process.cwd(), "public", "fonts", "Eurostar", "eurostar.ttf");
+/** Nama pemegang kartu memakai Exo 2 Bold, sama seperti pratinjau di layar. */
+const NAME_FONT_PATH = path.join(process.cwd(), "public", "fonts", "Exo2", "exo2-700.ttf");
 
-type Font = { name: string; data: Buffer; weight: 400; style: "normal" };
+type Font = { name: string; data: Buffer; weight: 400 | 700; style: "normal" };
 
-let cachedFont: Font | null = null;
-async function cardFont(): Promise<Font> {
-  if (!cachedFont) {
-    cachedFont = { name: "Eurostar", data: await readFile(FONT_PATH), weight: 400, style: "normal" };
+let cachedFonts: Font[] | null = null;
+async function cardFonts(): Promise<Font[]> {
+  if (!cachedFonts) {
+    cachedFonts = [
+      { name: "Eurostar", data: await readFile(FONT_PATH), weight: 400, style: "normal" },
+      { name: "Exo 2", data: await readFile(NAME_FONT_PATH), weight: 700, style: "normal" },
+    ];
   }
-  return cachedFont;
+  return cachedFonts;
 }
 
 /** Aset artwork di-cache karena dipakai setiap kartu dalam satu ekspor. */
@@ -94,7 +99,9 @@ function fontSize(b: KtaBox): string {
 }
 
 type TextSlotExtra = {
-  weight?: 400 | 500 | 800;
+  weight?: 400 | 500 | 700 | 800;
+  /** Nama font; default Eurostar (font kartu). */
+  family?: string;
   lineHeight?: number;
   /** Em, mengikuti `tracking-*` Tailwind di pratinjau. */
   letterSpacing?: string;
@@ -104,7 +111,7 @@ function textSlot(
   b: KtaBox,
   text: string,
   color: string,
-  { weight = 400, lineHeight = 1.15, letterSpacing }: TextSlotExtra = {},
+  { weight = 400, lineHeight = 1.15, letterSpacing, family = "Eurostar" }: TextSlotExtra = {},
   key?: string,
 ): ReactElement | null {
   if (b.size === 0 || !text) return null;
@@ -115,7 +122,7 @@ function textSlot(
       style: {
         ...box(b),
         display: "flex",
-        fontFamily: "Eurostar",
+        fontFamily: family,
         fontSize: fontSize(b),
         fontWeight: weight,
         color,
@@ -157,7 +164,7 @@ export async function renderCardFace(
   face: "depan" | "belakang",
 ): Promise<{ png: Buffer; verifyUrl: string }> {
   const art = await artworkUri(face);
-  const font = await cardFont();
+  const fonts = await cardFonts();
   const L = KTA_LAYOUT;
 
   const children: ReactElement[] = [
@@ -189,8 +196,8 @@ export async function renderCardFace(
       L.fullName,
       compactPersonName(card.fullName),
       "#ffffff",
-      // Pratinjau: font-extrabold leading-tight.
-      { weight: 800, lineHeight: 1.25 },
+      // Pratinjau: Exo 2 Bold, leading-tight.
+      { weight: 700, lineHeight: 1.25, family: "Exo 2" },
       "name",
     );
     if (name) children.push(name);
@@ -228,7 +235,7 @@ export async function renderCardFace(
 
   const res = new ImageResponse(
     h("div", { style: { display: "flex", position: "relative", width: `${CARD_W}px`, height: `${CARD_H}px`, overflow: "hidden" } }, ...children),
-    { width: CARD_W, height: CARD_H, fonts: [font] },
+    { width: CARD_W, height: CARD_H, fonts },
   );
   const png = Buffer.from(await res.arrayBuffer());
   return { png, verifyUrl: `${publicBaseUrl(card.request)}${verifyPath(card.memberNumber)}` };

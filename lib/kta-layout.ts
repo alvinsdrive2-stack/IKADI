@@ -38,7 +38,7 @@ export type KtaLayout = Record<KtaSlotKey, KtaBox>;
 
 export const KTA_FACE_SRC: Record<KtaFace, string> = {
   depan: "/kta ikadi muka.png",
-  belakang: "/kta ikadi belakang.png",
+  belakang: "/id card belakang.svg",
 };
 
 export const KTA_FACE_LABEL: Record<KtaFace, string> = { depan: "Depan", belakang: "Belakang" };

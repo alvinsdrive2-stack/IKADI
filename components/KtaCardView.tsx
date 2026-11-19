@@ -170,7 +170,12 @@ export function KtaCardView({
         {/* Nama */}
         {!kosong(L.fullName) && (
           <Slot box={L.fullName} className={`text-white ${align(L.fullName)}`}>
-            <p className="truncate font-extrabold leading-tight">{compactPersonName(d.fullName)}</p>
+            <p
+              className="truncate leading-tight"
+              style={{ fontFamily: "var(--font-kta-name)", fontWeight: 700 }}
+            >
+              {compactPersonName(d.fullName)}
+            </p>
           </Slot>
         )}
 

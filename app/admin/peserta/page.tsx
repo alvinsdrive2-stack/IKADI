@@ -1,18 +1,25 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { connection } from "next/server";
 import { AdminParticipants, AdminSkeleton } from "@/components/AdminParticipants";
 import { getSourceOptions } from "@/lib/queries";
 
 export const metadata: Metadata = { title: "Peserta | Admin KTA IKADI" };
 
-// Opsi filter sumber dibaca dari DB, jadi halaman ini tidak bisa statis.
-export const instant = false;
-
-export default async function AdminPesertaPage() {
-  const sourceOptions = await getSourceOptions();
+export default function AdminPesertaPage() {
   return (
     <Suspense fallback={<AdminSkeleton />}>
-      <AdminParticipants mode="list" sourceOptions={sourceOptions} />
+      <PesertaList />
     </Suspense>
   );
+}
+
+/**
+ * Opsi filter sumber dibaca dari DB, jadi tidak bisa ikut di-prerender.
+ * `connection()` menunda bagian ini ke request time; sisanya tetap static shell.
+ */
+async function PesertaList() {
+  await connection();
+  const sourceOptions = await getSourceOptions();
+  return <AdminParticipants mode="list" sourceOptions={sourceOptions} />;
 }

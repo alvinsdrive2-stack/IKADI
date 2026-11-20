@@ -236,7 +236,7 @@ export function ParticipantDetail({
                 {d.photoPath ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={`/${d.photoPath}`}
+                    src={/^https?:\/\//i.test(d.photoPath) ? d.photoPath : `/${d.photoPath}`}
                     alt={`Pas foto ${d.fullName}`}
                     width={320}
                     height={400}

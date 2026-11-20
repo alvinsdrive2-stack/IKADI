@@ -141,7 +141,8 @@ function PhotoUploader({
     }
   };
 
-  const currentSrc = preview ?? (photoPath ? (photoPath.startsWith("/") ? photoPath : `/${photoPath}`) : null);
+  // Foto impor MUNAS tersimpan sebagai URL absolut; jangan diberi garis miring.
+  const currentSrc = preview ?? (photoPath ? (/^https?:\/\//i.test(photoPath) || photoPath.startsWith("/") ? photoPath : `/${photoPath}`) : null);
 
   return (
     <section className="no-print rounded-xl border border-border bg-white">

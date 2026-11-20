@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { AppFrame, AnggotaItems } from "@/components/AppFrame"
+import { resolveAnggotaGate } from "@/lib/anggota-gate"
 
 export function AnggotaShell({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -12,6 +13,9 @@ export function AnggotaShell({ children }: { children: React.ReactNode }) {
   // null = belum tahu. Menu pengurus baru dirender setelah status pasti,
   // supaya tidak berkedip muncul lalu hilang.
   const [pengurus, setPengurus] = useState<{ aktif: boolean; label: string } | null>(null)
+  // true selama redirect gate berjalan. Isi halaman disembunyikan supaya
+  // halaman lama tidak sempat tampil bersama halaman tujuan.
+  const [gated, setGated] = useState(false)
 
   useEffect(() => {
     fetch("/api/anggota/me", { cache: "no-store", credentials: "same-origin" })
@@ -20,19 +24,20 @@ export function AnggotaShell({ children }: { children: React.ReactNode }) {
         else if (r.ok) {
           const b = await r.json().catch(() => null)
           if (b?.data?.fullName) setName(b.data.fullName)
-          // Peserta hasil impor wajib melengkapi profil dulu. Gate di sini, bukan
-          // per halaman, supaya semua menu ikut terkunci.
-          if (b?.data?.needsProfileCompletion === true && !pathname.startsWith("/anggota/lengkapi")) {
-            router.replace("/anggota/lengkapi")
+          // Prioritas gate ada di satu fungsi supaya dua kewajiban yang aktif
+          // bersamaan tidak saling lempar (dulu menyebabkan dua halaman tampil
+          // tumpang tindih).
+          const target = resolveAnggotaGate({
+            needsProfileCompletion: b?.data?.needsProfileCompletion === true,
+            mustChangePassword: b?.data?.mustChangePassword === true,
+            pathname,
+          })
+          if (target) {
+            setGated(true)
+            router.replace(target)
             return
           }
-          // Sandi hasil reset massal (tanggal lahir) wajib diganti sebelum
-          // anggota memakai menu lain. Pelengkapan profil sudah memuat ganti
-          // sandi, jadi gate itu didahulukan.
-          if (b?.data?.mustChangePassword === true && !pathname.startsWith("/anggota/ganti-sandi")) {
-            router.replace("/anggota/ganti-sandi")
-            return
-          }
+          setGated(false)
           const levelLabel = String(b?.data?.levelLabel ?? "")
           setPengurus({
             aktif: b?.data?.isPengurus === true,
@@ -78,7 +83,11 @@ export function AnggotaShell({ children }: { children: React.ReactNode }) {
       onLogout={logout}
       logoutBusy={busy}
     >
-      {children}
+      {gated ? (
+        <div aria-busy="true" aria-label="Mengalihkan" className="h-64 animate-pulse rounded-xl border border-border bg-white" />
+      ) : (
+        children
+      )}
     </AppFrame>
   )
 }

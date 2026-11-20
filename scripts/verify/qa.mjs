@@ -14,6 +14,7 @@ const args = [
   "tests/ocr-route.test.mts",
   "tests/http-smoke.test.mts",
   "tests/change-password-route.test.mts",
+  "tests/anggota-gate.test.mts",
 ];
 
 const r = spawnSync(process.execPath, args, {

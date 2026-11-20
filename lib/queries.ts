@@ -9,6 +9,10 @@ export type Sort = (typeof SORTS)[number];
 export type ListParams = {
   q?: string;
   education?: string;
+  /** Sumber data: id sumber, atau "mandiri" untuk peserta tanpa sumber. */
+  source?: string;
+  /** Level kepengurusan 1..7. */
+  level?: number;
   dateFrom?: string; // YYYY-MM-DD
   dateTo?: string; // YYYY-MM-DD
   sort?: Sort;
@@ -17,6 +21,9 @@ export type ListParams = {
   /** Batas wilayah untuk pengurus. Admin tidak mengirim apa pun = tanpa batas. */
   scopeWhere?: Prisma.ParticipantWhereInput;
 };
+
+/** Nilai filter sumber untuk peserta yang mendaftar sendiri (source_id NULL). */
+export const SOURCE_SELF = "mandiri";
 
 const orderBy: Record<Sort, Prisma.ParticipantOrderByWithRelationInput[]> = {
   newest: [{ createdAt: "desc" }, { id: "desc" }],
@@ -44,6 +51,12 @@ function where(p: FilterParams): Prisma.ParticipantWhereInput {
     });
   }
   if (p.education) and.push({ lastEducation: p.education });
+  if (p.level !== undefined) and.push({ levelCode: p.level });
+  if (p.source) {
+    // "mandiri" = tidak pernah masuk lewat impor, jadi source_id NULL.
+    const sourceId = p.source === SOURCE_SELF ? null : Number(p.source);
+    if (sourceId === null || Number.isInteger(sourceId)) and.push({ sourceId });
+  }
   if (p.scopeWhere) and.push(p.scopeWhere);
   if (p.dateFrom || p.dateTo) {
     const range: Prisma.DateTimeFilter = {};
@@ -224,4 +237,19 @@ export async function getEducationOptions() {
     orderBy: { lastEducation: "asc" },
   });
   return rows.map((r) => r.lastEducation).filter((v): v is string => !!v);
+}
+
+/**
+ * Pilihan filter sumber data: setiap baris `data_sources` plus "mandiri"
+ * untuk peserta yang mendaftar sendiri (source_id NULL).
+ */
+export async function getSourceOptions(): Promise<{ value: string; label: string }[]> {
+  const [sources, selfCount] = await Promise.all([
+    prisma.dataSource.findMany({ select: { id: true, label: true }, orderBy: { id: "asc" } }),
+    prisma.participant.count({ where: { sourceId: null } }),
+  ]);
+  return [
+    { value: SOURCE_SELF, label: "Daftar mandiri" },
+    ...sources.map((s) => ({ value: String(s.id), label: s.label })),
+  ].filter((o) => o.value !== SOURCE_SELF || selfCount > 0);
 }

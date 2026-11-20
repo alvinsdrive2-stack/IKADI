@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { SearchSelect } from "@/components/ui/search-select";
 import { BulkActions } from "@/components/BulkActions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { EDUCATION_OPTIONS, formatDateTime } from "@/components/constants";
+import { formatDateTime } from "@/components/constants";
 import { cn } from "@/lib/utils";
 
 export type ParticipantRow = {
@@ -34,7 +34,18 @@ export type ParticipantRow = {
 type ListResponse = { ok: boolean; data: ParticipantRow[]; total: number; page: number; perPage: number; totalPages: number };
 type Stats = { total: number; today: number; ktaPrinted: number };
 
-const FILTER_KEYS = ["q", "education", "dateFrom", "dateTo"] as const;
+const FILTER_KEYS = ["q", "education", "source", "level", "dateFrom", "dateTo"] as const;
+
+/** Level kepengurusan untuk filter "Role". Sama dengan LEVEL_LABELS. */
+const LEVEL_OPTIONS: { value: string; label: string }[] = [
+  { value: "1", label: "Pengurus Pusat" },
+  { value: "2", label: "Pengurus Wilayah" },
+  { value: "3", label: "Pengurus Daerah" },
+  { value: "4", label: "Pengurus Cabang" },
+  { value: "5", label: "Pengurus Ranting" },
+  { value: "6", label: "Anggota" },
+  { value: "7", label: "Purnabakti / Mantan Pengurus" },
+];
 
 export function AdminParticipants({
   mode = "list",
@@ -43,6 +54,7 @@ export function AdminParticipants({
   statsUrl = "/api/admin/stats",
   bulkExportBase = "/api/admin/bulk/kta",
   bulkIssueUrl = "/api/admin/bulk/terbitkan",
+  sourceOptions = [],
 }: {
   mode?: "dashboard" | "list";
   /** Halaman detail peserta. Admin: /admin/peserta, pengurus: /anggota/pengurus/anggota. */
@@ -55,6 +67,8 @@ export function AdminParticipants({
   bulkExportBase?: string;
   /** Endpoint penerbitan nomor massal. */
   bulkIssueUrl?: string;
+  /** Pilihan filter sumber data, diambil dari `data_sources` oleh halaman server. */
+  sourceOptions?: { value: string; label: string }[];
 }) {
   const searchParams = useSearchParams();
   return (
@@ -66,6 +80,7 @@ export function AdminParticipants({
       statsUrl={statsUrl}
       bulkExportBase={bulkExportBase}
       bulkIssueUrl={bulkIssueUrl}
+      sourceOptions={sourceOptions}
     />
   );
 }
@@ -78,6 +93,7 @@ function AdminData({
   statsUrl,
   bulkExportBase,
   bulkIssueUrl,
+  sourceOptions,
 }: {
   qs: string;
   mode: "dashboard" | "list";
@@ -86,6 +102,7 @@ function AdminData({
   statsUrl: string | null;
   bulkExportBase: string;
   bulkIssueUrl: string;
+  sourceOptions: { value: string; label: string }[];
 }) {
   const router = useRouter();
   const params = new URLSearchParams(qs);
@@ -198,7 +215,11 @@ function AdminData({
       )}
 
       {!isDashboard && (
-        <FiltersPanel params={params} onApply={(next) => router.push(`${basePath}${next ? `?${next}` : ""}`)} />
+        <FiltersPanel
+          params={params}
+          sourceOptions={sourceOptions}
+          onApply={(next) => router.push(`${basePath}${next ? `?${next}` : ""}`)}
+        />
       )}
 
       {!isDashboard && (
@@ -215,6 +236,7 @@ function AdminData({
       {!isDashboard && hasFilter && (
         <ActiveChips
           params={params}
+          sourceOptions={sourceOptions}
           onReset={resetAll}
           onChange={(key, value) => {
             const next = new URLSearchParams(qs);
@@ -464,17 +486,28 @@ function SortButton({ label, current, asc, desc, qs, basePath }: { label: string
   );
 }
 
-function FiltersPanel({ params, onApply }: { params: URLSearchParams; onApply: (nextQs: string) => void }) {
+function FiltersPanel({
+  params,
+  onApply,
+  sourceOptions,
+}: {
+  params: URLSearchParams;
+  onApply: (nextQs: string) => void;
+  sourceOptions: { value: string; label: string }[];
+}) {
   const initial = {
     q: params.get("q") ?? "",
-    education: params.get("education") ?? "",
+    source: params.get("source") ?? "",
+    level: params.get("level") ?? "",
     dateFrom: params.get("dateFrom") ?? "",
     dateTo: params.get("dateTo") ?? "",
   };
   const [values, setValues] = useState(initial);
   const [open, setOpen] = useState(() => Object.values(initial).some((v) => v !== ""));
   const set = (k: keyof typeof values) => (v: string) => setValues((prev) => ({ ...prev, [k]: v }));
-  const activeCount = (FILTER_KEYS.filter((k) => k !== "q") as (keyof typeof initial)[]).filter((k) => initial[k]).length;
+  const activeCount = (FILTER_KEYS.filter((k) => k !== "q") as (keyof typeof initial)[])
+    .filter((k) => k in initial)
+    .filter((k) => initial[k]).length;
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -486,7 +519,7 @@ function FiltersPanel({ params, onApply }: { params: URLSearchParams; onApply: (
   };
 
   const reset = () => {
-    setValues({ q: "", education: "", dateFrom: "", dateTo: "" });
+    setValues({ q: "", source: "", level: "", dateFrom: "", dateTo: "" });
     const next = new URLSearchParams();
     const sort = params.get("sort");
     if (sort) next.set("sort", sort);
@@ -521,7 +554,7 @@ function FiltersPanel({ params, onApply }: { params: URLSearchParams; onApply: (
       {open && (
         <>
           <div className="grid gap-4 border-t border-border p-4 sm:grid-cols-2 lg:grid-cols-3">
-            <FilterFields values={values} set={set} />
+            <FilterFields values={values} set={set} sourceOptions={sourceOptions} />
           </div>
           <div className="flex justify-end gap-2 border-t border-border px-4 py-3">
             <Button type="button" variant="secondary" onClick={reset}>
@@ -535,18 +568,36 @@ function FiltersPanel({ params, onApply }: { params: URLSearchParams; onApply: (
   );
 }
 
-type FilterValues = { q: string; education: string; dateFrom: string; dateTo: string };
+type FilterValues = { q: string; source: string; level: string; dateFrom: string; dateTo: string };
 
-function FilterFields({ values, set }: { values: FilterValues; set: (k: keyof FilterValues) => (v: string) => void }) {
+function FilterFields({
+  values,
+  set,
+  sourceOptions,
+}: {
+  values: FilterValues;
+  set: (k: keyof FilterValues) => (v: string) => void;
+  sourceOptions: { value: string; label: string }[];
+}) {
   return (
     <>
       <div className="space-y-1.5">
-        <label htmlFor="f-education" className="block text-sm font-medium text-ink">Pendidikan terakhir</label>
+        <label htmlFor="f-source" className="block text-sm font-medium text-ink">Sumber data</label>
         <SearchSelect
-          id="f-education"
-          value={values.education}
-          onValueChange={(v) => set("education")(v)}
-          options={[{ value: "", label: "Semua" }, ...EDUCATION_OPTIONS.map((o) => ({ value: o, label: o }))]}
+          id="f-source"
+          value={values.source}
+          onValueChange={(v) => set("source")(v)}
+          options={[{ value: "", label: "Semua" }, ...sourceOptions]}
+          disabled={sourceOptions.length === 0}
+        />
+      </div>
+      <div className="space-y-1.5">
+        <label htmlFor="f-level" className="block text-sm font-medium text-ink">Role</label>
+        <SearchSelect
+          id="f-level"
+          value={values.level}
+          onValueChange={(v) => set("level")(v)}
+          options={[{ value: "", label: "Semua" }, ...LEVEL_OPTIONS]}
         />
       </div>
       <div className="space-y-1.5">
@@ -563,12 +614,29 @@ function FilterFields({ values, set }: { values: FilterValues; set: (k: keyof Fi
 
 const CHIP_LABELS: Record<string, (v: string) => string> = {
   q: (v) => `Cari: ${v}`,
-  education: (v) => `Pendidikan: ${v}`,
+  source: (v) => `Sumber: ${v === "mandiri" ? "Daftar mandiri" : v}`,
+  level: (v) => `Role: ${LEVEL_OPTIONS.find((o) => o.value === v)?.label ?? v}`,
   dateFrom: (v) => `Dari: ${v}`,
   dateTo: (v) => `Sampai: ${v}`,
 };
 
-function ActiveChips({ params, onReset, onChange }: { params: URLSearchParams; onReset: () => void; onChange: (key: string, value: string) => void }) {
+function ActiveChips({
+  params,
+  onReset,
+  onChange,
+  sourceOptions,
+}: {
+  params: URLSearchParams;
+  onReset: () => void;
+  onChange: (key: string, value: string) => void;
+  sourceOptions: { value: string; label: string }[];
+}) {
+  const chipLabel = (key: string, value: string) => {
+    if (key === "source") {
+      return `Sumber: ${sourceOptions.find((o) => o.value === value)?.label ?? value}`;
+    }
+    return CHIP_LABELS[key]?.(value) ?? `${key}: ${value}`;
+  };
   const chips = FILTER_KEYS.flatMap((k) => {
     const v = params.get(k);
     return v ? [{ key: k, value: v }] : [];
@@ -578,11 +646,11 @@ function ActiveChips({ params, onReset, onChange }: { params: URLSearchParams; o
     <div className="flex flex-wrap items-center gap-2">
       {chips.map(({ key, value }) => (
         <span key={key} className="inline-flex items-center gap-1 rounded-md border border-primary/25 bg-primary-soft py-1 pl-2.5 pr-1 text-xs font-medium text-primary-ink">
-          {CHIP_LABELS[key]?.(value) ?? `${key}: ${value}`}
+          {chipLabel(key, value)}
           <button
             type="button"
             onClick={() => onChange(key, "")}
-            aria-label={`Hapus filter ${CHIP_LABELS[key]?.(value) ?? key}`}
+            aria-label={`Hapus filter ${chipLabel(key, value)}`}
             className="inline-flex size-6 items-center justify-center rounded hover:bg-primary/10"
           >
             <span aria-hidden>×</span>

@@ -1,5 +1,6 @@
 import { requirePengurus } from "@/lib/auth";
 import { listParticipants, SORTS, type Sort } from "@/lib/queries";
+import { levelParam, sourceParam } from "@/lib/participants-filter";
 import { scopeWhere } from "@/lib/pengurus";
 import { jsonError } from "@/lib/http";
 
@@ -36,6 +37,8 @@ export async function GET(request: Request) {
   const result = await listParticipants({
     q: str("q", 100),
     education: str("education", 100),
+    level: levelParam(sp),
+    source: sourceParam(sp),
     dateFrom,
     dateTo,
     sort: sortRaw as Sort,

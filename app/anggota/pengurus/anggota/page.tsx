@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AdminParticipants, AdminSkeleton } from "@/components/AdminParticipants";
+import { getSourceOptions } from "@/lib/queries";
 
 export const metadata: Metadata = { title: "Anggota Wilayah | IKADI" };
 
-export default function PengurusAnggotaPage() {
+// Opsi filter sumber dibaca dari DB, jadi halaman ini tidak bisa statis.
+export const instant = false;
+
+export default async function PengurusAnggotaPage() {
+  const sourceOptions = await getSourceOptions();
   return (
     <Suspense fallback={<AdminSkeleton />}>
       <AdminParticipants
@@ -15,6 +20,7 @@ export default function PengurusAnggotaPage() {
         statsUrl={null}
         bulkExportBase="/api/anggota/pengurus/bulk/kta"
         bulkIssueUrl="/api/anggota/pengurus/bulk/terbitkan"
+        sourceOptions={sourceOptions}
       />
     </Suspense>
   );

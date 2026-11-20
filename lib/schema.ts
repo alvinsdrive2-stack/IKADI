@@ -199,3 +199,30 @@ export const profileCompletionSchema = z.object({
 }));
 
 export type ProfileCompletionData = z.output<typeof profileCompletionSchema>;
+
+/**
+ * Body POST /api/anggota/sandi. Sandi lama wajib dibuktikan supaya sesi yang
+ * tertinggal di perangkat bersama tidak bisa dipakai mengganti sandi.
+ */
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z
+      .string({ error: "Sandi saat ini wajib diisi" })
+      .min(1, "Sandi saat ini wajib diisi")
+      .max(200, "Sandi maksimal 200 karakter"),
+    password: z
+      .string({ error: "Sandi baru wajib diisi" })
+      .min(8, "Sandi baru minimal 8 karakter")
+      .max(200, "Sandi baru maksimal 200 karakter"),
+  })
+  .superRefine((v, ctx) => {
+    if (v.password === v.currentPassword) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["password"],
+        message: "Sandi baru harus berbeda dari sandi saat ini",
+      });
+    }
+  });
+
+export type ChangePasswordData = z.output<typeof changePasswordSchema>;

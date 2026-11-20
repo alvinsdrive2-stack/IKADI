@@ -72,6 +72,9 @@ export async function POST(request: Request) {
         occupation: d.occupation,
         passwordHash,
         needsProfileCompletion: false,
+        // Jalur ini sudah membuat sandi sendiri, jadi kewajiban ganti sandi
+        // ikut selesai. Tanpa ini, gate ganti-sandi memaksa dua kali.
+        mustChangePassword: false,
       },
     });
     return Response.json({ ok: true, data: { completed: true } });

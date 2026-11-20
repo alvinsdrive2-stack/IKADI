@@ -110,6 +110,11 @@ model Participant {
   /// layanan. Kolom wajib lain diisi string kosong, bukan data karangan.
   needsProfileCompletion Boolean          @default(false) @map("needs_profile_completion")
 
+  /// Sandi direset ke tanggal lahir (DDMMYY) dan wajib diganti saat login
+  /// berikutnya. Terpisah dari `needsProfileCompletion`: yang itu soal data
+  /// profil, yang ini soal sandi. Dimatikan setelah sandi baru tersimpan.
+  mustChangePassword      Boolean          @default(false) @map("must_change_password")
+
   /// Asal data peserta. NULL = mendaftar sendiri lewat formulir IKADI.
   /// Relasi ini yang menjawab "data ini dari mana", bukan kolom teks bebas.
   sourceId                Int?             @map("source_id")

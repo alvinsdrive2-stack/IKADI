@@ -12,6 +12,15 @@
 /** Sandi cadangan saat tanggal lahir tidak bisa diturunkan dari NIK. */
 export const MUNAS_DEFAULT_PASSWORD = "Munas@IKADI2026";
 
+/**
+ * Sandi sementara untuk reset massal: satu sandi untuk semua peserta.
+ *
+ * Digunakan bersama `must_change_password = true`, jadi tidak pernah menjadi
+ * sandi permanen siapa pun: gate di area anggota memaksa ganti sebelum menu
+ * lain bisa dipakai.
+ */
+export const TEMP_PASSWORD = "IcardIkadi";
+
 export type DerivedPassword =
   | { ok: true; password: string; day: number; month: number; year2: number }
   | { ok: false; reason: string };

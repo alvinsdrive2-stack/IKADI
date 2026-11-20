@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/auth";
 import { listParticipants, SORTS, type Sort } from "@/lib/queries";
-import { levelParam, sourceParam } from "@/lib/participants-filter";
+import { levelParam, sourceParam, ktaParam } from "@/lib/participants-filter";
 import { jsonError } from "@/lib/http";
 
 
@@ -35,6 +35,7 @@ export async function GET(request: Request) {
     education: str("education", 100),
     level: levelParam(sp),
     source: sourceParam(sp),
+    kta: ktaParam(sp),
     dateFrom,
     dateTo,
     sort: sortRaw as Sort,

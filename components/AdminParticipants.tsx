@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { animate, stagger } from "animejs";
 import { ArrowRight, ArrowUpDown, Search } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { PageBanner } from "@/components/PageBanner";
@@ -34,7 +35,7 @@ export type ParticipantRow = {
 type ListResponse = { ok: boolean; data: ParticipantRow[]; total: number; page: number; perPage: number; totalPages: number };
 type Stats = { total: number; today: number; ktaPrinted: number };
 
-const FILTER_KEYS = ["q", "education", "source", "level", "dateFrom", "dateTo"] as const;
+const FILTER_KEYS = ["q", "education", "source", "level", "kta", "dateFrom", "dateTo"] as const;
 
 /** Level kepengurusan untuk filter "Role". Sama dengan LEVEL_LABELS. */
 const LEVEL_OPTIONS: { value: string; label: string }[] = [
@@ -163,6 +164,23 @@ function AdminData({
   const unauthorized = fresh && result.unauthorized;
   const loading = !fresh;
   const retry = () => setResult((prev) => ({ ...prev, qs: "" }));
+
+  // Baris masuk berurutan setelah data baru datang, jadi perubahan filter
+  // terasa sebagai hasil yang muncul, bukan tabel yang berkedip.
+  const bodyRef = useRef<HTMLTableSectionElement>(null);
+  useEffect(() => {
+    if (loading || !list?.data.length) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const rows = bodyRef.current?.querySelectorAll("tr");
+    if (!rows?.length) return;
+    animate(rows, {
+      y: [10, 0],
+      opacity: [0.4, 1],
+      duration: 380,
+      delay: stagger(22, { start: 40 }),
+      ease: "outQuart",
+    });
+  }, [query, loading, list?.data.length]);
   const hasFilter = FILTER_KEYS.some((k) => params.get(k));
   const resetAll = () => router.push(basePath);
   const isDashboard = mode === "dashboard";
@@ -305,7 +323,7 @@ function AdminData({
                     <TableHead className="text-right text-xs font-medium text-ink-muted">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody ref={bodyRef}>
                   {loading && <SkeletonRows columns={isDashboard ? 4 : 8} />}
                   {!loading && list?.data.map((p) => (
                     <TableRow key={p.id} data-selected={selected.includes(String(p.id)) || undefined}>
@@ -499,6 +517,7 @@ function FiltersPanel({
     q: params.get("q") ?? "",
     source: params.get("source") ?? "",
     level: params.get("level") ?? "",
+    kta: params.get("kta") ?? "",
     dateFrom: params.get("dateFrom") ?? "",
     dateTo: params.get("dateTo") ?? "",
   };
@@ -518,8 +537,21 @@ function FiltersPanel({
     onApply(next.toString());
   };
 
+  /**
+   * Status KTA satu klik: tulis langsung ke URL tanpa lewat "Terapkan", supaya
+   * terasa seperti tab. Filter lain yang sedang diisi ikut terbawa.
+   */
+  const setKtaNow = (v: string) => {
+    setValues((prev) => ({ ...prev, kta: v }));
+    const next = new URLSearchParams(params.toString());
+    if (v) next.set("kta", v);
+    else next.delete("kta");
+    next.delete("page");
+    onApply(next.toString());
+  };
+
   const reset = () => {
-    setValues({ q: "", source: "", level: "", dateFrom: "", dateTo: "" });
+    setValues({ q: "", source: "", level: "", kta: "", dateFrom: "", dateTo: "" });
     const next = new URLSearchParams();
     const sort = params.get("sort");
     if (sort) next.set("sort", sort);
@@ -541,7 +573,10 @@ function FiltersPanel({
             aria-label="Cari peserta"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {/* Status KTA sengaja di luar panel: pertanyaan yang paling sering
+              ditanyakan ("mana yang belum terbit?") harus satu klik. */}
+          <KtaSegmented value={values.kta} onChange={setKtaNow} className="h-10" />
           <Button type="button" variant="secondary" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="h-10">
             Filter{activeCount > 0 ? ` (${activeCount})` : ""}
           </Button>
@@ -568,7 +603,80 @@ function FiltersPanel({
   );
 }
 
-type FilterValues = { q: string; source: string; level: string; dateFrom: string; dateTo: string };
+type FilterValues = { q: string; source: string; level: string; kta: string; dateFrom: string; dateTo: string };
+
+const KTA_OPTIONS = [
+  { value: "", label: "Semua" },
+  { value: "terbit", label: "Sudah terbit" },
+  { value: "menunggu", label: "Menunggu" },
+] as const;
+
+/**
+ * Segmented control untuk status KTA. Satu klik langsung menetapkan filter,
+ * tanpa perlu buka panel lalu tekan "Terapkan" seperti filter lain.
+ */
+function KtaSegmented({
+  value,
+  onChange,
+  className,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+}) {
+  const groupRef = useRef<HTMLDivElement>(null);
+  const firstRender = useRef(true);
+
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    const group = groupRef.current;
+    if (!group) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Indikator aktif "menetas" ke ukurannya: cukup transform, tidak menyentuh
+    // layout, jadi daftar di bawahnya tidak ikut bergeser.
+    const active = group.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!active) return;
+    animate(active, {
+      scale: [0.92, 1],
+      duration: 260,
+      ease: "outBack(1.6)",
+    });
+  }, [value]);
+
+  return (
+    <div
+      ref={groupRef}
+      role="group"
+      aria-label="Status KTA"
+      className={cn(
+        // Scroll horizontal di layar sempit; tidak pernah memaksa lebar halaman.
+        "inline-flex max-w-full shrink-0 items-center overflow-x-auto rounded-lg border border-border bg-bg p-0.5",
+        className,
+      )}
+    >
+      {KTA_OPTIONS.map((o) => {
+        const active = value === o.value;
+        return (
+          <button
+            key={o.value || "all"}
+            type="button"
+            onClick={() => onChange(o.value)}
+            aria-pressed={active}
+            className={cn(
+              "min-h-8 shrink-0 rounded-md px-3 text-sm font-medium transition-colors",
+              active ? "bg-white text-ink shadow-sm" : "text-ink-muted hover:text-ink",
+            )}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function FilterFields({
   values,
@@ -616,6 +724,7 @@ const CHIP_LABELS: Record<string, (v: string) => string> = {
   q: (v) => `Cari: ${v}`,
   source: (v) => `Sumber: ${v === "mandiri" ? "Daftar mandiri" : v}`,
   level: (v) => `Role: ${LEVEL_OPTIONS.find((o) => o.value === v)?.label ?? v}`,
+  kta: (v) => `KTA: ${v === "terbit" ? "Sudah terbit" : "Menunggu"}`,
   dateFrom: (v) => `Dari: ${v}`,
   dateTo: (v) => `Sampai: ${v}`,
 };

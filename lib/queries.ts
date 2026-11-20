@@ -13,6 +13,8 @@ export type ListParams = {
   source?: string;
   /** Level kepengurusan 1..7. */
   level?: number;
+  /** Status KTA: "terbit" (nomor anggota sudah ada) atau "menunggu". */
+  kta?: "terbit" | "menunggu";
   dateFrom?: string; // YYYY-MM-DD
   dateTo?: string; // YYYY-MM-DD
   sort?: Sort;
@@ -52,6 +54,8 @@ function where(p: FilterParams): Prisma.ParticipantWhereInput {
   }
   if (p.education) and.push({ lastEducation: p.education });
   if (p.level !== undefined) and.push({ levelCode: p.level });
+  if (p.kta === "terbit") and.push({ memberNumber: { not: null } });
+  if (p.kta === "menunggu") and.push({ memberNumber: null });
   if (p.source) {
     // "mandiri" = tidak pernah masuk lewat impor, jadi source_id NULL.
     const sourceId = p.source === SOURCE_SELF ? null : Number(p.source);

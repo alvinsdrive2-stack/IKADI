@@ -23,3 +23,9 @@ export function sourceParam(sp: URLSearchParams): string | undefined {
   if (raw === "mandiri") return raw;
   return /^\d{1,10}$/.test(raw) ? raw : undefined;
 }
+
+/** `kta` kosong = tanpa filter. Selain "terbit"/"menunggu" diabaikan. */
+export function ktaParam(sp: URLSearchParams): "terbit" | "menunggu" | undefined {
+  const raw = sp.get("kta")?.trim();
+  return raw === "terbit" || raw === "menunggu" ? raw : undefined;
+}

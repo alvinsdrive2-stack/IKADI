@@ -9,13 +9,24 @@ export function AdminShell({ children, username }: { children: React.ReactNode; 
   const [busy, setBusy] = useState(false)
 
   const logout = async () => {
+    if (busy) return
     setBusy(true)
     try {
-      await fetch("/api/admin/logout", { method: "POST" })
+      await fetch("/api/admin/logout", {
+        method: "POST",
+        credentials: "same-origin",
+        // Tanpa batas waktu, request yang menggantung membuat tombol tertahan
+        // di "Keluar..." selamanya.
+        signal: AbortSignal.timeout(8000),
+      })
+    } catch {
+      // Server tidak menjawab: tetap keluar dari halaman ini.
     } finally {
-      router.replace("/masuk")
-      router.refresh()
+      // Wajib di-reset supaya tombol tidak tertinggal nonaktif kalau navigasi gagal.
+      setBusy(false)
     }
+    router.replace("/masuk")
+    router.refresh()
   }
 
   return (

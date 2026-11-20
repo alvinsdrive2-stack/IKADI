@@ -26,6 +26,13 @@ export function AnggotaShell({ children }: { children: React.ReactNode }) {
             router.replace("/anggota/lengkapi")
             return
           }
+          // Sandi hasil reset massal (tanggal lahir) wajib diganti sebelum
+          // anggota memakai menu lain. Pelengkapan profil sudah memuat ganti
+          // sandi, jadi gate itu didahulukan.
+          if (b?.data?.mustChangePassword === true && !pathname.startsWith("/anggota/ganti-sandi")) {
+            router.replace("/anggota/ganti-sandi")
+            return
+          }
           const levelLabel = String(b?.data?.levelLabel ?? "")
           setPengurus({
             aktif: b?.data?.isPengurus === true,
@@ -40,13 +47,26 @@ export function AnggotaShell({ children }: { children: React.ReactNode }) {
   }, [router, pathname])
 
   const logout = async () => {
+    if (busy) return
     setBusy(true)
     try {
-      await fetch("/api/anggota/logout", { method: "POST" })
+      await fetch("/api/anggota/logout", {
+        method: "POST",
+        credentials: "same-origin",
+        // Tanpa batas waktu, request yang menggantung membuat tombol tertahan
+        // di "Keluar..." selamanya.
+        signal: AbortSignal.timeout(8000),
+      })
+    } catch {
+      // Server tidak menjawab: tetap keluar dari halaman ini. Cookie kedaluwarsa
+      // sendiri, dan pengguna bisa mencoba lagi setelah masuk.
     } finally {
-      router.replace("/masuk")
-      router.refresh()
+      // Wajib di-reset: kalau navigasi gagal atau lambat, tombol tidak boleh
+      // tertinggal dalam keadaan nonaktif tanpa jalan keluar.
+      setBusy(false)
     }
+    router.replace("/masuk")
+    router.refresh()
   }
 
   return (

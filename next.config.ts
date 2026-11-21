@@ -13,6 +13,13 @@ const nextConfig: NextConfig = {
   },
   cacheComponents: true,
   partialPrefetching: true,
+  // Route pas foto membaca `public/uploads/participants` dari disk. Turbopack
+  // menelusuri direktori itu saat build dan tersandung symlink Python di
+  // ocr-service/.venv (target di luar root). Berkas foto tidak perlu ditelusuri,
+  // jadi dikecualikan; route membacanya per permintaan.
+  outputFileTracingExcludes: {
+    "*": ["./ocr-service/**", "./public/uploads/**"],
+  },
   turbopack: {
     rules: {
       "*.css": {

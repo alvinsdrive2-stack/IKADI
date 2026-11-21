@@ -8,6 +8,7 @@ import { Alert } from "@/components/Alert";
 import { MembershipAdmin } from "@/components/MembershipAdmin";
 import { MemberCardsPanel } from "@/components/MemberCardsPanel";
 import { ProfileEditor, type EditableProfile } from "@/components/ProfileEditor";
+import { DeleteParticipant } from "@/components/DeleteParticipant";
 import { PageBanner } from "@/components/PageBanner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -170,6 +171,15 @@ export function ParticipantDetail({
           ) : undefined
         }
       />
+
+      {canEdit && (
+        <DeleteParticipant
+          participantId={id}
+          fullName={d.fullName}
+          apiBase={apiBase}
+          basePath={basePath}
+        />
+      )}
 
       <MembershipAdmin id={id} apiBase={apiBase} allowedLevels={allowedLevels} detailPath={(pid) => `${basePath}/${pid}/kta`} />
 

@@ -61,6 +61,14 @@ export const fakePrisma = {
       Object.assign(r, data);
       return r;
     },
+    /** Sama seperti Prisma: baris yang tidak ada -> P2025, bukan diam-diam. */
+    delete: async ({ where }) => {
+      const id = BigInt(where.id);
+      const i = state.rows.findIndex((x) => BigInt(x.id) === id);
+      if (i < 0) return Promise.reject(Object.assign(new Error("Record not found"), { code: "P2025" }));
+      const [removed] = state.rows.splice(i, 1);
+      return removed;
+    },
   },
   // Kuota cetak KTA: sumber kebenaran = hitung baris `kta_prints` (kontrak E.4).
   ktaPrint: {
@@ -69,6 +77,15 @@ export const fakePrisma = {
       const row = { ...data, id: BigInt(state.prints.length + 1) };
       state.prints.push(row);
       return row;
+    },
+    deleteMany: async ({ where } = {}) => {
+      const before = state.prints.length;
+      if (where && "participantId" in where) {
+        state.prints = state.prints.filter((p) => BigInt(p.participantId) !== BigInt(where.participantId));
+      } else {
+        state.prints = [];
+      }
+      return { count: before - state.prints.length };
     },
   },
   // Serial nomor anggota per (level, provinsi, kab/kota, tahun). Kontrak E.2: atomik.

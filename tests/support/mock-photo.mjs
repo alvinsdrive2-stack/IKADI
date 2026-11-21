@@ -2,19 +2,37 @@
 // The alias loader swaps this file in only from the point QA_MOCK is set.
 export const saved = [];
 
+/** Panggilan penghapusan berkas, supaya tes bisa memastikan ikut dibersihkan. */
+export const deleted = { photo: [], ktp: [] };
+
+/** Set true untuk membuat panggilan hapus berikutnya gagal (uji jalur error). */
+export const failNext = { value: false };
+
 export async function saveParticipantPhoto(photoBase64, participantId) {
   saved.push({ photoBase64, participantId });
   return `uploads/participants/${participantId}.png`;
 }
 
-export async function deleteParticipantPhoto() {}
+export async function deleteParticipantPhoto(relPath) {
+  if (failNext.value) {
+    failNext.value = false;
+    throw new Error("Berkas tidak bisa dihapus");
+  }
+  deleted.photo.push(relPath);
+}
 
 export async function saveParticipantKtp(ktpBase64, participantId) {
   saved.push({ ktpBase64, participantId });
   return `ktp/${participantId}.png`;
 }
 
-export async function deleteParticipantKtp() {}
+export async function deleteParticipantKtp(relPath) {
+  if (failNext.value) {
+    failNext.value = false;
+    throw new Error("Berkas tidak bisa dihapus");
+  }
+  deleted.ktp.push(relPath);
+}
 
 export function detectImageExt(buf) {
   if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "jpg";

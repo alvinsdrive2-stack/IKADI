@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth";
 import { getParticipant } from "@/lib/queries";
 import { updateParticipantProfile } from "@/lib/participant-profile";
+import { deleteParticipant } from "@/lib/participant-delete";
 import { jsonError } from "@/lib/http";
 
 export async function GET(
@@ -49,5 +50,23 @@ export async function PATCH(
       { status: result.status },
     );
   }
+  return jsonError(result.status, result.code, result.message);
+}
+/**
+ * DELETE peserta. Permanen: kartu, riwayat keanggotaan, riwayat cetak, pas foto,
+ * dan foto KTP ikut hilang. Hanya admin, dan tidak tersedia untuk pengurus.
+ */
+export async function DELETE(
+  _request: Request,
+  ctx: { params: Promise<{ id: string }> },
+) {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
+
+  const { id: raw } = await ctx.params;
+  if (!/^\d{1,20}$/.test(raw)) return jsonError(404, "NOT_FOUND", "Data peserta tidak ditemukan");
+
+  const result = await deleteParticipant(BigInt(raw));
+  if (result.ok) return Response.json({ ok: true, data: result.data });
   return jsonError(result.status, result.code, result.message);
 }

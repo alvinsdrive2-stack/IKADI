@@ -16,6 +16,7 @@ const args = [
   "tests/change-password-route.test.mts",
   "tests/anggota-gate.test.mts",
   "tests/participants-filter.test.mts",
+  "tests/participant-profile.test.mts",
 ];
 
 const r = spawnSync(process.execPath, args, {

@@ -11,5 +11,5 @@ export default async function PesertaDetailPage({
   params,
 }: PageProps<"/admin/peserta/[id]">) {
   const { id } = await params;
-  return <ParticipantDetail id={id} />;
+  return <ParticipantDetail id={id} canEdit />;
 }

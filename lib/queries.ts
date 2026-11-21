@@ -1,5 +1,7 @@
 import { Prisma } from "@prisma/client";
-import { prisma } from "./prisma";
+// Pakai alias, bukan "./prisma": loader tes menukar `@/lib/prisma` dengan mock
+// in-memory, dan impor relatif melewati penukaran itu (modul asli ikut dimuat).
+import { prisma } from "@/lib/prisma";
 import { maskNik, maskWhatsapp } from "./mask";
 import { LEVEL_LABELS } from "./member-number";
 

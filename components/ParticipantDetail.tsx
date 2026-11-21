@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Check, Copy, Printer, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Check, Copy, Pencil, Printer, ShieldCheck } from "lucide-react";
 import { SessionExpired } from "@/components/AdminNav";
 import { Alert } from "@/components/Alert";
 import { MembershipAdmin } from "@/components/MembershipAdmin";
 import { MemberCardsPanel } from "@/components/MemberCardsPanel";
+import { ProfileEditor, type EditableProfile } from "@/components/ProfileEditor";
 import { PageBanner } from "@/components/PageBanner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,7 @@ export function ParticipantDetail({
   basePath = "/admin/peserta",
   allowedLevels,
   actorLevel,
+  canEdit = false,
 }: {
   id: string;
   apiBase?: string;
@@ -63,9 +65,15 @@ export function ParticipantDetail({
   allowedLevels?: number[];
   /** Level aktor. Kosong = admin (tanpa batas level bawah). */
   actorLevel?: number;
+  /**
+   * Boleh menyunting data pribadi. Hanya admin: halaman pengurus memuat NIK,
+   * alamat, dan jalur KTP, jadi kemampuan mengubahnya tidak ikut dibagikan.
+   */
+  canEdit?: boolean;
 }) {
   const [state, setState] = useState<State>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -169,7 +177,33 @@ export function ParticipantDetail({
 
       <div className="grid gap-4 lg:grid-cols-[1fr_240px] lg:items-start">
         <div className="rounded-xl border border-border bg-white px-5 sm:px-6">
-          <Group title="Identitas">
+          {editing && state.kind === "ok" ? (
+            <div className="border-b border-border py-5 last:border-0">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold text-ink">Ubah data pribadi</h2>
+                <p className="text-xs text-ink-muted">NIK dan wilayah tidak bisa diubah di sini.</p>
+              </div>
+              <ProfileEditor
+                participantId={id}
+                apiBase={apiBase}
+                initial={toEditable(d)}
+                onCancel={() => setEditing(false)}
+                onSaved={(patch) => {
+                  setState({ kind: "ok", data: { ...d, ...patch } as Detail });
+                  setEditing(false);
+                }}
+              />
+            </div>
+          ) : (
+            <>
+              {canEdit && (
+                <div className="flex justify-end border-b border-border pt-4">
+                  <Button type="button" variant="secondary" size="sm" onClick={() => setEditing(true)}>
+                    <Pencil aria-hidden /> Ubah data
+                  </Button>
+                </div>
+              )}
+              <Group title="Identitas">
             <Item label="Nama lengkap & gelar">{d.fullName}</Item>
             <Item label="NIK KTP" span={2} copyValue={d.nik} mono>
               {d.nik}
@@ -213,6 +247,8 @@ export function ParticipantDetail({
               {d.expertise ?? "-"}
             </Item>
           </Group>
+            </>
+          )}
 
         </div>
 
@@ -268,6 +304,25 @@ export function ParticipantDetail({
       </div>
     </div>
   );
+}
+
+/** Proyeksi Detail ke bentuk yang disunting ProfileEditor. */
+function toEditable(d: Detail): EditableProfile {
+  return {
+    fullName: d.fullName,
+    whatsapp: d.whatsapp,
+    birthPlace: d.birthPlace,
+    birthDate: d.birthDate,
+    gender: d.gender,
+    maritalStatus: d.maritalStatus,
+    bloodType: d.bloodType,
+    addressKtp: d.addressKtp,
+    addressCurrent: d.addressCurrent,
+    occupation: d.occupation,
+    lastEducation: d.lastEducation,
+    studyField: d.studyField,
+    expertise: d.expertise,
+  };
 }
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {

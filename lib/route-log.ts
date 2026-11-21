@@ -33,3 +33,12 @@ export function isUniqueViolation(err: unknown): boolean {
     (err as { code?: unknown }).code === "P2002"
   );
 }
+
+/** Baris yang mau diubah tidak ada (Prisma P2025). Sama: lewat `code`. */
+export function isRecordNotFound(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    (err as { code?: unknown }).code === "P2025"
+  );
+}

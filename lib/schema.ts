@@ -226,3 +226,38 @@ export const changePasswordSchema = z
   });
 
 export type ChangePasswordData = z.output<typeof changePasswordSchema>;
+
+/**
+ * Body PATCH /api/admin/participants/:id/profile — suntingan admin atas data
+ * pribadi peserta. Semua field opsional: hanya yang dikirim yang diubah.
+ *
+ * NIK dan wilayah sengaja TIDAK ada di sini: NIK adalah identitas unik yang
+ * dipakai login, dan wilayah punya alur sendiri (membership) yang sudah
+ * mencatat riwayat. Mengubahnya lewat jalur ini akan melewati aturan itu.
+ */
+export const adminProfileSchema = z.object({
+  fullName: requiredText("Nama lengkap", 200),
+  whatsapp: whatsappSchema,
+  birthPlace: requiredText("Tempat lahir", 120),
+  birthDate: birthDateSchema,
+  gender: z.enum(["LAKI_LAKI", "PEREMPUAN"], { error: "Jenis kelamin wajib dipilih" }),
+  maritalStatus: z
+    .enum(["BELUM_MENIKAH", "SUDAH_MENIKAH", "CERAI_HIDUP", "CERAI_MATI"])
+    .nullable()
+    .optional(),
+  bloodType: z.enum(["A", "B", "AB", "O", "TIDAK_TAHU"]).nullable().optional(),
+  addressKtp: requiredText("Alamat sesuai KTP", 5000),
+  addressCurrent: optionalText(5000, "Alamat tinggal saat ini"),
+  addressSameAsKtp: z.preprocess((v) => (typeof v === "boolean" ? v : false), z.boolean()),
+  occupation: requiredText("Pekerjaan", 150),
+  lastEducation: optionalText(100, "Pendidikan terakhir"),
+  studyField: optionalText(150, "Bidang studi"),
+  expertise: optionalText(5000, "Bidang keahlian"),
+}).transform((v) => ({
+  ...v,
+  // Kolom `address` lama tetap dicerminkan supaya laporan dan admin lain konsisten.
+  addressCurrent: v.addressSameAsKtp ? v.addressKtp : (v.addressCurrent ?? v.addressKtp),
+  address: v.addressSameAsKtp ? v.addressKtp : (v.addressCurrent ?? v.addressKtp),
+}));
+
+export type AdminProfileData = z.output<typeof adminProfileSchema>;

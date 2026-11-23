@@ -113,12 +113,13 @@ def test_kota_fallback_di_baris_mana_pun():
     assert out["city"]["value"] == "Surabaya"
 
 
-# Kartu KTP fisik asli (foto, guilloche) — bacaan ideal dari kartu Surabaya.
+# KTP sintetis bergaya kartu fisik (foto, guilloche): semua data karangan,
+# dipakai untuk menguji tata letak baris yang sama dengan kartu asli.
 KTP_FISIK = [
     line("PROVINSI JAWA TIMUR", 0.9),
     line("KOTA SURABAYA", 0.9),
-    line("NIK : 3578010603040003", 0.85),
-    line("Nama : ANANDA ALVIANSYAH PUTRA P.", 0.8),
+    line("NIK : 3578010603040001", 0.85),
+    line("Nama : BUDI SANTOSO PRATAMA", 0.8),
     line("Tempat/Tgl Lahir : SURABAYA, 06-03-2004", 0.8),
     line("Jenis kelamin : LAKI-LAKI Gol. Darah : B", 0.8),
     line("Alamat : KEBRAON TEGAL NO. 22", 0.8),
@@ -135,8 +136,8 @@ KTP_FISIK = [
 
 def test_ktp_fisik_surabaya():
     out = parse_ktp(KTP_FISIK)
-    assert out["nik"]["value"] == "3578010603040003"
-    assert out["fullName"]["value"] == "Ananda Alviansyah Putra P."
+    assert out["nik"]["value"] == "3578010603040001"
+    assert out["fullName"]["value"] == "Budi Santoso Pratama"
     assert out["birthPlace"]["value"] == "Surabaya"
     assert out["birthDate"]["value"] == "2004-03-06"
     assert out["gender"]["value"] == "LAKI_LAKI"

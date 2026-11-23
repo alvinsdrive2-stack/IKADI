@@ -1,7 +1,7 @@
 """Convert "DATA KTA IKADI.xlsx" (sheet "Data Fix") to idempotent MySQL INSERTs.
 
 Usage:
-    python -I scripts/import-data-fix.py "C:/Users/Alvia/Downloads/DATA KTA IKADI.xlsx" > data-fix.sql
+    python -I scripts/import-data-fix.py "~/Downloads/DATA KTA IKADI.xlsx" > data-fix.sql
 
 Output: INSERT ... SELECT ... WHERE NOT EXISTS on nik (uq_participants_nik).
 Duplicate person inside the file keeps the first occurrence; rows that fail

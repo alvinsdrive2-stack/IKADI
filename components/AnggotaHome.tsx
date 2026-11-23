@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Check, CircleDashed, Clock, IdCard, Printer, ShieldCheck, UserRound } from "lucide-react";
+import { Enter } from "@/components/motion/Enter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/Alert";
@@ -179,7 +180,7 @@ export function AnggotaHome({ variant = "dashboard" }: { variant?: "dashboard" |
 
   if (variant === "profil") {
     return (
-      <section className="rounded-xl border border-border bg-white" aria-labelledby="profil-h">
+      <Enter as="section" className="rounded-xl border border-border bg-white" aria-labelledby="profil-h">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-5 py-4">
           <div className="min-w-0">
             <h2 id="profil-h" className="text-sm font-semibold text-ink">
@@ -197,12 +198,12 @@ export function AnggotaHome({ variant = "dashboard" }: { variant?: "dashboard" |
             </div>
           ))}
         </dl>
-      </section>
+      </Enter>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <Enter className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">Assalamualaikum, {firstName}</h1>
@@ -355,7 +356,7 @@ export function AnggotaHome({ variant = "dashboard" }: { variant?: "dashboard" |
           </div>
         </section>
       </div>
-    </div>
+    </Enter>
   );
 }
 

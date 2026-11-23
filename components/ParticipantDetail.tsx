@@ -9,6 +9,7 @@ import { MembershipAdmin } from "@/components/MembershipAdmin";
 import { MemberCardsPanel } from "@/components/MemberCardsPanel";
 import { ProfileEditor, type EditableProfile } from "@/components/ProfileEditor";
 import { DeleteParticipant } from "@/components/DeleteParticipant";
+import { Enter } from "@/components/motion/Enter";
 import { PageBanner } from "@/components/PageBanner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -153,7 +154,7 @@ export function ParticipantDetail({
   const bisaCetak = actorLevel === undefined || d.levelCode === undefined || d.levelCode > actorLevel;
 
   return (
-    <div className="space-y-5">
+    <Enter className="space-y-5">
       <PageBanner
         headingId="page-h"
         title={d.fullName}
@@ -312,7 +313,7 @@ export function ParticipantDetail({
           </section>
         </aside>
       </div>
-    </div>
+    </Enter>
   );
 }
 

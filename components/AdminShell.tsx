@@ -30,7 +30,14 @@ export function AdminShell({ children, username }: { children: React.ReactNode; 
   }
 
   return (
-    <AppFrame role="admin" items={AdminItems()} userLabel={username} onLogout={logout} logoutBusy={busy}>
+    <AppFrame
+      role="admin"
+      items={AdminItems()}
+      userLabel={username}
+      onLogout={logout}
+      logoutBusy={busy}
+      changePasswordHref="/admin/ganti-sandi"
+    >
       {children}
     </AppFrame>
   )

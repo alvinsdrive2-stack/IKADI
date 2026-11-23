@@ -8,6 +8,8 @@
 export const state = {
   rows: [],
   failNextCreateWith: null,
+  // Baris admin. Hanya dipakai tes ganti sandi admin.
+  admins: [],
   // key: `${levelCode}.${provinceCode}.${regencyCode}.${year}` -> lastSerial
   sequences: new Map(),
   prints: [],
@@ -68,6 +70,20 @@ export const fakePrisma = {
       if (i < 0) return Promise.reject(Object.assign(new Error("Record not found"), { code: "P2025" }));
       const [removed] = state.rows.splice(i, 1);
       return removed;
+    },
+  },
+  admin: {
+    findUnique: async ({ where }) => {
+      if (where.id !== undefined) {
+        return state.admins.find((a) => BigInt(a.id) === BigInt(where.id)) ?? null;
+      }
+      return state.admins.find((a) => a.username === where.username) ?? null;
+    },
+    update: async ({ where, data }) => {
+      const a = state.admins.find((x) => BigInt(x.id) === BigInt(where.id));
+      if (!a) return Promise.reject(Object.assign(new Error("Record not found"), { code: "P2025" }));
+      Object.assign(a, data);
+      return a;
     },
   },
   // Kuota cetak KTA: sumber kebenaran = hitung baris `kta_prints` (kontrak E.4).
@@ -131,4 +147,5 @@ export function reset() {
   state.sequences = new Map();
   state.prints = [];
   state.officials = new Map();
+  state.admins = [];
 }

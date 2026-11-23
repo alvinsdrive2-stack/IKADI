@@ -15,7 +15,26 @@ import { Label } from "@/components/ui/label";
  * selalu diminta, jadi sesi yang tertinggal di perangkat bersama tidak cukup
  * untuk mengambil alih akun.
  */
-export function ChangePassword() {
+export function ChangePassword({
+  meUrl = "/api/anggota/me",
+  endpoint = "/api/anggota/sandi",
+  forcedWhen,
+  title = "Ganti sandi",
+  forcedText = "Sandi Anda masih tanggal lahir. Buat sandi sendiri sekarang supaya akun tidak bisa dibuka orang lain.",
+  redirectTo = "/anggota",
+}: {
+  /** Sumber status wajib-ganti-sandi. */
+  meUrl?: string;
+  /** Endpoint POST ganti sandi. */
+  endpoint?: string;
+  /** Pembaca penanda "wajib ganti" dari body `meUrl`; null = tidak pernah dipaksa. */
+  forcedWhen?: (data: Record<string, unknown> | null) => boolean;
+  title?: string;
+  /** Kalimat ajakan saat sandi wajib diganti. */
+  forcedText?: string;
+  /** Halaman tujuan setelah sandi tersimpan. */
+  redirectTo?: string;
+}) {
   const router = useRouter();
   const [forced, setForced] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -30,18 +49,18 @@ export function ChangePassword() {
 
   useEffect(() => {
     let alive = true;
-    fetch("/api/anggota/me", { cache: "no-store", credentials: "same-origin" })
+    fetch(meUrl, { cache: "no-store", credentials: "same-origin" })
       .then(async (r) => {
         if (!alive) return;
         if (r.status === 401) return router.replace("/masuk");
         const body = await r.json().catch(() => null);
-        setForced(body?.data?.mustChangePassword === true);
+        setForced(forcedWhen ? forcedWhen(body?.data ?? null) : false);
       })
       .catch(() => {});
     return () => {
       alive = false;
     };
-  }, [router]);
+  }, [router, meUrl, forcedWhen]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +72,7 @@ export function ChangePassword() {
     setNotice(null);
     setErrors({});
     try {
-      const res = await fetch("/api/anggota/sandi", {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
@@ -70,7 +89,7 @@ export function ChangePassword() {
         return;
       }
       setNotice("Sandi tersimpan. Mengalihkan…");
-      router.replace("/anggota");
+      router.replace(redirectTo);
       router.refresh();
     } catch {
       setNotice("Koneksi bermasalah. Coba lagi.");
@@ -82,11 +101,9 @@ export function ChangePassword() {
   return (
     <div className="mx-auto max-w-xl space-y-5">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">Ganti sandi</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">{title}</h1>
         <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">
-          {forced
-            ? "Sandi Anda masih tanggal lahir. Buat sandi sendiri sekarang supaya akun tidak bisa dibuka orang lain."
-            : "Masukkan sandi saat ini, lalu tentukan sandi baru."}
+          {forced ? forcedText : "Masukkan sandi saat ini, lalu tentukan sandi baru."}
         </p>
       </header>
 

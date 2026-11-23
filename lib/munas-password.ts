@@ -18,8 +18,12 @@ export const MUNAS_DEFAULT_PASSWORD = "Munas@IKADI2026";
  * Digunakan bersama `must_change_password = true`, jadi tidak pernah menjadi
  * sandi permanen siapa pun: gate di area anggota memaksa ganti sebelum menu
  * lain bisa dipakai.
+ *
+ * Diambil dari `TEMP_PASSWORD` di environment supaya nilai yang dipakai di
+ * produksi tidak ikut terbaca siapa pun yang membuka repo. Nilai cadangan di
+ * bawah hanya untuk tes dan pengembangan lokal; produksi wajib mengisinya.
  */
-export const TEMP_PASSWORD = "IcardIkadi";
+export const TEMP_PASSWORD = process.env.TEMP_PASSWORD?.trim() || "IcardIkadi";
 
 export type DerivedPassword =
   | { ok: true; password: string; day: number; month: number; year2: number }

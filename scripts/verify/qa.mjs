@@ -20,6 +20,7 @@ const args = [
   "tests/participant-delete.test.mts",
   "tests/anggota-profile-data.test.mts",
   "tests/admin-password.test.mts",
+  "tests/client-ip.test.mts",
 ];
 
 const r = spawnSync(process.execPath, args, {

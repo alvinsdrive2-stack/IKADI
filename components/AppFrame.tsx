@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Pencil,
   Scan,
   ShieldCheck,
   UserRound,
@@ -75,6 +76,8 @@ export function AppFrame({
   roleLabel,
   onLogout,
   logoutBusy,
+  changePasswordHref,
+  editDataHref,
   children,
 }: {
   role: "admin" | "anggota";
@@ -84,6 +87,10 @@ export function AppFrame({
   roleLabel?: string;
   onLogout: () => void;
   logoutBusy?: boolean;
+  /** Tujuan menu "Ubah kata sandi". Kosong = tidak ditampilkan (mis. admin). */
+  changePasswordHref?: string;
+  /** Tujuan menu "Ubah data akun". Kosong = tidak ditampilkan. */
+  editDataHref?: string;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -140,24 +147,13 @@ export function AppFrame({
     </nav>
   );
 
+  // Footer sidebar sengaja tanpa "Keluar" dan "Lihat situs": keduanya pindah ke
+  // menu profil, supaya panel kiri murni navigasi dan kaki sidebar bisa dipakai
+  // untuk identitas rilis.
   const asideFooter = (
-    <div className="border-t border-border p-3">
-      <Link
-        href="/"
-        className="flex min-h-10 items-center gap-2.5 rounded-md px-3 text-sm font-medium text-ink-muted transition-colors hover:bg-bg hover:text-ink"
-      >
-        <ExternalLink aria-hidden className="size-4 shrink-0" />
-        Lihat situs
-      </Link>
-      <button
-        type="button"
-        onClick={onLogout}
-        disabled={logoutBusy}
-        className="flex min-h-10 w-full items-center gap-2.5 rounded-md px-3 text-sm font-medium text-ink-muted transition-colors hover:bg-bg hover:text-ink disabled:opacity-60"
-      >
-        <LogOut aria-hidden className="size-4 shrink-0" />
-        {logoutBusy ? "Keluar..." : "Keluar"}
-      </button>
+    <div className="border-t border-border px-4 py-4">
+      <p className="text-xs font-medium text-ink-muted">v. 0.4</p>
+      <p className="mt-0.5 text-xs text-ink-muted">Copyright by Keynine Tech © 2026</p>
     </div>
   );
 
@@ -235,6 +231,37 @@ export function AppFrame({
                   </p>
                 </div>
                 <div className="p-1.5">
+                  {editDataHref && (
+                    <Link
+                      href={editDataHref}
+                      role="menuitem"
+                      onClick={() => setProfileOpen(false)}
+                      className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-left text-sm font-medium text-ink-muted hover:bg-bg hover:text-ink"
+                    >
+                      <UserRound aria-hidden className="size-4" />
+                      Ubah data akun
+                    </Link>
+                  )}
+                  {changePasswordHref && (
+                    <Link
+                      href={changePasswordHref}
+                      role="menuitem"
+                      onClick={() => setProfileOpen(false)}
+                      className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-left text-sm font-medium text-ink-muted hover:bg-bg hover:text-ink"
+                    >
+                      <Pencil aria-hidden className="size-4" />
+                      Ubah kata sandi
+                    </Link>
+                  )}
+                  <Link
+                    href="/"
+                    role="menuitem"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-left text-sm font-medium text-ink-muted hover:bg-bg hover:text-ink"
+                  >
+                    <ExternalLink aria-hidden className="size-4" />
+                    Lihat situs
+                  </Link>
                   <button
                     type="button"
                     role="menuitem"

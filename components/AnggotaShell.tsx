@@ -82,6 +82,8 @@ export function AnggotaShell({ children }: { children: React.ReactNode }) {
       roleLabel={pengurus?.aktif ? pengurus.label : undefined}
       onLogout={logout}
       logoutBusy={busy}
+      changePasswordHref="/anggota/ganti-sandi"
+      editDataHref="/anggota/profil#data-akun"
     >
       {gated ? (
         <div aria-busy="true" aria-label="Mengalihkan" className="h-64 animate-pulse rounded-xl border border-border bg-white" />

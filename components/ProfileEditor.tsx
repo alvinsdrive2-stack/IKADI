@@ -62,12 +62,15 @@ function toForm(p: EditableProfile) {
 export function ProfileEditor({
   participantId,
   apiBase,
+  endpoint,
   initial,
   onCancel,
   onSaved,
 }: {
   participantId: string;
   apiBase: string;
+  /** Endpoint lengkap. Kalau diisi, `apiBase`/`participantId` diabaikan. */
+  endpoint?: string;
   initial: EditableProfile;
   onCancel: () => void;
   onSaved: (patch: EditableProfile) => void;
@@ -87,7 +90,7 @@ export function ProfileEditor({
     setNotice(null);
     setErrors({});
     try {
-      const res = await fetch(`${apiBase}/${encodeURIComponent(participantId)}`, {
+      const res = await fetch(endpoint ?? `${apiBase}/${encodeURIComponent(participantId)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",

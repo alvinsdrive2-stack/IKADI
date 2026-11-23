@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { AnggotaHome } from "@/components/AnggotaHome";
+import { AnggotaDataAkun } from "@/components/AnggotaDataAkun";
 
 export const metadata: Metadata = { title: "Profil Anggota | IKADI" };
 
@@ -13,8 +14,11 @@ export default function AnggotaProfilPage() {
       </Link>
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">Profil</h1>
-        <p className="mt-1.5 text-sm text-ink-muted">Data yang Anda kirim saat mendaftar. Hubungi pengurus untuk perubahan.</p>
+        <p className="mt-1.5 text-sm text-ink-muted">
+          Data pribadi Anda bisa diubah sendiri. NIK dan wilayah hanya lewat pengurus.
+        </p>
       </div>
+      <AnggotaDataAkun />
       <AnggotaHome variant="profil" />
     </div>
   );

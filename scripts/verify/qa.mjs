@@ -18,6 +18,7 @@ const args = [
   "tests/participants-filter.test.mts",
   "tests/participant-profile.test.mts",
   "tests/participant-delete.test.mts",
+  "tests/anggota-profile-data.test.mts",
 ];
 
 const r = spawnSync(process.execPath, args, {

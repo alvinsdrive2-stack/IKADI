@@ -304,7 +304,9 @@ proyek dan `pm2` dijalankan dari folder yang sama.
 **`PrismaClientInitializationError`**, user MySQL salah, password salah, atau database
 belum dibuat. Tes manual: `mysql -u ikadi_app -p ikadi -e "SHOW TABLES;"`.
 
-**Login selalu gagal**, admin belum di-seed. Jalankan `npm run db:seed`.
+**Login selalu gagal**, admin belum di-seed. Jalankan `npm run db:seed`. Kalau admin
+sudah ada tapi sandinya lupa, seed tidak menimpanya — pakai `npm run db:seed -- --force`
+untuk mengembalikan sandi ke `ADMIN_PASSWORD` di `.env`.
 
 **Cookie tidak tersimpan**, akses lewat HTTPS. Dengan `NODE_ENV=production` cookie
 bertanda `Secure`, jadi tidak dikirim lewat HTTP biasa.
